@@ -14,7 +14,7 @@ const {
   getAllQuinipolo,
   getQuinipoloByLeague,
 } = require("./controllers/QuinipolosController.js");
-
+require("dotenv").config();
 // Enable CORS for all routes
 app.use(cors()); // Add this line
 
@@ -22,10 +22,9 @@ app.use(cors()); // Add this line
 app.use(bodyParser.json());
 
 // Connect to MongoDB
-const dbPassword = "salvadorsc"; // Replace with your actual MongoDB password
 
 mongoose.connect(
-  `mongodb+srv://salvadorsc:${dbPassword}@cluster44605.siymouu.mongodb.net/`,
+  `mongodb+srv://${process.env.DBUSER}:${process.env.DBPASSWORD}@${process.env.DBURL}/`,
   {}
 );
 
