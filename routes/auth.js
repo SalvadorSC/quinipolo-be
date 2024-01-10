@@ -33,7 +33,6 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log("aaaaaa");
   try {
     // Find user by email
     const user = await User.findOne({ email }).exec();
@@ -49,7 +48,10 @@ router.post("/login", async (req, res) => {
     }
 
     // Authentication successful
-    res.json({ message: "Login successful", user });
+    res.json({
+      message: "Login successful",
+      user: { username: user.username, role: user.role },
+    });
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ error: "Internal Server Error" });

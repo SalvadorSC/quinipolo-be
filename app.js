@@ -7,7 +7,11 @@ const app = express();
 const PORT = 3000;
 const bodyParser = require("body-parser"); // Add this line for parsing JSON requests
 const authRoutes = require("./routes/auth.js");
-const { createUser, getAllUsers } = require("./controllers/UserController.js");
+const {
+  createUser,
+  getAllUsers,
+  getUserRole,
+} = require("./controllers/UserController.js");
 const { getAllTeams } = require("./controllers/TeamsController.js");
 const {
   createNewQuinipolo,
@@ -45,6 +49,12 @@ app.post("/api/quinipolos", createNewQuinipolo);
 // READ //
 // Get all users
 app.get("/api/users", getAllUsers);
+
+// Get an user
+/* app.get("/api/user", getUser); */
+
+// Get an user's role
+app.get("/api/user/role", getUserRole);
 
 // Get all teams
 app.get("/api/teamOptions", getAllTeams);

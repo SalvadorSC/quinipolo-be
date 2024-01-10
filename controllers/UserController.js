@@ -12,6 +12,17 @@ const getAllUsers = async (req, res) => {
   }
 };
 
+const getUserRole = async (req, res) => {
+  try {
+    console.log("Fetching user's role");
+    const user = await User.find({ username: req.body.username });
+    res.status(200).json(user.role);
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
 const createUser = async (req, res) => {
   try {
     const newUser = new User(req.body);
@@ -24,4 +35,4 @@ const createUser = async (req, res) => {
   }
 };
 
-module.exports = { getAllUsers, createUser };
+module.exports = { getAllUsers, createUser, getUserRole };
