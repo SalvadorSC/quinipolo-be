@@ -17,6 +17,13 @@ const surveyItemSchema = new mongoose.Schema({
   },
 });
 
+const correctAnswerSchema = new mongoose.Schema({
+  matchNumber: Number,
+  chosenWinner: String,
+  goalsHomeTeam: String,
+  goalsAwayTeam: String,
+});
+
 // Define the full survey schema using an array of survey items
 const QuinipoloSchema = new mongoose.Schema({
   league: {
@@ -24,6 +31,10 @@ const QuinipoloSchema = new mongoose.Schema({
     required: true,
   },
   quinipolo: [surveyItemSchema],
+  correctAnswers: [correctAnswerSchema],
+  creationDate: Date,
+  endDate: Date,
+  hasBeenCorrected: Boolean,
 });
 
 const Quinipolo = mongoose.model("quinipolos", QuinipoloSchema);

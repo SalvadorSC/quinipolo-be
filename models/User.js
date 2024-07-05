@@ -2,14 +2,14 @@
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  username: {
+  /* userId: {
     type: String,
     required: true,
-  },
-  password: {
+  }, */
+  /* password: {
     type: String,
     required: true,
-  },
+  }, */
   role: {
     type: String,
     enum: ["user", "moderator"],
@@ -20,6 +20,7 @@ const userSchema = new mongoose.Schema({
     default: 0,
   },
   leagues: Array,
+  moderatedLeagues: [String],
   isBanned: {
     type: Boolean,
     default: false,
@@ -33,6 +34,7 @@ const userSchema = new mongoose.Schema({
     default: Date.now,
   },
   email: { type: String, unique: true, required: true },
+  username: { type: String, unique: true, required: true },
 });
 
 const User = mongoose.model("users", userSchema);
