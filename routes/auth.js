@@ -59,7 +59,7 @@ router.post("/signup", async (req, res) => {
   }
 }); */
 
-router.post("/checkUser?:username", async (req, res) => {
+router.get("/checkUser?:username", async (req, res) => {
   const username = req.query.username;
   console.log("params", username);
   console.log("username", username);
