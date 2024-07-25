@@ -4,10 +4,10 @@ const Quinipolo = require("../models/Quinipolo");
 
 const submitQuinipoloAnswer = async (req, res) => {
   try {
-    const { userId, quinipoloId, answers } = req.body;
+    const { quinipoloId, answers, username } = req.body;
 
-    // Validate User
-    const user = await User.findById(userId);
+    // Validate User by username
+    const user = await User.findOne({ username: username });
     if (!user) {
       return res.status(404).send("User not found");
     }
@@ -19,7 +19,7 @@ const submitQuinipoloAnswer = async (req, res) => {
     }
 
     // Check if the user has already answered this Quinipolo
-    const existingAnswer = await Answers.findOne({ userId, quinipoloId });
+    const existingAnswer = await Answers.findOne({ username, quinipoloId });
     if (existingAnswer) {
       return res.status(409).send("User has already answered this Quinipolo");
     }
@@ -40,13 +40,24 @@ const submitQuinipoloAnswer = async (req, res) => {
       return res.status(400).send("Invalid answers format");
     }
 
+    console.log("Answers:", answers);
+
     // Save the answers
     const newAnswer = new Answers({
-      userId,
+      username,
       quinipoloId,
       answers,
     });
     await newAnswer.save();
+
+    console.log("Answers saved successfully");
+    console.log(
+      "Participants who answered:",
+      quinipolo.participantsWhoAnswered
+    );
+    console.log("Username:", username);
+    quinipolo.participantsWhoAnswered.push(username);
+    await quinipolo.save();
 
     res.status(200).json({ message: "Answers submitted successfully" });
   } catch (error) {
@@ -55,6 +66,18 @@ const submitQuinipoloAnswer = async (req, res) => {
   }
 };
 
+const getQuinipoloAnswerByUsernameAndQuinipoloId = async (
+  username,
+  quinipoloId
+) => {
+  const answers = await Answers.findOne({ username, quinipoloId });
+  if (!answers) {
+    return res.status(404).json({ message: "Answers not found" });
+  }
+  return answers;
+};
+
 module.exports = {
   submitQuinipoloAnswer,
+  getQuinipoloAnswerByUsernameAndQuinipoloId,
 };

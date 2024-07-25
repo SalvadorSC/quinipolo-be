@@ -26,7 +26,11 @@ const correctAnswerSchema = new mongoose.Schema({
 
 // Define the full survey schema using an array of survey items
 const QuinipoloSchema = new mongoose.Schema({
-  league: {
+  leagueId: {
+    type: String,
+    required: true,
+  },
+  leagueName: {
     type: String,
     required: true,
   },
@@ -34,7 +38,12 @@ const QuinipoloSchema = new mongoose.Schema({
   correctAnswers: [correctAnswerSchema],
   creationDate: Date,
   endDate: Date,
+  participantsWhoAnswered: [String],
   hasBeenCorrected: Boolean,
+  isDeleted: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const Quinipolo = mongoose.model("quinipolos", QuinipoloSchema);

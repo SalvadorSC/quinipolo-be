@@ -6,7 +6,7 @@ const router = express.Router();
 
 router.post("/signup", async (req, res) => {
   try {
-    const { userId, email, role, leagues, username, fullName } = req.body;
+    const { email, role, leagues, username, fullName } = req.body;
 
     // Hash the password
     //const hashedPassword = await bcrypt.hash(password, 10);
@@ -32,37 +32,8 @@ router.post("/signup", async (req, res) => {
   }
 });
 
-/* router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
-  try {
-    // Find user by email
-    const user = await User.findOne({ email }).exec();
-    // Check if user exists
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const passwordMatch = await bcrypt.compare(password, user.password);
-    // Check password
-    if (!passwordMatch) {
-      return res.status(401).json({ error: "Invalid password" });
-    }
-
-    // Authentication successful
-    res.json({
-      message: "Login successful",
-      user: { userId: user._id, role: user.role },
-    });
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-}); */
-
 router.get("/checkUser?:username", async (req, res) => {
   const username = req.query.username;
-  console.log("params", username);
-  console.log("username", username);
   try {
     // Find user by email
     const user = await User.findOne({ username }).exec();
@@ -77,7 +48,7 @@ router.get("/checkUser?:username", async (req, res) => {
     res.json({
       message: "User exists",
       messageCode: "USER_FOUND",
-      user: { userId: user._id, role: user.role },
+      user: { userId: user._id, role: user.role, username: user.username },
     });
   } catch (error) {
     console.error("Login error:", error);

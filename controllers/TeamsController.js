@@ -1,4 +1,4 @@
-// controllers/UserController.js
+// controllers/TeamsController.js
 const Teams = require("../models/Teams");
 
 const getAllTeams = async (req, res) => {

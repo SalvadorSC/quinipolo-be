@@ -24,9 +24,8 @@ const answerItemSchema = new mongoose.Schema({
 });
 
 const answerSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "users",
+  username: {
+    type: String,
     required: true,
   },
   quinipoloId: {

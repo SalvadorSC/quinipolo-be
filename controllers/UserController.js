@@ -101,7 +101,7 @@ const getUserBasicData = async (req, res) => {
         for (const quinipolo of quinipolos) {
           // Check if the user has already answered this quinipolo
           const answerExists = await Answer.findOne({
-            userId: user._id,
+            username: user.username,
             quinipoloId: quinipolo._id,
           });
 
@@ -128,6 +128,8 @@ const getUserBasicData = async (req, res) => {
       leagues: leaguesInfo,
       quinipolosToAnswer: quinipolosToAnswer,
       moderatedLeagues: user.moderatedLeagues,
+      userId: user._id,
+      username: user.username,
     });
   } catch (error) {
     console.error("Error fetching users:", error);

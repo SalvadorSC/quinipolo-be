@@ -1,4 +1,4 @@
-// models/User.js
+// models/Teams.js
 const mongoose = require("mongoose");
 
 const teamsSchema = new mongoose.Schema({
