@@ -188,12 +188,16 @@ const getQuinipoloAnswersAndCorrections = async (req, res) => {
 
   try {
     const quinipolo = await Quinipolo.findById(id);
+    console.log(quinipolo);
     const answers = await getQuinipoloAnswerByUsernameAndQuinipoloId(
       req.params.username,
       quinipolo._id
     );
     if (!quinipolo) {
       return res.status(404).json({ message: "Quinipolo not found" });
+    }
+    if (!answers) {
+      return res.status(200).json({ quinipolo, answers: { answers: [] } });
     }
 
     res.status(200).json({ quinipolo, answers });

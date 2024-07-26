@@ -23,6 +23,11 @@ router.post(
   "/:leagueId/request-moderator",
   LeaguesController.createModerationPetition
 );
+router.post(
+  "/:leagueId/request-participant",
+  LeaguesController.createParticipantPetition
+);
+
 router.get(
   "/:leagueId/moderator-petitions",
   LeaguesController.getModerationPetitions
@@ -38,6 +43,23 @@ router.put(
 router.put(
   "/:leagueId/moderator-petitions/:petitionId/cancel",
   LeaguesController.cancelModerationPetition
+);
+
+router.get(
+  "/:leagueId/participant-petitions",
+  LeaguesController.getParticipantPetitions
+);
+router.put(
+  "/:leagueId/participant-petitions/:petitionId/accept",
+  LeaguesController.acceptParticipantPetition
+);
+router.put(
+  "/:leagueId/participant-petitions/:petitionId/reject",
+  LeaguesController.rejectParticipantPetition
+);
+router.put(
+  "/:leagueId/participant-petitions/:petitionId/cancel",
+  LeaguesController.cancelParticipantPetition
 );
 
 // Get quinipolos for a league

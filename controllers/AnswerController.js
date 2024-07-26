@@ -71,9 +71,7 @@ const getQuinipoloAnswerByUsernameAndQuinipoloId = async (
   quinipoloId
 ) => {
   const answers = await Answers.findOne({ username, quinipoloId });
-  if (!answers) {
-    return res.status(404).json({ message: "Answers not found" });
-  }
+
   return answers;
 };
 

@@ -140,6 +140,13 @@ const getUserBasicData = async (req, res) => {
 const createUser = async (req, res) => {
   try {
     const newUser = new User(req.body);
+
+    const globalLeague = await Leagues.findOne({ leagueId: "global" });
+    console.log("Global league:", globalLeague);
+    globalLeague.participants.push(newUser.username);
+    console.log("Global league after push:", global);
+    await globalLeague.save();
+
     await newUser.save();
     console.log("User created successfully:", newUser);
     res.status(201).json(newUser);

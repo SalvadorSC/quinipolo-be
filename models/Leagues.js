@@ -1,7 +1,7 @@
 // models/Leagues.js
 const mongoose = require("mongoose");
 
-const moderatorPetitionSchema = new mongoose.Schema({
+const petitionSchema = new mongoose.Schema({
   userId: {
     type: String,
     required: true,
@@ -38,7 +38,11 @@ const leaguesSchema = new mongoose.Schema({
     default: [],
   },
   moderatorPetitions: {
-    type: [moderatorPetitionSchema],
+    type: [petitionSchema],
+    default: [],
+  },
+  participantPetitions: {
+    type: [petitionSchema],
     default: [],
   },
   leagueName: {
