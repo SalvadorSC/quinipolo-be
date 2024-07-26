@@ -76,21 +76,53 @@ const joinLeague = async (req, res) => {
     console.log("Joining league", req.body.username, req.body.leagueId);
     // first find league, then save the user to the league
     const league = await Leagues.findOne({ leagueId: req.body.leagueId });
-    league.participants.push(req.body.username);
-    await league.save();
+    joinLeagueById(req.body.leagueId, req.body.username);
 
     // join leaderboard for the league
-
-    const leaderboard = await Leaderboard.findOne({
-      leagueId: req.body.leagueId,
-    });
-    leaderboard.participantsLeaderboard.push(req.body.username);
-    await leaderboard.save();
 
     res.status(200).json(league);
   } catch (error) {
     console.error("Error joining league:", error);
     res.status(500).send("Internal Server Error");
+  }
+};
+
+const joinLeagueById = async (leagueId, username) => {
+  try {
+    console.log("Joining league", username, leagueId);
+    // first find league, then save the user to the league
+    const league = await Leagues.findOne({ leagueId: leagueId });
+
+    // check if user is already in the league
+    if (league.participants.includes(username)) {
+      return;
+    }
+
+    const leaderboard = await Leaderboard.findOne({
+      leagueId: leagueId,
+    });
+
+    // if participant is in leaderboard
+    if (
+      leaderboard.participantsLeaderboard.find(
+        (participant) => participant.username === username
+      )
+    ) {
+      return;
+    }
+
+    leaderboard.participantsLeaderboard.push({
+      username: username,
+      points: 0,
+      fullCorrectQuinipolos: 0,
+      nQuinipolosParticipated: 0,
+    });
+    await leaderboard.save();
+
+    league.participants.push(username);
+    await league.save();
+  } catch (error) {
+    console.error("Error joining league:", error);
   }
 };
 
@@ -239,4 +271,5 @@ module.exports = {
   rejectParticipantPetition,
   cancelParticipantPetition,
   getParticipantPetitions,
+  joinLeagueById,
 };

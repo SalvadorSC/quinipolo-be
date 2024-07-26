@@ -143,13 +143,7 @@ const createUser = async (req, res) => {
     const newUser = new User(req.body);
 
     const globalLeague = await Leagues.findOne({ leagueId: "global" });
-    console.log("Global league:", globalLeague);
-    globalLeague.participants.push(newUser.username);
-    console.log("Global league after push:", global);
-    await globalLeague.save();
-    // save user to leaderboard for global league
-    const leaderboard = await Leaderboard.findOne({ leagueId: "global" });
-    leaderboard.participantsLeaderboard.push(newUser.username);
+    joinLeagueById("global", newUser.username);
 
     await newUser.save();
     console.log("User created successfully:", newUser);

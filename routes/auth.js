@@ -2,6 +2,7 @@
 const express = require("express");
 const User = require("../models/User");
 const Leagues = require("../models/Leagues");
+const { joinLeagueById } = require("../controllers/LeaguesController");
 
 const router = express.Router();
 
@@ -22,11 +23,7 @@ router.post("/signup", async (req, res) => {
       username,
       fullName,
     });
-    const globalLeague = await Leagues.findOne({ leagueId: "global" });
-    console.log("Global league:", globalLeague);
-    globalLeague.participants.push(newUser.username);
-    console.log("Global league after push:", global);
-    await globalLeague.save();
+    joinLeagueById("global", username);
     // Save the user to the database
     await newUser.save();
 
