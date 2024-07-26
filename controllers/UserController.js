@@ -1,5 +1,6 @@
 // controllers/UserController.js
 const Answer = require("../models/Answers");
+const Leaderboard = require("../models/Leaderboard");
 const Leagues = require("../models/Leagues");
 const Quinipolo = require("../models/Quinipolo");
 const User = require("../models/User");
@@ -146,6 +147,9 @@ const createUser = async (req, res) => {
     globalLeague.participants.push(newUser.username);
     console.log("Global league after push:", global);
     await globalLeague.save();
+    // save user to leaderboard for global league
+    const leaderboard = await Leaderboard.findOne({ leagueId: "global" });
+    leaderboard.participantsLeaderboard.push(newUser.username);
 
     await newUser.save();
     console.log("User created successfully:", newUser);
