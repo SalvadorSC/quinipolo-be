@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 
-// Define the survey item schema
 const surveyItemSchema = new mongoose.Schema({
   gameType: {
     type: String,
@@ -24,7 +23,6 @@ const correctAnswerSchema = new mongoose.Schema({
   goalsAwayTeam: String,
 });
 
-// Define the full survey schema using an array of survey items
 const QuinipoloSchema = new mongoose.Schema({
   leagueId: {
     type: String,

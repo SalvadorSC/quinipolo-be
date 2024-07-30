@@ -1,4 +1,4 @@
-// routes/teams.js
+// routes/quinipolos.js
 const express = require("express");
 const router = express.Router();
 const QuinipolosController = require("../controllers/QuinipolosController");

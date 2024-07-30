@@ -1,4 +1,4 @@
-// controllers/UserController.js
+// controllers/QuinipoloController.js
 const Answer = require("../models/Answers");
 const Leagues = require("../models/Leagues");
 const Quinipolo = require("../models/Quinipolo");
