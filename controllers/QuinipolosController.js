@@ -1,4 +1,4 @@
-// controllers/UserController.js
+// controllers/QuinipoloController.js
 const Answer = require("../models/Answers");
 const Leagues = require("../models/Leagues");
 const Quinipolo = require("../models/Quinipolo");
@@ -188,7 +188,6 @@ const getQuinipoloAnswersAndCorrections = async (req, res) => {
 
   try {
     const quinipolo = await Quinipolo.findById(id);
-    console.log(quinipolo);
     const answers = await getQuinipoloAnswerByUsernameAndQuinipoloId(
       req.params.username,
       quinipolo._id
@@ -209,7 +208,6 @@ const getQuinipoloAnswersAndCorrections = async (req, res) => {
 const getQuinipolosToAnswer = async (req, res) => {
   try {
     console.log("Fetching Quinipolos to answer");
-    console.log(req.query.username);
     const user = await User.findOne({ username: req.query.username });
     let quinipolosToAnswer = [];
     if (user.leagues.length > 0) {
@@ -298,7 +296,6 @@ const processAndCorrectAnswers = async (quinipoloId, correctedAnswers) => {
       correct15thGame: correct15thGame,
     });
   }
-  console.log(feedbackForModerator);
   return feedbackForModerator;
 };
 
@@ -365,7 +362,6 @@ const getUserPointsGained = async (quinipoloId, correctedAnswers) => {
       correct15thGame: correct15thGame,
     });
   }
-  console.log(feedbackForModerator);
   return feedbackForModerator;
 };
 
@@ -388,8 +384,6 @@ const editQuinipoloCorrection = async (req, res) => {
 
     const newResults = await getUserPointsGained(id, answers);
 
-    console.log("previousResults", previousResults);
-    console.log("newResults", newResults);
     const updatedLeaderboard = await updateLeaderboardForEditedCorrection(
       previousResults,
       newResults,

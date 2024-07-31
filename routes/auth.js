@@ -1,8 +1,9 @@
 // routes/auth.js
 const express = require("express");
 const User = require("../models/User");
-const Leagues = require("../models/Leagues");
 const { joinLeagueById } = require("../controllers/LeaguesController");
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 
 const router = express.Router();
 
@@ -10,13 +11,7 @@ router.post("/signup", async (req, res) => {
   try {
     const { email, role, leagues, username, fullName } = req.body;
 
-    // Hash the password
-    //const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Create a new user
     const newUser = new User({
-      // userId,
-      //password: hashedPassword,
       email,
       role,
       leagues,
@@ -24,7 +19,6 @@ router.post("/signup", async (req, res) => {
       fullName,
     });
     joinLeagueById("global", username);
-    // Save the user to the database
     await newUser.save();
 
     res.status(201).json({ message: "User registered successfully" });
@@ -37,7 +31,7 @@ router.post("/signup", async (req, res) => {
 router.get("/checkUser?:username", async (req, res) => {
   const username = req.query.username;
   try {
-    // Find user by email
+    // Find user by username
     const user = await User.findOne({ username }).exec();
     // Check if user exists
     if (!user) {
@@ -46,6 +40,19 @@ router.get("/checkUser?:username", async (req, res) => {
         messageCode: "USER_NOT_FOUND",
       });
     }
+
+    // Check subscription status
+    let subscription = null;
+    if (user.subscription?.id) {
+      subscription = await stripe.subscriptions.retrieve(user.subscription.id);
+    }
+
+    // Update role if no active subscription and user role is not "user"
+    if (!subscription || subscription.status !== "active") {
+      user.role = "user";
+      await user.save();
+    }
+
     // Authentication successful
     res.json({
       message: "User exists",
@@ -53,7 +60,7 @@ router.get("/checkUser?:username", async (req, res) => {
       user: { userId: user._id, role: user.role, username: user.username },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Check user error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });

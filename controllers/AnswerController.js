@@ -27,7 +27,6 @@ const submitQuinipoloAnswer = async (req, res) => {
     // Validate Answers
     const isValidAnswer = (answer) => {
       if (!answer.matchNumber || !answer.chosenWinner) {
-        console.log("Invalid answer:", answer.matchNumber);
         return false;
       }
       return !(
@@ -40,8 +39,6 @@ const submitQuinipoloAnswer = async (req, res) => {
       return res.status(400).send("Invalid answers format");
     }
 
-    console.log("Answers:", answers);
-
     // Save the answers
     const newAnswer = new Answers({
       username,
@@ -50,12 +47,6 @@ const submitQuinipoloAnswer = async (req, res) => {
     });
     await newAnswer.save();
 
-    console.log("Answers saved successfully");
-    console.log(
-      "Participants who answered:",
-      quinipolo.participantsWhoAnswered
-    );
-    console.log("Username:", username);
     quinipolo.participantsWhoAnswered.push(username);
     await quinipolo.save();
 
