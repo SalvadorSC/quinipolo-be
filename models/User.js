@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const userSchema = new mongoose.Schema({
   role: {
     type: String,
-    enum: ["user", "moderator"],
+    enum: ["user", "pro", "moderator"],
     default: "user",
   },
   points: {
