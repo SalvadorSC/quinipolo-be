@@ -1,15 +1,6 @@
-// models/User.js
 const mongoose = require("mongoose");
 
 const userSchema = new mongoose.Schema({
-  /* userId: {
-    type: String,
-    required: true,
-  }, */
-  /* password: {
-    type: String,
-    required: true,
-  }, */
   role: {
     type: String,
     enum: ["user", "moderator"],
@@ -35,6 +26,17 @@ const userSchema = new mongoose.Schema({
   },
   email: { type: String, unique: true, required: true },
   username: { type: String, unique: true, required: true },
+  subscription: {
+    id: String,
+    status: String,
+    plan: String,
+  },
+  stripeCustomerId: String,
+  subscriptionType: {
+    type: String,
+    enum: ["pro", "moderator", "none"],
+    default: "none",
+  },
 });
 
 const User = mongoose.model("users", userSchema);

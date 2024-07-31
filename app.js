@@ -10,6 +10,7 @@ const authRoutes = require("./routes/auth.js");
 const leaguesRoutes = require("./routes/leagues.js");
 const usersRoutes = require("./routes/users.js");
 const quinipolosRoutes = require("./routes/quinipolos.js");
+const subscriptionsRoutes = require("./routes/subscriptions.js");
 const { getAllTeams } = require("./controllers/TeamsController.js");
 
 require("dotenv").config();
@@ -54,6 +55,12 @@ app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
+// console.log everytime a request is made
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
 app.use("/api/auth", authRoutes);
 
 app.use("/api/leagues", leaguesRoutes);
@@ -61,3 +68,5 @@ app.use("/api/leagues", leaguesRoutes);
 app.use("/api/users", usersRoutes);
 
 app.use("/api/quinipolos", quinipolosRoutes);
+
+app.use("/api/subscriptions", subscriptionsRoutes);

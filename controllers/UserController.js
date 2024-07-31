@@ -27,56 +27,6 @@ const getUserRole = async (req, res) => {
   }
 };
 
-/* const getUserBasicData = async (req, res) => {
-  try {
-    console.log("Fetching user's data", req.params.username);
-    const user = await User.findOne({ username: req.params.username });
-
-    let quinipolosToAnswer = [];
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if (user.leagues.length > 0) {
-      const leaguePromises = user.leagues.map(async (league) => {
-        const quinipolos = await Quinipolo.find({
-          league: league,
-          endDate: { $gt: new Date() },
-        });
-        const quinipolosWithAnswerFlag = [];
-
-        for (const quinipolo of quinipolos) {
-          // Check if the user has already answered this quinipolo
-          const answerExists = await Answer.findOne({
-            userId: user._id,
-            quinipoloId: quinipolo._id,
-          });
-
-          quinipolosWithAnswerFlag.push({
-            ...quinipolo.toObject(),
-            answered: !!answerExists,
-          });
-        }
-
-        return quinipolosWithAnswerFlag;
-      });
-
-      const results = await Promise.all(leaguePromises);
-      quinipolosToAnswer = results.flat();
-    }
-
-    res.status(200).json({
-      role: user.role,
-      leagues: user.leagues,
-      quinipolosToAnswer: quinipolosToAnswer,
-      moderatedLeagues: user.moderatedLeagues,
-    });
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).send("Internal Server Error");
-  }
-}; */
-
 const getUserBasicData = async (req, res) => {
   try {
     console.log("Fetching user's data", req.params.username);
@@ -163,10 +113,21 @@ const getUserName = async (username) => {
   }
 };
 
+const updateUserSubscription = async (userId, subscriptionId, planId) => {
+  await User.findByIdAndUpdate(userId, {
+    subscription: {
+      id: subscriptionId,
+      plan: planId,
+      status: "active",
+    },
+  });
+};
+
 module.exports = {
   getAllUsers,
   createUser,
   getUserRole,
   getUserBasicData,
   getUserName,
+  updateUserSubscription,
 };

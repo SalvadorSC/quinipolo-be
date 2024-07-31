@@ -89,7 +89,7 @@ const joinLeague = async (req, res) => {
 
 const joinLeagueById = async (leagueId, username) => {
   try {
-    console.log("Joining league", username, leagueId);
+    console.log("Joining league (by Id)", username, leagueId);
     // first find league, then save the user to the league
     const league = await Leagues.findOne({ leagueId: leagueId });
 
