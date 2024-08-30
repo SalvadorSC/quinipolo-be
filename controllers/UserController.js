@@ -61,12 +61,12 @@ const getUserBasicData = async (req, res) => {
             answered: !!answerExists,
           });
         }
-
-        leaguesInfo.push({
-          ...league.toObject(),
-          quinipolos: quinipolosWithAnswerFlag,
-        });
-
+        if (league) {
+          leaguesInfo.push({
+            ...league.toObject(),
+            quinipolos: quinipolosWithAnswerFlag,
+          });
+        }
         return quinipolosWithAnswerFlag;
       });
 
