@@ -2,8 +2,8 @@
 const express = require("express");
 const User = require("../models/User");
 const { joinLeagueById } = require("../controllers/LeaguesController");
-const Stripe = require("stripe");
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+/* const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_SECRET_KEY); */
 
 const router = express.Router();
 
@@ -43,15 +43,15 @@ router.get("/checkUser?:username", async (req, res) => {
 
     // Check subscription status
     let subscription = null;
-    if (user.subscription?.id) {
+    /* if (user.subscription?.id) {
       subscription = await stripe.subscriptions.retrieve(user.subscription.id);
-    }
+    } */
 
     // Update role if no active subscription and user role is not "user"
-    if (!subscription || subscription.status !== "active") {
+    /* if (!subscription || subscription.status !== "active") {
       user.role = "user";
       await user.save();
-    }
+    } */
 
     // Authentication successful
     res.json({
