@@ -1,6 +1,5 @@
 // controllers/UserController.js
 const Answer = require("../models/Answers");
-const Leaderboard = require("../models/Leaderboard");
 const Leagues = require("../models/Leagues");
 const Quinipolo = require("../models/Quinipolo");
 const User = require("../models/User");
@@ -92,7 +91,6 @@ const createUser = async (req, res) => {
   try {
     const newUser = new User(req.body);
 
-    const globalLeague = await Leagues.findOne({ leagueId: "global" });
     joinLeagueById("global", newUser.username);
 
     await newUser.save();

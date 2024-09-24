@@ -49,6 +49,10 @@ const leaguesSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  isPrivate: {
+    type: Boolean,
+    required: true,
+  },
 });
 
 const Leagues = mongoose.model("leagues", leaguesSchema);

@@ -1,6 +1,7 @@
 // controllers/LeaguesController.js
 const Leaderboard = require("../models/Leaderboard");
 const Leagues = require("../models/Leagues");
+const User = require("../models/User");
 const { createLeaderboard } = require("./LeaderboardController");
 
 const getAllLeaguesData = async (req, res) => {
@@ -35,6 +36,14 @@ const createNewLeague = async (req, res) => {
       lastUpdated: new Date(),
     });
     await newLeague.save();
+
+    // add league to moderatedLeagues at user data.
+
+    const user = await User.findOne({ username: req.body.createdBy }); // createdBy is the username of the user who created the league
+    user.moderatedLeagues.push(newLeague.leagueId);
+    user.leagues.push(newLeague.leagueId);
+    await user.save();
+
     // create leaderboard for the league
     await createLeaderboard(newLeague.leagueId);
 
@@ -141,7 +150,7 @@ const addLeagueImage = async (req, res) => {
 };
 
 const createPetition = async (req, res, petitionType) => {
-  const petitionField = `${petitionType}Petitions`;
+  const petitionField = `${petitionType}Petitions`; // moderatorPetitions, participantPetitions
 
   // find if user has a pending petition in the league
   const userHasPendingPetition = await Leagues.findOne({

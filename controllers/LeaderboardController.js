@@ -155,7 +155,16 @@ const updateLeaderboardForEditedCorrection = async (
 const createLeaderboard = async (leagueId) => {
   try {
     // Fetch all players in the league
+    console.log("Creating leaderboard for league", leagueId);
+
     const players = await User.find({ leagues: leagueId });
+
+    console.log("Players found:", players);
+    if (!players) {
+      throw new Error("No players found for the league");
+    }
+
+    players.forEach((player) => console.log(player));
 
     // Create the participantsLeaderboard array
     const participantsLeaderboard = players.map((player) => ({
