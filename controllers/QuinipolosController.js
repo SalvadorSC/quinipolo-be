@@ -261,15 +261,22 @@ const processAndCorrectAnswers = async (quinipoloId, correctedAnswers) => {
         (c) => c.matchNumber === userAnswer.matchNumber
       );
       if (correct) {
-        if (userAnswer.chosenWinner === correct.chosenWinner) {
+        if (
+          userAnswer.chosenWinner === correct.chosenWinner &&
+          userAnswer.matchNumber !== 15
+        ) {
           points += 1; // Basic point for correct winner
         }
 
         // Special handling for the 15th question
         if (userAnswer.matchNumber === 15) {
           correct15thGame =
+            userAnswer.chosenWinner === correct.chosenWinner &&
             userAnswer.goalsHomeTeam === correct.goalsHomeTeam &&
             userAnswer.goalsAwayTeam === correct.goalsAwayTeam;
+          if (correct15thGame) {
+            points += 1;
+          }
         }
       }
     });
