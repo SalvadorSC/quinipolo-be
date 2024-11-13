@@ -457,6 +457,76 @@ const setQuinipoloAsDeleted = async (req, res) => {
     });
   }
 };
+
+/* const fixUserScores = async (req, res) => {
+  const { leagueId } = req.params;
+
+  // get all quinipolos from santfeliu league
+  // get all answers from santfeliu league
+  // Ignore and delete any answers from quinipolos that aren't in the database.
+  // For each answer, find the 15th game and see who got it right.
+  // Check if the result is the correct one. If it isn't correct, subtract one point from the user.
+  // Update the leaderboard with the new scores.
+  // Send the updated leaderboard as a response.
+
+  try {
+    const quinipolos = await Quinipolo.find({ leagueId: leagueId });
+    const correctedQuinipolos = quinipolos.filter((q) => q.hasBeenCorrected);
+    // console.log(correctedQuinipolos);
+    const usersToReducePoints = [];
+    // find answers from quinipolosId 67098e1d9ce8783992fba35e, 671253659ce8783992fc18d4 and 671c01ec9ce8783992fce4f7
+    const answers = await Answer.find({
+      quinipoloId: { $in: correctedQuinipolos.map((q) => q._id) },
+    });
+    // console.log(answers);
+
+    // Ignore and delete any answers from quinipolos that aren't in the database.
+    for (const answer of answers) {
+      
+      const getNewPoints = async (id) => {
+        if (answer.quinipoloId == id) {
+          const correct15thGame = quinipolos.filter((q) => q.id === id)[0]
+            .correctAnswers[14];
+
+          if (
+            answer.answers[14].chosenWinner === correct15thGame.chosenWinner &&
+            !(
+              answer.answers[14].chosenWinner ===
+                correct15thGame.chosenWinner &&
+              answer.answers[14].goalsHomeTeam ===
+                correct15thGame.goalsHomeTeam &&
+              answer.answers[14].goalsAwayTeam === correct15thGame.goalsAwayTeam
+            )
+          ) {
+            const user = usersToReducePoints.find(
+              (u) => u.username === answer.username
+            );
+
+            if (user) {
+              console.log("aaa");
+              user.numberOfDeductedPoints += 1;
+            } else {
+              console.log("bbb");
+              usersToReducePoints.push({
+                username: answer.username,
+                numberOfDeductedPoints: 1,
+              });
+            }
+          }
+        }
+      };
+    }
+    console.log(usersToReducePoints);
+
+    res.status(200).json(usersToReducePoints);
+
+    // For each answer, find the 15th game and see who got it right.
+  } catch (error) {
+    console.error("Error fixing user scores:", error);
+    res.status(500).send("Internal Server Error");
+  }
+}; */
+
 module.exports = {
   getAllQuinipolo,
   createNewQuinipolo,
@@ -469,4 +539,5 @@ module.exports = {
   getQuinipoloAnswersAndCorrections,
   editQuinipoloCorrection,
   setQuinipoloAsDeleted,
+  // fixUserScores,
 };

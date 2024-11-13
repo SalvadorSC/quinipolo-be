@@ -101,6 +101,7 @@ const joinLeagueById = async (leagueId, username) => {
     console.log("Joining league (by Id)", username, leagueId);
     // first find league, then save the user to the league
     const league = await Leagues.findOne({ leagueId: leagueId });
+    checkLeaguesAndUpdateUser(leagueId, username);
 
     // check if user is already in the league
     if (league.participants.includes(username)) {
@@ -211,7 +212,10 @@ const updatePetitionStatus = async (
 
   try {
     const league = await Leagues.findOne({ leagueId: req.params.leagueId });
-    const petition = league[petitionField].id(req.params.petitionId);
+    /* const petition = league[petitionField].id(req.params.petitionId); */
+    /* const petition = league[petitionField].find(
+      (petition) => petition._id == req.params.petitionId
+    ); */
     petition.status = newStatus;
 
     if (addToArray) {
@@ -238,25 +242,33 @@ const getPetitions = async (req, res, petitionType) => {
   }
 };
 
+// PETITIONS
 const createModerationPetition = (req, res) =>
   createPetition(req, res, "moderator");
 const createParticipantPetition = (req, res) =>
   createPetition(req, res, "participant");
 
+// MODERATION PETITIONS
 const acceptModerationPetition = (req, res) =>
   updatePetitionStatus(req, res, "moderator", "accepted", true);
+
 const rejectModerationPetition = (req, res) =>
   updatePetitionStatus(req, res, "moderator", "rejected", false);
+
 const cancelModerationPetition = (req, res) =>
   updatePetitionStatus(req, res, "moderator", "cancelled", false);
 
+// PARTICIPANT PETITIONS
 const acceptParticipantPetition = (req, res) =>
   updatePetitionStatus(req, res, "participant", "accepted", true);
+
 const rejectParticipantPetition = (req, res) =>
   updatePetitionStatus(req, res, "participant", "rejected", false);
+
 const cancelParticipantPetition = (req, res) =>
   updatePetitionStatus(req, res, "participant", "cancelled", false);
 
+// GET PETITIONS
 const getModerationPetitions = (req, res) =>
   getPetitions(req, res, "moderator");
 const getParticipantPetitions = (req, res) =>

@@ -121,6 +121,23 @@ const updateUserSubscription = async (userId, subscriptionId, planId) => {
   });
 };
 
+// Function to check leagues and add them to user's league list if they don't exist
+const checkLeaguesAndUpdateUser = async (leagueId, username) => {
+  // get league
+  const league = await Leagues.findOne({ leagueId: leagueId });
+  // iterate all participants in the league
+  for (const participant of league.participants) {
+    // if the participant is the user, add the league to the user's leagues list
+    if (participant === username) {
+      console.log(participant);
+      await User.findOneAndUpdate(
+        { username: participant },
+        { $addToSet: { leagues: leagueId } }
+      );
+    }
+  }
+};
+
 module.exports = {
   getAllUsers,
   createUser,
@@ -128,4 +145,5 @@ module.exports = {
   getUserBasicData,
   getUserName,
   updateUserSubscription,
+  checkLeaguesAndUpdateUser,
 };
