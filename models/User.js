@@ -26,16 +26,11 @@ const userSchema = new mongoose.Schema({
   },
   email: { type: String, unique: true, required: true },
   username: { type: String, unique: true, required: true },
-  subscription: {
-    id: String,
-    status: String,
-    plan: String,
-  },
+  priceId: String,
   stripeCustomerId: String,
-  subscriptionType: {
-    type: String,
-    enum: ["pro", "moderator", "none"],
-    default: "none",
+  isPro: {
+    type: Boolean,
+    default: false,
   },
 });
 

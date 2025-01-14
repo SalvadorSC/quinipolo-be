@@ -1,5 +1,5 @@
 // app.js
-
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors"); // Add this line
@@ -11,14 +11,13 @@ const leaguesRoutes = require("./routes/leagues.js");
 const usersRoutes = require("./routes/users.js");
 const quinipolosRoutes = require("./routes/quinipolos.js");
 const subscriptionsRoutes = require("./routes/subscriptions.js");
+const stripeRoutes = require("./routes/stripe.js");
 const { getAllTeams } = require("./controllers/TeamsController.js");
+const { plans } = require("./controllers/StripeController.js");
 
 require("dotenv").config();
 // Enable CORS for all routes
 app.use(cors()); // Add this line
-
-// Add middleware for parsing JSON requests
-app.use(bodyParser.json());
 
 // Connect to MongoDB
 
@@ -55,11 +54,19 @@ app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-// console.log everytime a request is made
+// console.log every time a request is made
 app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
+app.use(
+  "/api/webhook/",
+  express.raw({ type: "application/json" }),
+  stripeRoutes
+);
+
+// Add middleware for parsing JSON requests
+app.use(bodyParser.json());
 
 app.use("/api/auth", authRoutes);
 
