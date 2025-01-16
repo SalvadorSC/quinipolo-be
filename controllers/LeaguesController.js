@@ -208,16 +208,17 @@ const updatePetitionStatus = async (
   addToArray
 ) => {
   const petitionField = `${petitionType}Petitions`;
-  const arrayField = `${petitionType}Array`;
-
+  const arrayField =
+    petitionType === "participant"
+      ? `${petitionType}s`
+      : `${petitionType}Array`;
   try {
     const league = await Leagues.findOne({ leagueId: req.params.leagueId });
-    /* const petition = league[petitionField].id(req.params.petitionId); */
-    /* const petition = league[petitionField].find(
-      (petition) => petition._id == req.params.petitionId
-    ); */
+    const petition = league[petitionField].id(req.params.petitionId);
+
     petition.status = newStatus;
 
+    console.log(arrayField);
     if (addToArray) {
       league[arrayField].push(petition.username);
     }
