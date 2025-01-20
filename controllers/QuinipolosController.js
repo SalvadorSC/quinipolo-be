@@ -301,6 +301,7 @@ const processAndCorrectAnswers = async (quinipoloId, correctedAnswers) => {
       pointsEarned: points,
       totalPoints: userLeaderboardUpdate.totalPoints,
       correct15thGame: correct15thGame,
+      nQuinipolosParticipated: userLeaderboardUpdate.nQuinipolosParticipated,
     });
   }
   return feedbackForModerator;

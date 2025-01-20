@@ -53,6 +53,7 @@ const updateLeaderboard = async (
       totalPoints: updatedEntry.points,
       fullCorrectQuinipolos: updatedEntry.fullCorrectQuinipolos,
       changeInPoints: points,
+      nQuinipolosParticipated: updatedEntry.nQuinipolosParticipated,
     };
 
     return response;
