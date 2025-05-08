@@ -4,6 +4,7 @@ const Leagues = require("../models/Leagues");
 const Quinipolo = require("../models/Quinipolo");
 const Teams = require("../models/Teams");
 const User = require("../models/User");
+const NotificationService = require("../services/NotificationService");
 const {
   getQuinipoloAnswerByUsernameAndQuinipoloId,
 } = require("./AnswerController");
@@ -43,6 +44,10 @@ const createNewQuinipolo = async (req, res) => {
 
       // Save quinipolo
       await newQuinipolo.save();
+
+      // Send notifications to all users in the league
+      await NotificationService.notifyNewQuinipolo(newQuinipolo._id, req.body.leagueId);
+
       res.status(201).json(newQuinipolo);
     } else {
       res.status(500).send("Por favor escoge una fecha de finalización");
@@ -310,7 +315,6 @@ const processAndCorrectAnswers = async (quinipoloId, correctedAnswers) => {
 const correctQuinipolo = async (req, res) => {
   const { id } = req.params;
   const { answers } = req.body;
-  /*  Find if quinipolo already has correction */
 
   try {
     const quinipolo = await Quinipolo.findById(id);
@@ -325,6 +329,7 @@ const correctQuinipolo = async (req, res) => {
 
     quinipolo.correctAnswers = answers;
     quinipolo.hasBeenCorrected = true;
+    quinipolo.correctionDate = new Date();
 
     await quinipolo.save();
     res
