@@ -36,6 +36,7 @@ const QuinipoloSchema = new mongoose.Schema({
   correctAnswers: [correctAnswerSchema],
   creationDate: Date,
   endDate: Date,
+  correctionDate: Date,
   participantsWhoAnswered: [String],
   hasBeenCorrected: Boolean,
   isDeleted: {
