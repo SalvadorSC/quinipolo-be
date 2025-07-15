@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Leaderboard = require("../models/Leaderboard");
 const User = require("../models/User");
+const { supabase } = require("../services/supabaseClient");
 
 const updateLeaderboard = async (
   username,
@@ -66,15 +67,50 @@ const updateLeaderboard = async (
 const getLeaderboardByLeagueId = async (req, res) => {
   const leagueId = req.params.leagueId;
   try {
-    const leaderboard = await Leaderboard.findOne({ leagueId });
-    if (!leaderboard) {
-      await createLeaderboard(leagueId);
-      throw new Error("Leaderboard not found");
+    // 1. Get user_ids
+    const { data: userLeagues, error: userLeaguesError } = await supabase
+      .from('user_leagues')
+      .select('user_id')
+      .eq('league_id', leagueId);
+
+    if (userLeaguesError) {
+      return res.status(500).json({ error: userLeaguesError.message });
     }
-    res.status(200).json(leaderboard);
+    const userIds = userLeagues.map(u => u.user_id);
+
+    let participantUsernames = [];
+    if (userIds.length > 0) {
+      // 2. Get usernames from profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('username')
+        .in('id', userIds);
+
+      if (profilesError) {
+        return res.status(500).json({ error: profilesError.message });
+      }
+      participantUsernames = profiles.map(p => p.username);
+    }
+
+    // 1. Get leaderboard rows for this league
+    const { data: leaderboardRows, error } = await supabase
+      .from('leaderboard')
+      .select('*')
+      .eq('league_id', leagueId)
+      .order('points', { ascending: false });
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    // If no leaderboard exists, return an empty array (or create one if you want)
+    res.status(200).json({
+      leagueId,
+      participantsLeaderboard: leaderboardRows || [],
+    });
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
-    throw error;
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
