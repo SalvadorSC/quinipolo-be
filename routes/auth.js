@@ -1,67 +1,41 @@
 // routes/auth.js
 const express = require("express");
-const User = require("../models/User");
-const { joinLeagueById } = require("../controllers/LeaguesController");
-/* const Stripe = require("stripe");
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY); */
-
+const { supabase } = require("../services/supabaseClient");
 const router = express.Router();
 
+// Signup endpoint
 router.post("/signup", async (req, res) => {
   try {
-    const { email, role, leagues, username, fullName } = req.body;
-
-    const newUser = new User({
+    const { email, password } = req.body;
+    const { data, error } = await supabase.auth.signUp({
       email,
-      role,
-      leagues,
-      username,
-      fullName,
+      password,
     });
-    joinLeagueById("global", username);
-    await newUser.save();
-
-    res.status(201).json({ message: "User registered successfully" });
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(201).json({ message: "User registered successfully", data });
   } catch (error) {
     console.error("Error creating user:", error);
     res.status(500).send("Internal Server Error");
   }
 });
 
-router.get("/checkUser?:username", async (req, res) => {
-  const username = req.query.username;
+// Login endpoint
+router.post("/login", async (req, res) => {
   try {
-    // Find user by username
-    const user = await User.findOne({ username }).exec();
-    // Check if user exists
-    if (!user) {
-      return res.json({
-        message: "User does not exist",
-        messageCode: "USER_NOT_FOUND",
+    const { email, password } = req.body;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
       });
+    if (error) {
+      return res.status(400).json({ error: error.message });
     }
-
-    // Check subscription status
-    let subscription = null;
-    /* if (user.subscription?.id) {
-      subscription = await stripe.subscriptions.retrieve(user.subscription.id);
-    } */
-
-    // Update role if no active subscription and user role is not "user"
-    /* if (!subscription || subscription.status !== "active") {
-      user.role = "user";
-      await user.save();
-    } */
-
-    // Authentication successful
-    res.json({
-      message: "User exists",
-      messageCode: "USER_FOUND",
-      user: { userId: user._id, role: user.role, username: user.username },
-    });
+    res.status(200).json({ message: "Login successful", data });
   } catch (error) {
-    console.error("Check user error:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    console.error("Login error:", error);
+    res.status(500).send("Internal Server Error");
   }
 });
 

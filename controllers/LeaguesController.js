@@ -3,6 +3,7 @@ const Leaderboard = require("../models/Leaderboard");
 const Leagues = require("../models/Leagues");
 const User = require("../models/User");
 const { createLeaderboard } = require("./LeaderboardController");
+const { supabase } = require("../services/supabaseClient");
 
 const getAllLeaguesData = async (req, res) => {
   try {
@@ -17,11 +18,49 @@ const getAllLeaguesData = async (req, res) => {
 
 const getLeagueData = async (req, res) => {
   try {
-    console.log("Fetching league data");
-    const league = await Leagues.findOne({ leagueId: req.params.leagueId });
-    res.status(200).json(league);
+    const leagueId = req.params.leagueId;
+
+    // 1. Get league info
+    const { data: league, error: leagueError } = await supabase
+      .from('leagues')
+      .select('*')
+      .eq('id', leagueId)
+      .single();
+
+    if (leagueError || !league) {
+      return res.status(404).json({ error: 'League not found' });
+    }
+
+    // 2. Get user_ids from user_leagues
+    const { data: userLeagues, error: userLeaguesError } = await supabase
+      .from('user_leagues')
+      .select('user_id')
+      .eq('league_id', leagueId);
+
+    if (userLeaguesError) {
+      return res.status(500).json({ error: userLeaguesError.message });
+    }
+    const userIds = userLeagues.map(u => u.user_id);
+
+    let participantUsernames = [];
+    if (userIds.length > 0) {
+      // 3. Get usernames from profiles
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('username')
+        .in('id', userIds);
+
+      if (profilesError) {
+        return res.status(500).json({ error: profilesError.message });
+      }
+      participantUsernames = profiles.map(p => p.username);
+    }
+
+    res.status(200).json({
+      ...league,
+      participants: participantUsernames,
+    });
   } catch (error) {
-    console.error("Error fetching league data:", error);
     res.status(500).send("Internal Server Error");
   }
 };

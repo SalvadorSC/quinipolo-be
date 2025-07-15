@@ -1,39 +1,88 @@
-const mongoose = require("mongoose");
+// User.js - Supabase-based user operations for 'profiles' table
+const supabase = require('../services/supabaseClient');
 
-const userSchema = new mongoose.Schema({
-  role: {
-    type: String,
-    enum: ["user", "pro", "moderator"],
-    default: "user",
-  },
-  points: {
-    type: Number,
-    default: 0,
-  },
-  leagues: Array,
-  moderatedLeagues: [String],
-  isBanned: {
-    type: Boolean,
-    default: false,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-  email: { type: String, unique: true, required: true },
-  username: { type: String, unique: true, required: true },
-  priceId: String,
-  stripeCustomerId: String,
-  isPro: {
-    type: Boolean,
-    default: false,
-  },
-});
+// Get user by id
+async function getUserById(id) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return data;
+}
 
-const User = mongoose.model("users", userSchema);
+// Get user by email
+async function getUserByEmail(email) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('email', email)
+    .single();
+  if (error) throw error;
+  return data;
+}
 
-module.exports = User;
+// Create user
+async function createUser(user) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert([user])
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Update user
+async function updateUser(id, updates) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Delete user
+async function deleteUser(id) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .delete()
+    .eq('id', id)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Get user by username
+async function getUserByUsername(username) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('username', username)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+// Update user by username
+async function updateUserByUsername(username, updates) {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(updates)
+    .eq('username', username)
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+module.exports = {
+  getUserById,
+  getUserByEmail,
+  createUser,
+  updateUser,
+  deleteUser,
+  getUserByUsername,
+  updateUserByUsername,
+};

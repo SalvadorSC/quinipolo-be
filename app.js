@@ -1,11 +1,11 @@
 // app.js
+require('dotenv').config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors"); // Add this line
+const cors = require("cors");
 const app = express();
 const PORT = 3000;
-const bodyParser = require("body-parser"); // Add this line for parsing JSON requests
+//const bodyParser = require("body-parser");
 const authRoutes = require("./routes/auth.js");
 const leaguesRoutes = require("./routes/leagues.js");
 const usersRoutes = require("./routes/users.js");
@@ -17,13 +17,11 @@ const { getAllTeams } = require("./controllers/TeamsController.js");
 const { plans } = require("./controllers/StripeController.js");
 const scheduler = require("./scheduler.js");
 
-require("dotenv").config();
 // Enable CORS for all routes
 app.use(cors()); // Add this line
 
-// Connect to MongoDB
 
-const connectWithRetry = async () => {
+/* const connectWithRetry = async () => {
   try {
     await mongoose.connect(
       `mongodb+srv://${process.env.DBUSER}:${process.env.DBPASSWORD}@${process.env.DBURL}/`,
@@ -37,19 +35,12 @@ const connectWithRetry = async () => {
     );
     setTimeout(connectWithRetry, 5000);
   }
-};
+}; */
 
-connectWithRetry();
-
-const db = mongoose.connection;
-
-db.on("error", console.error.bind(console, "MongoDB connection error:"));
-db.once("open", () => {
-  console.log("Connected to MongoDB");
-});
+/* connectWithRetry(); */
 
 // Get all teams
-app.get("/api/teamOptions", getAllTeams);
+// app.get("/api/teamOptions", getAllTeams);
 
 // Start the server
 app.listen(PORT, () => {
@@ -67,10 +58,10 @@ app.use(
   stripeRoutes
 );
 
-// Add middleware for parsing JSON requests
-app.use(bodyParser.json());
+// app.use(bodyParser.json());
 
 app.use("/api/auth", authRoutes);
+
 
 app.use("/api/leagues", leaguesRoutes);
 

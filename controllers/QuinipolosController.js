@@ -12,6 +12,7 @@ const {
   updateLeaderboard,
   updateLeaderboardForEditedCorrection,
 } = require("./LeaderboardController");
+const { supabase } = require("../services/supabaseClient");
 
 const getAllQuinipolo = async (req, res) => {
   try {
@@ -46,7 +47,10 @@ const createNewQuinipolo = async (req, res) => {
       await newQuinipolo.save();
 
       // Send notifications to all users in the league
-      await NotificationService.notifyNewQuinipolo(newQuinipolo._id, req.body.leagueId);
+      await NotificationService.notifyNewQuinipolo(
+        newQuinipolo._id,
+        req.body.leagueId
+      );
 
       res.status(201).json(newQuinipolo);
     } else {
@@ -115,12 +119,17 @@ const addNewTeams = async (teams) => {
 const getQuinipoloByLeague = async (req, res) => {
   try {
     const leagueId = req.params.leagueId;
-    console.log("Fetching quinipolos for league", leagueId);
-    const quinipolos = await Quinipolo.find({ leagueId: leagueId });
-    res.status(200).json(quinipolos);
+    const { data, error } = await supabase
+      .from("quinipolos")
+      .select("*")
+      .eq("league_id", leagueId);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+    res.status(200).json(data);
   } catch (error) {
-    console.error("Error fetching Quinipolos:", error);
-    res.status(500).send(`Internal Server Error ${req.params.league}`);
+    res.status(500).send(`Internal Server Error ${req.params.leagueId}`);
   }
 };
 
@@ -137,27 +146,37 @@ const getQuinipoloById = async (req, res) => {
 
 const getQuinipolosFromUserLeagues = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.query.username });
+    const userId = req.user.id; // Get from JWT/session
 
-    if (user?.leagues.length > 0) {
-      const leaguePromises = user.leagues.map(async (league) => {
-        const quinipolos = await Quinipolo.find({
-          leagueId: league,
-        }).sort({ endDate: -1 });
+    // 1. Get all league_ids for this user
+    const { data: userLeagues, error: leaguesError } = await supabase
+      .from("user_leagues")
+      .select("league_id")
+      .eq("user_id", userId);
 
-        return quinipolos;
-      });
-
-      const results = await Promise.all(leaguePromises);
-      const quinipolosFromUserLeagues = results.flat();
-
-      res.status(200).json(quinipolosFromUserLeagues);
-    } else {
-      res.status(200).json([]);
+    if (leaguesError) {
+      return res.status(500).json({ error: "Error fetching user leagues" });
     }
+
+    const leagueIds = userLeagues.map((l) => l.league_id);
+
+    if (leagueIds.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // 2. Get all quinipolos for these leagues
+    const { data: quinipolos, error: quinipolosError } = await supabase
+      .from("quinipolos")
+      .select("*")
+      .in("league_id", leagueIds);
+
+    if (quinipolosError) {
+      return res.status(500).json({ error: "Error fetching quinipolos" });
+    }
+
+    res.status(200).json(quinipolos);
   } catch (error) {
-    console.error("Error fetching quinipolos from user leagues:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -210,43 +229,48 @@ const getQuinipoloAnswersAndCorrections = async (req, res) => {
   }
 };
 
+// Supabase-based version: Get quinipolos to answer for a user
 const getQuinipolosToAnswer = async (req, res) => {
   try {
-    console.log("Fetching Quinipolos to answer");
-    const user = await User.findOne({ username: req.query.username });
-    let quinipolosToAnswer = [];
-    if (user.leagues.length > 0) {
-      const leaguePromises = user.leagues.map(async (league) => {
-        const quinipolos = await Quinipolo.find({
-          leagueId: league,
-          // endDate: { $gt: new Date() },
-        }).sort({ endDate: -1 });
-        const quinipolosWithAnswerFlag = [];
-
-        for (const quinipolo of quinipolos) {
-          // Check if the user has already answered this quinipolo
-          const answerExists = await Answer.findOne({
-            username: req.query.username,
-            quinipoloId: quinipolo._id,
-          });
-
-          quinipolosWithAnswerFlag.push({
-            ...quinipolo.toObject(),
-            answered: !!answerExists,
-          });
-        }
-
-        return quinipolosWithAnswerFlag;
-      });
-
-      const results = await Promise.all(leaguePromises);
-      quinipolosToAnswer = results.flat();
+    const userId = req.user.id;
+    // 1. Get all league_ids for this user
+    const { data: userLeagues, error: leaguesError } = await supabase
+      .from('user_leagues')
+      .select('league_id')
+      .eq('user_id', userId);
+    if (leaguesError) {
+      return res.status(500).json({ error: 'Error fetching user leagues' });
     }
-
-    res.status(200).json(quinipolosToAnswer);
+    const leagueIds = userLeagues.map((l) => l.league_id);
+    if (leagueIds.length === 0) {
+      return res.status(200).json([]);
+    }
+    // 2. Get all quinipolos for these leagues
+    const { data: quinipolos, error: quinipolosError } = await supabase
+      .from('quinipolos')
+      .select('*')
+      .in('league_id', leagueIds);
+    if (quinipolosError) {
+      return res.status(500).json({ error: 'Error fetching quinipolos' });
+    }
+    // 3. Get all answers for this user
+    const { data: answers, error: answersError } = await supabase
+      .from('answers')
+      .select('quinipolo_id')
+      .eq('user_id', userId);
+    if (answersError) {
+      return res.status(500).json({ error: 'Error fetching answers' });
+    }
+    const answeredQuinipoloIds = new Set(answers.map(a => a.quinipolo_id));
+    // 4. Mark each quinipolo with answered flag
+    const quinipolosWithAnswerFlag = quinipolos.map(q => ({
+      ...q,
+      answered: answeredQuinipoloIds.has(q.id),
+    }));
+    res.status(200).json(quinipolosWithAnswerFlag);
   } catch (error) {
-    console.error("Error fetching quinipolos to answer:", error);
-    res.status(500).send("Internal Server Error");
+    console.error('Error fetching quinipolos to answer:', error);
+    res.status(500).send('Internal Server Error');
   }
 };
 
@@ -545,5 +569,6 @@ module.exports = {
   getQuinipoloAnswersAndCorrections,
   editQuinipoloCorrection,
   setQuinipoloAsDeleted,
+
   // fixUserScores,
 };
