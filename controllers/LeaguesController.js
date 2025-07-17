@@ -7,9 +7,54 @@ const { supabase } = require("../services/supabaseClient");
 
 const getAllLeaguesData = async (req, res) => {
   try {
-    console.log("Fetching all leagues");
-    const leagues = await Leagues.find();
-    res.status(200).json(leagues);
+    // 1. Get all leagues
+    const { data: leagues, error: leaguesError } = await supabase
+      .from('leagues')
+      .select('*');
+    if (leaguesError) {
+      return res.status(500).json({ error: leaguesError.message });
+    }
+
+    // 2. For each league, get participants (user_id, role) and usernames
+    const result = await Promise.all(leagues.map(async (league) => {
+      // Fetch user_leagues with roles
+      const { data: userLeagues, error: userLeaguesError } = await supabase
+        .from('user_leagues')
+        .select('user_id, role')
+        .eq('league_id', league.id);
+
+      let participants = [];
+      if (userLeagues && userLeagues.length > 0) {
+        const userIds = userLeagues.map(u => u.user_id);
+        // Fetch usernames
+        const { data: profiles, error: profilesError } = await supabase
+          .from('profiles')
+          .select('id, username')
+          .in('id', userIds);
+
+        if (profiles) {
+          participants = userLeagues.map(ul => ({
+            user_id: ul.user_id,
+            username: profiles.find(p => p.id === ul.user_id)?.username || 'unknown',
+            role: ul.role
+          }));
+        }
+      }
+
+      // Petitions fields (default to [] if missing)
+      const participantPetitions = league.participant_petitions || [];
+      const moderatorPetitions = league.moderator_petitions || [];
+
+      return {
+        ...league,
+        participants,
+        participantsCount: participants.length,
+        participantPetitions,
+        moderatorPetitions,
+      };
+    }));
+
+    res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching leagues:", error);
     res.status(500).send("Internal Server Error");
@@ -31,10 +76,10 @@ const getLeagueData = async (req, res) => {
       return res.status(404).json({ error: 'League not found' });
     }
 
-    // 2. Get user_ids from user_leagues
+    // 2. Get user_ids and roles from user_leagues
     const { data: userLeagues, error: userLeaguesError } = await supabase
       .from('user_leagues')
-      .select('user_id')
+      .select('user_id, role')
       .eq('league_id', leagueId);
 
     if (userLeaguesError) {
@@ -42,23 +87,27 @@ const getLeagueData = async (req, res) => {
     }
     const userIds = userLeagues.map(u => u.user_id);
 
-    let participantUsernames = [];
+    let participants = [];
     if (userIds.length > 0) {
       // 3. Get usernames from profiles
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('username')
+        .select('id, username')
         .in('id', userIds);
 
       if (profilesError) {
         return res.status(500).json({ error: profilesError.message });
       }
-      participantUsernames = profiles.map(p => p.username);
+      participants = userLeagues.map(ul => ({
+        user_id: ul.user_id,
+        username: profiles.find(p => p.id === ul.user_id)?.username || 'unknown',
+        role: ul.role
+      }));
     }
 
     res.status(200).json({
       ...league,
-      participants: participantUsernames,
+      participants,
     });
   } catch (error) {
     res.status(500).send("Internal Server Error");

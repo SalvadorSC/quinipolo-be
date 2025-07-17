@@ -12,10 +12,8 @@ const usersRoutes = require("./routes/users.js");
 const quinipolosRoutes = require("./routes/quinipolos.js");
 const subscriptionsRoutes = require("./routes/subscriptions.js");
 const stripeRoutes = require("./routes/stripe.js");
-const notificationsRoutes = require("./routes/notifications.js");
-const { getAllTeams } = require("./controllers/TeamsController.js");
-const { plans } = require("./controllers/StripeController.js");
-const scheduler = require("./scheduler.js");
+const teamsRoutes = require("./routes/teams.js");
+// const { plans } = require("./controllers/StripeController.js");
 
 // Enable CORS for all routes
 app.use(cors()); // Add this line
@@ -71,4 +69,5 @@ app.use("/api/quinipolos", quinipolosRoutes);
 
 app.use("/api/subscriptions", subscriptionsRoutes);
 
-app.use("/api/notifications", notificationsRoutes);
+app.use("/api/teams", teamsRoutes);
+

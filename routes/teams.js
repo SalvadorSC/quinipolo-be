@@ -4,6 +4,6 @@ const router = express.Router();
 const TeamsController = require("../controllers/TeamsController");
 
 // Define a route for fetching all users
-router.get("/teams", TeamsController.getAllTeams);
+router.get("/all", TeamsController.getAllTeams);
 
 module.exports = router;

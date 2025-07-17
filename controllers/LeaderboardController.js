@@ -64,67 +64,69 @@ const updateLeaderboard = async (
   }
 };
 
+/**
+ * Example response:
+ * {
+ *   leagueId: "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+ *   participantsLeaderboard: [
+ *     {
+ *       username: "user1",
+ *       points: 100,
+ *       totalPoints: 100,
+ *       nQuinipolosParticipated: 5,
+ *       fullCorrectQuinipolos: 2
+ *     },
+ *     ...
+ *   ]
+ * }
+ */
 const getLeaderboardByLeagueId = async (req, res) => {
   const leagueId = req.params.leagueId;
   try {
     // 1. Get leaderboard rows for this league
-    console.log('leagueId', leagueId);
-    let { data: leaderboardRows, error } = await supabase
+    const { data: leaderboardRows, error: leaderboardError } = await supabase
       .from("leaderboard")
-      .select("*")
+      .select("user_id, points, n_quinipolos_participated, full_correct_quinipolos")
       .eq("league_id", leagueId)
       .order("points", { ascending: false });
 
-    if (error) {
-      return res.status(500).json({ error: error.message });
+    if (leaderboardError) {
+      return res.status(500).json({ error: leaderboardError.message });
     }
 
-    // 2. If no leaderboard exists, create it with all current participants
-    console.log('leaderboardRows', leaderboardRows);
     if (!leaderboardRows || leaderboardRows.length === 0) {
-      // Get all user_ids for this league
-      const { data: userLeagues, error: userLeaguesError } = await supabase
-        .from("user_leagues")
-        .select("user_id")
-        .eq("league_id", leagueId);
-
-      // 3. Map user_ids to usernames
-      const userIds = leaderboardRows.map((row) => row.user_id);
-      let userMap = {};
-      if (userIds.length > 0) {
-        const { data: profiles, error: profilesError } = await supabase
-          .from("profiles")
-          .select("id, username")
-          .in("id", userIds);
-
-        if (profilesError) {
-          return res.status(500).json({ error: profilesError.message });
-        }
-        userMap = Object.fromEntries(profiles.map((p) => [p.id, p.username]));
-      }
-
-      // 4. Map leaderboard rows to include username
-      const leaderboardWithUsernames = leaderboardRows.map((row) => ({
-        username: userMap[row.user_id] || "unknown",
-        points: row.points,
-        totalPoints: row.points, 
-        nQuinipolosParticipated: row.n_quinipolos_participated,
-        fullCorrectQuinipolos: row.full_correct_quinipolos,
-      }));
-
-      console.log("userIds:", userIds);
-      console.log("profiles:", profiles);
-      console.log("userMap:", userMap);
-      console.log("leaderboardRows:", leaderboardRows);
-
-      res.status(200).json({
-        leagueId,
-        participantsLeaderboard: leaderboardWithUsernames,
-      });
+      return res.status(200).json({ leagueId, participantsLeaderboard: [] });
     }
+
+    // 2. Get usernames for all user_ids
+    const userIds = leaderboardRows.map(row => row.user_id);
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", userIds);
+
+    if (profilesError) {
+      return res.status(500).json({ error: profilesError.message });
+    }
+
+    const userMap = Object.fromEntries((profiles || []).map(p => [p.id, p.username]));
+
+    // 3. Map leaderboard rows to include username
+    const participantsLeaderboard = leaderboardRows.map(row => ({
+      username: userMap[row.user_id] || "unknown",
+      points: row.points,
+      totalPoints: row.points, // for compatibility with FE
+      nQuinipolosParticipated: row.n_quinipolos_participated,
+      fullCorrectQuinipolos: row.full_correct_quinipolos,
+    }));
+
+    return res.status(200).json({
+      leagueId,
+      participantsLeaderboard,
+    });
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 

@@ -2,9 +2,8 @@
 const Answer = require("../models/Answers");
 const Leagues = require("../models/Leagues");
 const Quinipolo = require("../models/Quinipolo");
-const Teams = require("../models/Teams");
+// const Teams = require("../models/Teams");
 const User = require("../models/User");
-const NotificationService = require("../services/NotificationService");
 const {
   getQuinipoloAnswerByUsernameAndQuinipoloId,
 } = require("./AnswerController");
@@ -13,6 +12,46 @@ const {
   updateLeaderboardForEditedCorrection,
 } = require("./LeaderboardController");
 const { supabase } = require("../services/supabaseClient");
+
+/**
+ * Adds new teams to the Supabase 'teams' table.
+ * @param {Object} teamsObj - { waterpolo: [...], football: [...], basketball: [...] }
+ */
+const addNewTeams = async (teamsObj) => {
+  try {
+    for (const sport in teamsObj) {
+      const teamNames = teamsObj[sport];
+      if (!Array.isArray(teamNames)) continue;
+
+      // Fetch existing teams for this sport
+      const { data: existingTeams, error } = await supabase
+        .from("teams")
+        .select("name")
+        .eq("sport", sport);
+
+      if (error) throw error;
+
+      const existingNames = new Set(existingTeams.map(t => t.name));
+
+      // Prepare new teams to insert
+      const newTeams = teamNames
+        .filter(name => !existingNames.has(name))
+        .map(name => ({ name, sport }));
+
+      if (newTeams.length > 0) {
+        const { error: insertError } = await supabase
+          .from("teams")
+          .insert(newTeams);
+
+        if (insertError) throw insertError;
+      }
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding new teams:", error);
+    throw error;
+  }
+};
 
 const getAllQuinipolo = async (req, res) => {
   try {
@@ -47,10 +86,10 @@ const createNewQuinipolo = async (req, res) => {
       await newQuinipolo.save();
 
       // Send notifications to all users in the league
-      await NotificationService.notifyNewQuinipolo(
-        newQuinipolo._id,
-        req.body.leagueId
-      );
+      // await NotificationService.notifyNewQuinipolo(
+      //   newQuinipolo._id,
+      //   req.body.leagueId
+      // );
 
       res.status(201).json(newQuinipolo);
     } else {
@@ -85,35 +124,6 @@ const extractTeamsFromQuinipolo = (quinipoloItems) => {
     waterpolo: Array.from(teams.waterpolo),
     football: Array.from(teams.football),
   };
-};
-
-const addNewTeams = async (teams) => {
-  try {
-    // Fetch the existing teams
-    let existingTeams = await Teams.findOne();
-
-    // Initialize if no teams exist
-    if (!existingTeams) {
-      existingTeams = new Teams({ waterpolo: [], football: [] });
-    }
-
-    const sports = ["waterpolo", "football"];
-
-    for (const sport of sports) {
-      const newTeams = teams[sport] || [];
-      for (const team of newTeams) {
-        if (!existingTeams[sport].includes(team)) {
-          existingTeams[sport].push(team);
-        }
-      }
-    }
-
-    // Save updated teams
-    await existingTeams.save();
-  } catch (error) {
-    console.error("Error adding new teams:", error);
-    throw error;
-  }
 };
 
 const getQuinipoloByLeague = async (req, res) => {
