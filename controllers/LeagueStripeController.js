@@ -149,7 +149,7 @@ const createLeagueCheckoutSession = async (req, res) => {
       },
       discounts: [
         {
-          promotion_code: "promo_1RyElwBAGHnqysPyi8wZqvXq",
+          promotion_code: "promo_1RyaXOBAGHnqysPytRZJXM9c",
         },
       ],
       /* allow_promotion_codes: true, */
