@@ -152,7 +152,7 @@ const createLeagueCheckoutSession = async (req, res) => {
           promotion_code: "promo_1RyElwBAGHnqysPyi8wZqvXq",
         },
       ],
-      allow_promotion_codes: true,
+      /* allow_promotion_codes: true, */
       expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minutes
     });
 
