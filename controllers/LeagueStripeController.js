@@ -147,11 +147,11 @@ const createLeagueCheckoutSession = async (req, res) => {
         is_private: isPrivate ? "true" : "false",
         user_id: userId,
       },
-      discounts: [
+      /* discounts: [
         {
           promotion_code: "promo_1RyaXOBAGHnqysPytRZJXM9c",
         },
-      ],
+      ], */
       /* allow_promotion_codes: true, */
       expires_at: Math.floor(Date.now() / 1000) + 30 * 60, // 30 minutes
     });
