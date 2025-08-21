@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const QuinipolosController = require("../controllers/QuinipolosController");
 const AnswerController = require("../controllers/AnswerController");
+const { authenticateToken } = require("../middleware/auth");
 
 // Create an answer
 
@@ -26,9 +27,10 @@ router.post(
   QuinipolosController.correctQuinipolo
 );
 
-// api/quinipolos/quinipolo/668bf4504d16cd5b651c803f/answers-see/username
+// api/quinipolos/quinipolo/:id/answers-see - uses authenticated user
 router.get(
-  "/quinipolo/:id/answers-see/:username",
+  "/quinipolo/:id/answers-see",
+  authenticateToken,
   QuinipolosController.getQuinipoloAnswersAndCorrections
 );
 

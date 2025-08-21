@@ -1,7 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const Stripe = require("stripe");
-const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
+
+const STRIPE_KEY =
+  process.env.REACT_APP_ENV === "development"
+    ? process.env.STRIPE_SECRET_KEY_TEST
+    : process.env.STRIPE_SECRET_KEY;
+const stripe = Stripe(STRIPE_KEY);
 const { updateUserSubscription } = require("../controllers/UserController");
 const User = require("../models/User");
 

@@ -1,6 +1,10 @@
 // app.js
-require('dotenv').config();
-const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+require("dotenv").config();
+const STRIPE_KEY =
+  process.env.REACT_APP_ENV === "development"
+    ? process.env.STRIPE_SECRET_KEY_TEST
+    : process.env.STRIPE_SECRET_KEY;
+const stripe = require("stripe")(STRIPE_KEY);
 const express = require("express");
 const cors = require("cors");
 const app = express();
@@ -11,29 +15,22 @@ const leaguesRoutes = require("./routes/leagues.js");
 const usersRoutes = require("./routes/users.js");
 const quinipolosRoutes = require("./routes/quinipolos.js");
 const subscriptionsRoutes = require("./routes/subscriptions.js");
-const stripeRoutes = require("./routes/stripe.js");
+const leagueStripeRoutes = require("./routes/leagueStripe.js");
+const LeagueStripeController = require("./controllers/LeagueStripeController");
 const teamsRoutes = require("./routes/teams.js");
-// const { plans } = require("./controllers/StripeController.js");
 
 // Enable CORS for all routes
 app.use(cors()); // Add this line
 
+// Stripe webhook must receive the raw body (place BEFORE express.json)
+app.post(
+  "/api/league-stripe/webhook",
+  express.raw({ type: "application/json" }),
+  LeagueStripeController.handleLeaguePaymentWebhook
+);
 
-/* const connectWithRetry = async () => {
-  try {
-    await mongoose.connect(
-      `mongodb+srv://${process.env.DBUSER}:${process.env.DBPASSWORD}@${process.env.DBURL}/`,
-      {}
-    );
-    console.log("Successfully connected to MongoDB");
-  } catch (err) {
-    console.error(
-      "Failed to connect to mongo on startup - retrying in 5 sec",
-      err
-    );
-    setTimeout(connectWithRetry, 5000);
-  }
-}; */
+// Parse JSON bodies - for all other routes
+app.use(express.json());
 
 /* connectWithRetry(); */
 
@@ -50,16 +47,8 @@ app.use((req, res, next) => {
   console.log(`${req.method} ${req.url}`);
   next();
 });
-app.use(
-  "/api/webhook/",
-  express.raw({ type: "application/json" }),
-  stripeRoutes
-);
-
-// app.use(bodyParser.json());
 
 app.use("/api/auth", authRoutes);
-
 
 app.use("/api/leagues", leaguesRoutes);
 
@@ -69,5 +58,6 @@ app.use("/api/quinipolos", quinipolosRoutes);
 
 app.use("/api/subscriptions", subscriptionsRoutes);
 
-app.use("/api/teams", teamsRoutes);
+app.use("/api/league-stripe", leagueStripeRoutes);
 
+app.use("/api/teams", teamsRoutes);
