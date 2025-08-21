@@ -1,23 +1,86 @@
 // controllers/QuinipoloController.js
-const Answer = require("../models/Answers");
-const Leagues = require("../models/Leagues");
-const Quinipolo = require("../models/Quinipolo");
-const Teams = require("../models/Teams");
-const User = require("../models/User");
-const NotificationService = require("../services/NotificationService");
 const {
   getQuinipoloAnswerByUsernameAndQuinipoloId,
 } = require("./AnswerController");
-const {
-  updateLeaderboard,
-  updateLeaderboardForEditedCorrection,
-} = require("./LeaderboardController");
+const { updateLeaderboard } = require("./LeaderboardController");
+const { supabase } = require("../services/supabaseClient");
+
+/**
+ * Adds new teams to the Supabase 'teams' table.
+ * @param {Object} teamsObj - { waterpolo: [...], football: [...], basketball: [...] }
+ */
+const addNewTeams = async (teamsObj) => {
+  try {
+    for (const sport in teamsObj) {
+      const teamNames = teamsObj[sport];
+      if (!Array.isArray(teamNames)) continue;
+
+      // Fetch existing teams for this sport
+      const { data: existingTeams, error } = await supabase
+        .from("teams")
+        .select("name")
+        .eq("sport", sport);
+
+      if (error) throw error;
+
+      const existingNames = new Set(existingTeams.map((t) => t.name));
+
+      // Prepare new teams to insert
+      const newTeams = teamNames
+        .filter((name) => !existingNames.has(name))
+        .map((name) => ({ name, sport }));
+
+      if (newTeams.length > 0) {
+        const { error: insertError } = await supabase
+          .from("teams")
+          .insert(newTeams);
+
+        if (insertError) throw insertError;
+      }
+    }
+    return { success: true };
+  } catch (error) {
+    console.error("Error adding new teams:", error);
+    throw error;
+  }
+};
 
 const getAllQuinipolo = async (req, res) => {
   try {
     console.log("Fetching all quinipolos");
-    const quinipolos = await Quinipolo.find();
-    res.status(200).json(quinipolos);
+    const { data: quinipolos, error } = await supabase.from("quinipolos")
+      .select(`
+        *,
+        leagues!inner(league_name)
+      `);
+
+    if (error) {
+      console.error("Error fetching quinipolos:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+
+    // Transform to match expected format
+    const transformedQuinipolos = quinipolos.map((quinipolo) => ({
+      id: quinipolo.id,
+      league_id: quinipolo.league_id,
+      league_name: quinipolo.leagues.league_name,
+      quinipolo: quinipolo.quinipolo,
+      end_date: quinipolo.end_date,
+      has_been_corrected: quinipolo.has_been_corrected,
+      creation_date: quinipolo.creation_date,
+      is_deleted: quinipolo.is_deleted,
+      participants_who_answered: quinipolo.participants_who_answered || [],
+      correct_answers: quinipolo.correct_answers || [],
+      // Legacy fields for backward compatibility
+      leagueName: quinipolo.leagues.league_name,
+      leagueId: quinipolo.league_id,
+      endDate: quinipolo.end_date,
+      hasBeenCorrected: quinipolo.has_been_corrected,
+      creationDate: quinipolo.creation_date,
+      _id: quinipolo.id,
+    }));
+
+    res.status(200).json(transformedQuinipolos);
   } catch (error) {
     console.error("Error fetching quinipolos:", error);
     res.status(500).send("Internal Server Error");
@@ -26,13 +89,48 @@ const getAllQuinipolo = async (req, res) => {
 
 const createNewQuinipolo = async (req, res) => {
   try {
-    if (req.body.endDate) {
-      const league = await Leagues.findOne({ leagueId: req.body.leagueId });
+    // Accept snake_case as the canonical naming; support legacy camelCase as fallback
+    const leagueId = req.body.league_id || req.body.leagueId;
+    const endDate = req.body.end_date || req.body.endDate;
+    const creationDate = req.body.creation_date || req.body.creationDate;
 
-      const newQuinipolo = new Quinipolo({
-        ...req.body,
-        leagueName: league.leagueName,
-      });
+    if (endDate) {
+      // Get league from Supabase instead of MongoDB
+      const { data: league, error: leagueError } = await supabase
+        .from("leagues")
+        .select("league_name")
+        .eq("id", leagueId)
+        .single();
+
+      if (leagueError) {
+        console.error("Error fetching league:", leagueError);
+        return res.status(404).json({ error: "League not found" });
+      }
+
+      // Create quinipolo in Supabase
+      const { data: newQuinipolo, error: createError } = await supabase
+        .from("quinipolos")
+        .insert({
+          league_id: leagueId,
+          quinipolo: req.body.quinipolo,
+          end_date: endDate,
+          has_been_corrected: false,
+          creation_date: creationDate,
+          is_deleted: false,
+        })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error("Error creating quinipolo:", createError);
+        return res.status(500).json({ error: "Failed to create quinipolo" });
+      }
+
+      // Add league_name to the response for frontend convenience (snake_case only)
+      const quinipoloWithLeagueName = {
+        ...newQuinipolo,
+        league_name: league.league_name,
+      };
 
       // Extract teams from quinipolo data
       const teams = extractTeamsFromQuinipolo(req.body.quinipolo);
@@ -42,13 +140,13 @@ const createNewQuinipolo = async (req, res) => {
         await addNewTeams(teams);
       }
 
-      // Save quinipolo
-      await newQuinipolo.save();
-
       // Send notifications to all users in the league
-      await NotificationService.notifyNewQuinipolo(newQuinipolo._id, req.body.leagueId);
+      // await NotificationService.notifyNewQuinipolo(
+      //   newQuinipolo.id,
+      //   req.body.leagueId
+      // );
 
-      res.status(201).json(newQuinipolo);
+      res.status(201).json(quinipoloWithLeagueName);
     } else {
       res.status(500).send("Por favor escoge una fecha de finalización");
     }
@@ -83,52 +181,77 @@ const extractTeamsFromQuinipolo = (quinipoloItems) => {
   };
 };
 
-const addNewTeams = async (teams) => {
-  try {
-    // Fetch the existing teams
-    let existingTeams = await Teams.findOne();
-
-    // Initialize if no teams exist
-    if (!existingTeams) {
-      existingTeams = new Teams({ waterpolo: [], football: [] });
-    }
-
-    const sports = ["waterpolo", "football"];
-
-    for (const sport of sports) {
-      const newTeams = teams[sport] || [];
-      for (const team of newTeams) {
-        if (!existingTeams[sport].includes(team)) {
-          existingTeams[sport].push(team);
-        }
-      }
-    }
-
-    // Save updated teams
-    await existingTeams.save();
-  } catch (error) {
-    console.error("Error adding new teams:", error);
-    throw error;
-  }
-};
-
 const getQuinipoloByLeague = async (req, res) => {
   try {
     const leagueId = req.params.leagueId;
-    console.log("Fetching quinipolos for league", leagueId);
-    const quinipolos = await Quinipolo.find({ leagueId: leagueId });
-    res.status(200).json(quinipolos);
+
+    // Get quinipolos with league information
+    const { data, error } = await supabase
+      .from("quinipolos")
+      .select(
+        `
+        *,
+        leagues!inner(league_name)
+      `
+      )
+      .eq("league_id", leagueId);
+
+    if (error) {
+      return res.status(500).json({ error: error.message });
+    }
+
+    // Transform the data to include league_name at the top level
+    const quinipolosWithLeagueName = data.map((quinipolo) => ({
+      ...quinipolo,
+      league_name: quinipolo.leagues.league_name,
+    }));
+
+    res.status(200).json(quinipolosWithLeagueName);
   } catch (error) {
-    console.error("Error fetching Quinipolos:", error);
-    res.status(500).send(`Internal Server Error ${req.params.league}`);
+    res.status(500).send(`Internal Server Error ${req.params.leagueId}`);
   }
 };
 
 const getQuinipoloById = async (req, res) => {
   console.log("Fetching quinipolo by id", req.params.id);
   try {
-    const quinipolo = await Quinipolo.findById(req.params.id);
-    res.status(200).json(quinipolo);
+    const { data: quinipolo, error } = await supabase
+      .from("quinipolos")
+      .select(
+        `
+        *,
+        leagues!inner(league_name)
+      `
+      )
+      .eq("id", req.params.id)
+      .single();
+
+    if (error) {
+      return res.status(404).json({ message: "Quinipolo not found" });
+    }
+
+    // Transform to match expected format
+    const transformedQuinipolo = {
+      id: quinipolo.id,
+      league_id: quinipolo.league_id,
+      league_name: quinipolo.leagues.league_name,
+      quinipolo: quinipolo.quinipolo,
+      end_date: quinipolo.end_date,
+      has_been_corrected: quinipolo.has_been_corrected,
+      creation_date: quinipolo.creation_date,
+      is_deleted: quinipolo.is_deleted,
+      participants_who_answered: quinipolo.participants_who_answered || [],
+      correct_answers: quinipolo.correct_answers || [],
+      // Legacy fields for backward compatibility
+      leagueName: quinipolo.leagues.league_name,
+      leagueId: quinipolo.league_id,
+      endDate: quinipolo.end_date,
+      hasBeenCorrected: quinipolo.has_been_corrected,
+      creationDate: quinipolo.creation_date,
+      _id: quinipolo.id,
+    };
+
+    res.status(200).json(transformedQuinipolo);
   } catch (error) {
     console.error("Error fetching Quinipolo:", error);
     res.status(500).send(`Internal Server Error ${req.query.id}`);
@@ -137,45 +260,127 @@ const getQuinipoloById = async (req, res) => {
 
 const getQuinipolosFromUserLeagues = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.query.username });
+    const userId = req.user.id; // Get from JWT/session
 
-    if (user?.leagues.length > 0) {
-      const leaguePromises = user.leagues.map(async (league) => {
-        const quinipolos = await Quinipolo.find({
-          leagueId: league,
-        }).sort({ endDate: -1 });
+    // 1. Get all league_ids for this user
+    const { data: userLeagues, error: leaguesError } = await supabase
+      .from("user_leagues")
+      .select("league_id")
+      .eq("user_id", userId);
 
-        return quinipolos;
-      });
-
-      const results = await Promise.all(leaguePromises);
-      const quinipolosFromUserLeagues = results.flat();
-
-      res.status(200).json(quinipolosFromUserLeagues);
-    } else {
-      res.status(200).json([]);
+    if (leaguesError) {
+      return res.status(500).json({ error: "Error fetching user leagues" });
     }
+
+    const leagueIds = userLeagues.map((l) => l.league_id);
+
+    if (leagueIds.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // 2. Get all quinipolos for these leagues with league information
+    const { data: quinipolos, error: quinipolosError } = await supabase
+      .from("quinipolos")
+      .select(
+        `
+        *,
+        leagues!inner(league_name)
+      `
+      )
+      .in("league_id", leagueIds);
+
+    if (quinipolosError) {
+      return res.status(500).json({ error: "Error fetching quinipolos" });
+    }
+
+    // Transform the data to include league_name at the top level
+    const quinipolosWithLeagueName = quinipolos.map((quinipolo) => ({
+      ...quinipolo,
+      league_name: quinipolo.leagues.league_name,
+    }));
+
+    res.status(200).json(quinipolosWithLeagueName);
   } catch (error) {
-    console.error("Error fetching quinipolos from user leagues:", error);
-    res.status(500).send("Internal Server Error");
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
 const getUserAnswers = async (req, res) => {
   try {
-    const user = await User.findOne({ username: req.query.username });
-    const quinipolos = await Quinipolo.find({
-      leagueId: user.leagues,
-    });
+    // Get user by username
+    const { data: user, error: userError } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .eq("username", req.query.username)
+      .single();
 
+    if (userError) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Get user's leagues
+    const { data: userLeagues, error: leaguesError } = await supabase
+      .from("user_leagues")
+      .select("league_id")
+      .eq("user_id", user.id);
+
+    if (leaguesError) {
+      return res.status(500).json({ message: "Error fetching user leagues" });
+    }
+
+    const leagueIds = userLeagues.map((ul) => ul.league_id);
+
+    if (leagueIds.length === 0) {
+      return res.status(200).json([]);
+    }
+
+    // Get quinipolos for user's leagues
+    const { data: quinipolos, error: quinipolosError } = await supabase
+      .from("quinipolos")
+      .select(
+        `
+        *,
+        leagues!inner(league_name)
+      `
+      )
+      .in("league_id", leagueIds);
+
+    if (quinipolosError) {
+      return res.status(500).json({ message: "Error fetching quinipolos" });
+    }
+
+    // Get answers for each quinipolo
     const answersPromises = quinipolos.map(async (quinipolo) => {
-      const answer = await Answer.findOne({
-        username: req.query.username,
-        quinipoloId: quinipolo._id,
-      });
+      const { data: answer } = await supabase
+        .from("answers")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("quinipolo_id", quinipolo.id)
+        .single();
+
+      // Transform quinipolo to match expected format
+      const transformedQuinipolo = {
+        id: quinipolo.id,
+        league_id: quinipolo.league_id,
+        league_name: quinipolo.leagues.league_name,
+        quinipolo: quinipolo.quinipolo,
+        end_date: quinipolo.end_date,
+        has_been_corrected: quinipolo.has_been_corrected,
+        creation_date: quinipolo.creation_date,
+        is_deleted: quinipolo.is_deleted,
+        participants_who_answered: quinipolo.participants_who_answered || [],
+        correct_answers: quinipolo.correct_answers || [],
+        // Legacy fields for backward compatibility
+        leagueName: quinipolo.leagues.league_name,
+        leagueId: quinipolo.league_id,
+        endDate: quinipolo.end_date,
+        hasBeenCorrected: quinipolo.has_been_corrected,
+        creationDate: quinipolo.creation_date,
+        _id: quinipolo.id,
+      };
 
       return {
-        quinipolo,
+        quinipolo: transformedQuinipolo,
         answer,
       };
     });
@@ -190,71 +395,154 @@ const getUserAnswers = async (req, res) => {
 
 const getQuinipoloAnswersAndCorrections = async (req, res) => {
   const { id } = req.params;
+  const userId = req.user.id; // Get user ID from authenticated user
 
   try {
-    const quinipolo = await Quinipolo.findById(id);
-    const answers = await getQuinipoloAnswerByUsernameAndQuinipoloId(
-      req.params.username,
-      quinipolo._id
-    );
-    if (!quinipolo) {
+    // Get quinipolo
+    const { data: quinipolo, error: quinipoloError } = await supabase
+      .from("quinipolos")
+      .select(
+        `
+        *,
+        leagues!inner(league_name)
+      `
+      )
+      .eq("id", id)
+      .single();
+
+    if (quinipoloError) {
       return res.status(404).json({ message: "Quinipolo not found" });
     }
-    if (!answers) {
-      return res.status(200).json({ quinipolo, answers: { answers: [] } });
+
+    // Get user answers using user_id from authenticated user
+    const { data: answers, error: answersError } = await supabase
+      .from("answers")
+      .select("answers")
+      .eq("quinipolo_id", id)
+      .eq("user_id", userId) // Use authenticated user ID
+      .single();
+
+    if (answersError && answersError.code !== "PGRST116") {
+      // PGRST116 is "not found"
+      return res
+        .status(500)
+        .json({ message: "Error fetching answers", error: answersError });
     }
 
-    res.status(200).json({ quinipolo, answers });
+    // Transform quinipolo to match expected format
+    const transformedQuinipolo = {
+      id: quinipolo.id,
+      league_id: quinipolo.league_id,
+      league_name: quinipolo.leagues.league_name,
+      quinipolo: quinipolo.quinipolo,
+      end_date: quinipolo.end_date,
+      has_been_corrected: quinipolo.has_been_corrected,
+      creation_date: quinipolo.creation_date,
+      is_deleted: quinipolo.is_deleted,
+      participants_who_answered: quinipolo.participants_who_answered || [],
+      correct_answers: quinipolo.correct_answers || [],
+      // Legacy fields for backward compatibility
+      leagueName: quinipolo.leagues.league_name,
+      leagueId: quinipolo.league_id,
+      endDate: quinipolo.end_date,
+      hasBeenCorrected: quinipolo.has_been_corrected,
+      creationDate: quinipolo.creation_date,
+      _id: quinipolo.id,
+    };
+
+    if (!answers) {
+      return res
+        .status(200)
+        .json({ quinipolo: transformedQuinipolo, answers: [] });
+    }
+
+    res.status(200).json({ quinipolo: transformedQuinipolo, ...answers });
   } catch (error) {
     res.status(500).json({ message: "An error occurred", error });
   }
 };
 
+// Supabase-based version: Get quinipolos to answer for a user
 const getQuinipolosToAnswer = async (req, res) => {
   try {
-    console.log("Fetching Quinipolos to answer");
-    const user = await User.findOne({ username: req.query.username });
-    let quinipolosToAnswer = [];
-    if (user.leagues.length > 0) {
-      const leaguePromises = user.leagues.map(async (league) => {
-        const quinipolos = await Quinipolo.find({
-          leagueId: league,
-          // endDate: { $gt: new Date() },
-        }).sort({ endDate: -1 });
-        const quinipolosWithAnswerFlag = [];
-
-        for (const quinipolo of quinipolos) {
-          // Check if the user has already answered this quinipolo
-          const answerExists = await Answer.findOne({
-            username: req.query.username,
-            quinipoloId: quinipolo._id,
-          });
-
-          quinipolosWithAnswerFlag.push({
-            ...quinipolo.toObject(),
-            answered: !!answerExists,
-          });
-        }
-
-        return quinipolosWithAnswerFlag;
-      });
-
-      const results = await Promise.all(leaguePromises);
-      quinipolosToAnswer = results.flat();
+    const userId = req.user.id;
+    // 1. Get all league_ids for this user
+    const { data: userLeagues, error: leaguesError } = await supabase
+      .from("user_leagues")
+      .select("league_id")
+      .eq("user_id", userId);
+    if (leaguesError) {
+      return res.status(500).json({ error: "Error fetching user leagues" });
     }
-
-    res.status(200).json(quinipolosToAnswer);
+    const leagueIds = userLeagues.map((l) => l.league_id);
+    if (leagueIds.length === 0) {
+      return res.status(200).json([]);
+    }
+    // 2. Get all quinipolos for these leagues with league information
+    const { data: quinipolos, error: quinipolosError } = await supabase
+      .from("quinipolos")
+      .select(
+        `
+        *,
+        leagues!inner(league_name)
+      `
+      )
+      .in("league_id", leagueIds);
+    if (quinipolosError) {
+      return res.status(500).json({ error: "Error fetching quinipolos" });
+    }
+    // 3. Get all answers for this user
+    const { data: answers, error: answersError } = await supabase
+      .from("answers")
+      .select("quinipolo_id")
+      .eq("user_id", userId);
+    if (answersError) {
+      return res.status(500).json({ error: "Error fetching answers" });
+    }
+    const answeredQuinipoloIds = new Set(answers.map((a) => a.quinipolo_id));
+    // 4. Mark each quinipolo with answered flag and include league_name
+    const quinipolosWithAnswerFlag = quinipolos.map((q) => ({
+      ...q,
+      league_name: q.leagues.league_name,
+      answered: answeredQuinipoloIds.has(q.id),
+    }));
+    res.status(200).json(quinipolosWithAnswerFlag);
   } catch (error) {
     console.error("Error fetching quinipolos to answer:", error);
     res.status(500).send("Internal Server Error");
   }
 };
 
-const processAndCorrectAnswers = async (quinipoloId, correctedAnswers) => {
-  const answers = await Answer.find({ quinipoloId });
+const processAndCorrectAnswers = async (
+  quinipoloId,
+  correctedAnswers,
+  moderatorId,
+  isEdit = false
+) => {
+  const { data: answers, error } = await supabase
+    .from("answers")
+    .select("*")
+    .eq("quinipolo_id", quinipoloId);
+
+  if (error) {
+    throw error;
+  }
+
   let feedbackForModerator = [];
 
-  const leagueId = (await Quinipolo.findById(quinipoloId)).leagueId;
+  // Get league ID
+  const { data: quinipolo, error: quinipoloError } = await supabase
+    .from("quinipolos")
+    .select("league_id, correction_count")
+    .eq("id", quinipoloId)
+    .single();
+
+  if (quinipoloError) {
+    throw quinipoloError;
+  }
+
+  const leagueId = quinipolo.league_id;
+  const newCorrectionVersion = (quinipolo.correction_count || 0) + 1;
 
   for (let answer of answers) {
     let points = 0;
@@ -287,28 +575,72 @@ const processAndCorrectAnswers = async (quinipoloId, correctedAnswers) => {
     });
 
     const fullCorrectQuinipolo = points === 15 && correct15thGame;
+
+    // Get username from user_id for leaderboard update
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", answer.user_id)
+      .single();
+
+    const username = userProfile?.username || answer.user_id;
+
+    // Calculate point difference for edits
+    let pointsDifference = points;
+    if (isEdit) {
+      // For edits, calculate the difference from previous points
+      pointsDifference = points - (answer.points_earned || 0);
+    }
+
     // Update points in the leaderboard
     const userLeaderboardUpdate = await updateLeaderboard(
-      answer.username,
+      username,
       leagueId,
-      points,
+      pointsDifference,
       fullCorrectQuinipolo
     );
 
-    // Mark the answer as corrected
-    answer.corrected = true;
+    // Update the answer with new correction data
+    const { error: updateError } = await supabase
+      .from("answers")
+      .update({
+        corrected: true,
+        points_earned: points,
+        correction_version: newCorrectionVersion,
+        last_corrected_at: new Date().toISOString(),
+      })
+      .eq("id", answer.id);
 
-    await answer.save();
+    if (updateError) {
+      console.warn("Failed to update answer correction data:", updateError);
+    }
 
     // Gather feedback for the moderator
     feedbackForModerator.push({
       username: userLeaderboardUpdate.username,
-      pointsEarned: points,
+      pointsEarned: pointsDifference,
       totalPoints: userLeaderboardUpdate.totalPoints,
       correct15thGame: correct15thGame,
       nQuinipolosParticipated: userLeaderboardUpdate.nQuinipolosParticipated,
     });
   }
+
+  // Update quinipolo correction metadata
+  const { error: quinipoloUpdateError } = await supabase
+    .from("quinipolos")
+    .update({
+      correction_count: newCorrectionVersion,
+      last_corrected_by: moderatorId,
+    })
+    .eq("id", quinipoloId);
+
+  if (quinipoloUpdateError) {
+    console.warn(
+      "Failed to update quinipolo correction metadata:",
+      quinipoloUpdateError
+    );
+  }
+
   return feedbackForModerator;
 };
 
@@ -317,21 +649,62 @@ const correctQuinipolo = async (req, res) => {
   const { answers } = req.body;
 
   try {
-    const quinipolo = await Quinipolo.findById(id);
+    // Check if quinipolo exists
+    const { data: quinipolo, error: quinipoloError } = await supabase
+      .from("quinipolos")
+      .select("id")
+      .eq("id", id)
+      .single();
 
-    if (!quinipolo) {
+    if (quinipoloError) {
       return res.status(404).json({ message: "Quinipolo not found" });
     }
 
     // Call a function to process and update answers
     console.log("Correcting Quinipolo", id);
-    const results = await processAndCorrectAnswers(id, answers);
+    const results = await processAndCorrectAnswers(
+      id,
+      answers,
+      req.user.id,
+      false
+    );
 
-    quinipolo.correctAnswers = answers;
-    quinipolo.hasBeenCorrected = true;
-    quinipolo.correctionDate = new Date();
+    // Create correction history entry for initial correction
+    const { error: historyError } = await supabase
+      .from("correction_history")
+      .insert({
+        quinipolo_id: id,
+        moderator_id: req.user.id,
+        previous_correct_answers: [],
+        new_correct_answers: answers,
+        points_changes: results.reduce((acc, result) => {
+          acc[result.username] = result.pointsEarned;
+          return acc;
+        }, {}),
+        correction_type: "initial",
+      });
 
-    await quinipolo.save();
+    if (historyError) {
+      console.warn("Failed to create correction history:", historyError);
+    }
+
+    // Update the quinipolo with corrections
+    const { error: updateError } = await supabase
+      .from("quinipolos")
+      .update({
+        correct_answers: answers,
+        has_been_corrected: true,
+        correction_date: new Date().toISOString(),
+      })
+      .eq("id", id);
+
+    if (updateError) {
+      return res.status(500).json({
+        message: "Failed to update quinipolo corrections",
+        error: updateError,
+      });
+    }
+
     res
       .status(200)
       .json({ message: "Quinipolo corrected successfully", results });
@@ -344,7 +717,15 @@ const correctQuinipolo = async (req, res) => {
 };
 
 const getUserPointsGained = async (quinipoloId, correctedAnswers) => {
-  const answers = await Answer.find({ quinipoloId });
+  const { data: answers, error } = await supabase
+    .from("answers")
+    .select("*")
+    .eq("quinipolo_id", quinipoloId);
+
+  if (error) {
+    throw error;
+  }
+
   let feedbackForModerator = [];
   for (let answer of answers) {
     let points = 0;
@@ -368,9 +749,18 @@ const getUserPointsGained = async (quinipoloId, correctedAnswers) => {
         }
       }
     });
+    // Get username from user_id
+    const { data: userProfile } = await supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", answer.user_id)
+      .single();
+
+    const username = userProfile?.username || answer.user_id;
+
     // Gather feedback for the moderator
     feedbackForModerator.push({
-      username: answer.username,
+      username: username,
       pointsEarned: points,
       correct15thGame: correct15thGame,
     });
@@ -381,37 +771,90 @@ const getUserPointsGained = async (quinipoloId, correctedAnswers) => {
 const editQuinipoloCorrection = async (req, res) => {
   const { id } = req.params;
   const { answers } = req.body;
-  /*  Find if quinipolo already has correction */
 
   try {
-    const quinipolo = await Quinipolo.findById(id);
+    // Get current quinipolo with corrections
+    const { data: quinipolo, error: quinipoloError } = await supabase
+      .from("quinipolos")
+      .select("id, correct_answers, league_id")
+      .eq("id", id)
+      .single();
 
-    if (!quinipolo) {
+    if (quinipoloError) {
       return res.status(404).json({ message: "Quinipolo not found" });
     }
 
-    const previousResults = await getUserPointsGained(
+    // Store correction history before making changes
+    const { data: allAnswers, error: answersError } = await supabase
+      .from("answers")
+      .select("user_id, points_earned")
+      .eq("quinipolo_id", id);
+
+    if (answersError) {
+      return res.status(500).json({
+        message: "Error fetching answers",
+        error: answersError,
+      });
+    }
+
+    // Create correction history entry
+    const pointsChanges = {};
+    for (const answer of allAnswers) {
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", answer.user_id)
+        .single();
+
+      const username = userProfile?.username || answer.user_id;
+      pointsChanges[username] = answer.points_earned || 0;
+    }
+
+    const { error: historyError } = await supabase
+      .from("correction_history")
+      .insert({
+        quinipolo_id: id,
+        moderator_id: req.user.id,
+        previous_correct_answers: quinipolo.correct_answers || [],
+        new_correct_answers: answers,
+        points_changes: pointsChanges,
+        correction_type: "edit",
+      });
+
+    if (historyError) {
+      console.warn("Failed to create correction history:", historyError);
+    }
+
+    // Process the correction with the new answers (this will handle point differences)
+    const results = await processAndCorrectAnswers(
       id,
-      quinipolo.correctAnswers
+      answers,
+      req.user.id,
+      true
     );
 
-    const newResults = await getUserPointsGained(id, answers);
+    // Update the quinipolo with new corrections
+    const { error: updateError } = await supabase
+      .from("quinipolos")
+      .update({
+        correct_answers: answers,
+        correction_date: new Date().toISOString(),
+      })
+      .eq("id", id);
 
-    const updatedLeaderboard = await updateLeaderboardForEditedCorrection(
-      previousResults,
-      newResults,
-      quinipolo.leagueId
-    );
-
-    quinipolo.correctAnswers = answers;
-
-    await quinipolo.save();
+    if (updateError) {
+      return res.status(500).json({
+        message: "Failed to update quinipolo corrections",
+        error: updateError,
+      });
+    }
 
     res.status(200).json({
       message: "Quinipolo correction edited successfully",
-      results: updatedLeaderboard,
+      results: results,
     });
   } catch (error) {
+    console.error("Error editing quinipolo correction:", error);
     res.status(500).json({
       message:
         "Quinipolo correction could not be edited. Please try again later",
@@ -424,13 +867,43 @@ const getQuinipoloCorrectedById = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const quinipolo = await Quinipolo.findById(id);
+    const { data: quinipolo, error } = await supabase
+      .from("quinipolos")
+      .select(
+        `
+        *,
+        leagues!inner(league_name)
+      `
+      )
+      .eq("id", id)
+      .single();
 
-    if (!quinipolo) {
+    if (error) {
       return res.status(404).json({ message: "Quinipolo not found" });
     }
 
-    res.status(200).json(quinipolo);
+    // Transform to match expected format
+    const transformedQuinipolo = {
+      id: quinipolo.id,
+      league_id: quinipolo.league_id,
+      league_name: quinipolo.leagues.league_name,
+      quinipolo: quinipolo.quinipolo,
+      end_date: quinipolo.end_date,
+      has_been_corrected: quinipolo.has_been_corrected,
+      creation_date: quinipolo.creation_date,
+      is_deleted: quinipolo.is_deleted,
+      participants_who_answered: quinipolo.participants_who_answered || [],
+      correct_answers: quinipolo.correct_answers || [],
+      // Legacy fields for backward compatibility
+      leagueName: quinipolo.leagues.league_name,
+      leagueId: quinipolo.league_id,
+      endDate: quinipolo.end_date,
+      hasBeenCorrected: quinipolo.has_been_corrected,
+      creationDate: quinipolo.creation_date,
+      _id: quinipolo.id,
+    };
+
+    res.status(200).json(transformedQuinipolo);
   } catch (error) {
     res
       .status(500)
@@ -442,15 +915,27 @@ const setQuinipoloAsDeleted = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const quinipolo = await Quinipolo.findById(id);
+    const { data: quinipolo, error: quinipoloError } = await supabase
+      .from("quinipolos")
+      .select("id")
+      .eq("id", id)
+      .single();
 
-    if (!quinipolo) {
+    if (quinipoloError) {
       return res.status(404).json({ message: "Quinipolo not found" });
     }
 
-    quinipolo.isDeleted = true;
+    const { error: updateError } = await supabase
+      .from("quinipolos")
+      .update({ is_deleted: true })
+      .eq("id", id);
 
-    await quinipolo.save();
+    if (updateError) {
+      return res.status(500).json({
+        message: "Failed to mark quinipolo as deleted",
+        error: updateError,
+      });
+    }
 
     res
       .status(200)
@@ -545,5 +1030,4 @@ module.exports = {
   getQuinipoloAnswersAndCorrections,
   editQuinipoloCorrection,
   setQuinipoloAsDeleted,
-  // fixUserScores,
 };

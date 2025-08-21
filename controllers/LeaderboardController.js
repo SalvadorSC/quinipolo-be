@@ -1,6 +1,4 @@
-const mongoose = require("mongoose");
-const Leaderboard = require("../models/Leaderboard");
-const User = require("../models/User");
+const { supabase } = require("../services/supabaseClient");
 
 const updateLeaderboard = async (
   username,
@@ -9,72 +7,159 @@ const updateLeaderboard = async (
   fullCorrectQuinipolo
 ) => {
   try {
-    const leagueLeaderboard = await Leaderboard.findOne({ leagueId });
-    if (!leagueLeaderboard) {
-      throw new Error("Leaderboard not found");
-    }
+    // Get user ID from username
+    const { data: user, error: userError } = await supabase
+      .from("profiles")
+      .select("id")
+      .eq("username", username)
+      .single();
 
-    const user = await User.findOne({ username });
-    if (!user) {
+    if (userError || !user) {
       throw new Error("User not found");
     }
 
-    // Find participant in the leaderboard
-    const participantEntry = leagueLeaderboard.participantsLeaderboard.find(
-      (participant) => participant.username === username
-    );
+    // Check if leaderboard entry exists
+    const { data: existingEntry, error: checkError } = await supabase
+      .from("leaderboard")
+      .select("*")
+      .eq("user_id", user.id)
+      .eq("league_id", leagueId)
+      .single();
 
-    if (participantEntry) {
-      console.log("Updating existing entry");
-      participantEntry.points += points;
-      participantEntry.nQuinipolosParticipated += 1;
-      if (fullCorrectQuinipolo) {
-        participantEntry.fullCorrectQuinipolos += 1;
-      }
-    } else {
-      console.log("Creating new entry");
-      leagueLeaderboard.participantsLeaderboard.push({
-        username,
-        points,
-        fullCorrectQuinipolos: fullCorrectQuinipolo ? 1 : 0,
-        nQuinipolosParticipated: 1,
-      });
+    if (checkError && checkError.code !== "PGRST116") {
+      // PGRST116 is "not found" error
+      throw new Error("Error checking leaderboard entry");
     }
 
-    // Save the updated leaderboard
-    await leagueLeaderboard.save();
+    if (existingEntry) {
+      // Update existing entry
+      console.log("Updating existing leaderboard entry");
+      const { data: updatedEntry, error: updateError } = await supabase
+        .from("leaderboard")
+        .update({
+          points: existingEntry.points + points,
+          n_quinipolos_participated:
+            existingEntry.n_quinipolos_participated + 1,
+          full_correct_quinipolos:
+            existingEntry.full_correct_quinipolos +
+            (fullCorrectQuinipolo ? 1 : 0),
+        })
+        .eq("user_id", user.id)
+        .eq("league_id", leagueId)
+        .select()
+        .single();
 
-    const updatedEntry = leagueLeaderboard.participantsLeaderboard.find(
-      (participant) => participant.username === username
-    );
+      if (updateError) {
+        throw new Error("Error updating leaderboard entry");
+      }
 
-    const response = {
-      username: user.username,
-      totalPoints: updatedEntry.points,
-      fullCorrectQuinipolos: updatedEntry.fullCorrectQuinipolos,
-      changeInPoints: points,
-      nQuinipolosParticipated: updatedEntry.nQuinipolosParticipated,
-    };
+      return {
+        username: username,
+        totalPoints: updatedEntry.points,
+        fullCorrectQuinipolos: updatedEntry.full_correct_quinipolos,
+        changeInPoints: points,
+        nQuinipolosParticipated: updatedEntry.n_quinipolos_participated,
+      };
+    } else {
+      // Create new entry
+      console.log("Creating new leaderboard entry");
+      const { data: newEntry, error: insertError } = await supabase
+        .from("leaderboard")
+        .insert({
+          user_id: user.id,
+          league_id: leagueId,
+          points: points,
+          n_quinipolos_participated: 1,
+          full_correct_quinipolos: fullCorrectQuinipolo ? 1 : 0,
+        })
+        .select()
+        .single();
 
-    return response;
+      if (insertError) {
+        throw new Error("Error creating leaderboard entry");
+      }
+
+      return {
+        username: username,
+        totalPoints: newEntry.points,
+        fullCorrectQuinipolos: newEntry.full_correct_quinipolos,
+        changeInPoints: points,
+        nQuinipolosParticipated: newEntry.n_quinipolos_participated,
+      };
+    }
   } catch (error) {
     console.error("Error updating leaderboard:", error);
     throw error;
   }
 };
 
+/**
+ * Example response:
+ * {
+ *   leagueId: "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+ *   participantsLeaderboard: [
+ *     {
+ *       username: "user1",
+ *       points: 100,
+ *       totalPoints: 100,
+ *       nQuinipolosParticipated: 5,
+ *       fullCorrectQuinipolos: 2
+ *     },
+ *     ...
+ *   ]
+ * }
+ */
 const getLeaderboardByLeagueId = async (req, res) => {
   const leagueId = req.params.leagueId;
   try {
-    const leaderboard = await Leaderboard.findOne({ leagueId });
-    if (!leaderboard) {
-      await createLeaderboard(leagueId);
-      throw new Error("Leaderboard not found");
+    // 1. Get leaderboard rows for this league
+    const { data: leaderboardRows, error: leaderboardError } = await supabase
+      .from("leaderboard")
+      .select(
+        "user_id, points, n_quinipolos_participated, full_correct_quinipolos"
+      )
+      .eq("league_id", leagueId)
+      .order("points", { ascending: false });
+
+    if (leaderboardError) {
+      return res.status(500).json({ error: leaderboardError.message });
     }
-    res.status(200).json(leaderboard);
+
+    if (!leaderboardRows || leaderboardRows.length === 0) {
+      return res.status(200).json({ leagueId, participantsLeaderboard: [] });
+    }
+
+    // 2. Get usernames for all user_ids
+    const userIds = leaderboardRows.map((row) => row.user_id);
+    const { data: profiles, error: profilesError } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", userIds);
+
+    if (profilesError) {
+      return res.status(500).json({ error: profilesError.message });
+    }
+
+    const userMap = Object.fromEntries(
+      (profiles || []).map((p) => [p.id, p.username])
+    );
+
+    // 3. Map leaderboard rows to include username
+    const participantsLeaderboard = leaderboardRows.map((row) => ({
+      username: userMap[row.user_id] || "unknown",
+      points: row.points,
+      totalPoints: row.points, // for compatibility with FE
+      nQuinipolosParticipated: row.n_quinipolos_participated,
+      fullCorrectQuinipolos: row.full_correct_quinipolos,
+    }));
+
+    return res.status(200).json({
+      leagueId,
+      participantsLeaderboard,
+    });
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
-    throw error;
+    return res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
@@ -102,47 +187,82 @@ const updateLeaderboardForEditedCorrection = async (
         (newResult.correct15thGame ? 1 : 0) -
         (prevResult.correct15thGame ? 1 : 0);
 
-      // Update the leaderboard for each user
-      const leagueLeaderboard = await Leaderboard.findOne({
-        leagueId,
-      });
-      if (!leagueLeaderboard) {
-        throw new Error("Leaderboard not found");
+      // Get user ID from username
+      const { data: user, error: userError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("username", newResult.username)
+        .single();
+
+      if (userError || !user) {
+        console.error("User not found:", newResult.username);
+        continue;
       }
 
-      const participantEntry = leagueLeaderboard.participantsLeaderboard.find(
-        (participant) => participant.username === newResult.username
-      );
+      // Check if leaderboard entry exists
+      const { data: existingEntry, error: checkError } = await supabase
+        .from("leaderboard")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("league_id", leagueId)
+        .single();
 
-      if (participantEntry) {
-        participantEntry.points += pointsDifference;
-        if (fullCorrectDifference !== 0) {
-          participantEntry.fullCorrectQuinipolos += fullCorrectDifference;
+      if (checkError && checkError.code !== "PGRST116") {
+        console.error("Error checking leaderboard entry:", checkError);
+        continue;
+      }
+
+      if (existingEntry) {
+        // Update existing entry
+        const { data: updatedEntry, error: updateError } = await supabase
+          .from("leaderboard")
+          .update({
+            points: existingEntry.points + pointsDifference,
+            full_correct_quinipolos:
+              existingEntry.full_correct_quinipolos + fullCorrectDifference,
+          })
+          .eq("user_id", user.id)
+          .eq("league_id", leagueId)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error("Error updating leaderboard entry:", updateError);
+          continue;
         }
-      } else {
-        // If the user is not found in the leaderboard, create a new entry
-        leagueLeaderboard.participantsLeaderboard.push({
+
+        updates.push({
           username: newResult.username,
-          points: newResult.pointsEarned,
-          fullCorrectQuinipolos: newResult.correct15thGame ? 1 : 0,
-          nQuinipolosParticipated: 1,
+          pointsEarned: pointsDifference,
+          totalPoints: updatedEntry.points,
+          correct15thGame: newResult.correct15thGame,
+        });
+      } else {
+        // Create new entry if user doesn't exist in leaderboard
+        const { data: newEntry, error: insertError } = await supabase
+          .from("leaderboard")
+          .insert({
+            user_id: user.id,
+            league_id: leagueId,
+            points: newResult.pointsEarned,
+            n_quinipolos_participated: 1,
+            full_correct_quinipolos: newResult.correct15thGame ? 1 : 0,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error("Error creating leaderboard entry:", insertError);
+          continue;
+        }
+
+        updates.push({
+          username: newResult.username,
+          pointsEarned: newResult.pointsEarned,
+          totalPoints: newEntry.points,
+          correct15thGame: newResult.correct15thGame,
         });
       }
-
-      // Save the updated leaderboard
-      await leagueLeaderboard.save();
-
-      // Find the updated entry
-      const updatedEntry = leagueLeaderboard.participantsLeaderboard.find(
-        (participant) => participant.username === newResult.username
-      );
-
-      updates.push({
-        username: updatedEntry.username,
-        pointsEarned: pointsDifference,
-        totalPoints: updatedEntry.points,
-        correct15thGame: newResult.correct15thGame,
-      });
     }
 
     console.log("Leaderboard updated successfully");
