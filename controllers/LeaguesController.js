@@ -382,7 +382,7 @@ const ensureGlobalLeagueExists = async () => {
       const { data: newLeague, error: createError } = await supabase
         .from("leagues")
         .insert({
-          name: "Global League",
+          league_name: "Global",
           is_private: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),

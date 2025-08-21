@@ -89,12 +89,17 @@ const getAllQuinipolo = async (req, res) => {
 
 const createNewQuinipolo = async (req, res) => {
   try {
-    if (req.body.endDate) {
+    // Accept snake_case as the canonical naming; support legacy camelCase as fallback
+    const leagueId = req.body.league_id || req.body.leagueId;
+    const endDate = req.body.end_date || req.body.endDate;
+    const creationDate = req.body.creation_date || req.body.creationDate;
+
+    if (endDate) {
       // Get league from Supabase instead of MongoDB
       const { data: league, error: leagueError } = await supabase
         .from("leagues")
         .select("league_name")
-        .eq("id", req.body.leagueId)
+        .eq("id", leagueId)
         .single();
 
       if (leagueError) {
@@ -106,11 +111,11 @@ const createNewQuinipolo = async (req, res) => {
       const { data: newQuinipolo, error: createError } = await supabase
         .from("quinipolos")
         .insert({
-          league_id: req.body.leagueId,
+          league_id: leagueId,
           quinipolo: req.body.quinipolo,
-          end_date: req.body.endDate,
+          end_date: endDate,
           has_been_corrected: false,
-          creation_date: req.body.creationDate,
+          creation_date: creationDate,
           is_deleted: false,
         })
         .select()
@@ -121,15 +126,10 @@ const createNewQuinipolo = async (req, res) => {
         return res.status(500).json({ error: "Failed to create quinipolo" });
       }
 
-      // Add league name to the response for frontend compatibility
+      // Add league_name to the response for frontend convenience (snake_case only)
       const quinipoloWithLeagueName = {
         ...newQuinipolo,
-        leagueName: league.league_name,
-        leagueId: req.body.leagueId,
-        endDate: newQuinipolo.end_date,
-        hasBeenCorrected: newQuinipolo.has_been_corrected,
-        creationDate: newQuinipolo.creation_date,
-        _id: newQuinipolo.id,
+        league_name: league.league_name,
       };
 
       // Extract teams from quinipolo data
