@@ -3,7 +3,6 @@ const { supabase } = require("../services/supabaseClient");
 
 const getAllTeams = async (req, res) => {
   try {
-    // console.log("Fetching all teams from Supabase");
     const { data: teams, error } = await supabase
       .from("teams")
       .select("name, sport");

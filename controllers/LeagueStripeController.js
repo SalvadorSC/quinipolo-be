@@ -1,19 +1,47 @@
 // controllers/LeagueStripeController.js
 const Stripe = require("stripe");
-const STRIPE_KEY =
-  process.env.REACT_APP_ENV === "development"
-    ? process.env.STRIPE_SECRET_KEY_TEST
-    : process.env.STRIPE_SECRET_KEY;
+const { STRIPE_KEY, STRIPE_PRICE_IDS } = require("../config");
 const stripe = Stripe(STRIPE_KEY);
 const { supabase } = require("../services/supabaseClient");
+
+// Ensure the creator has a moderator membership in user_leagues
+const ensureUserLeagueModerator = async (userId, leagueId) => {
+  try {
+    const { data: existing, error: checkError } = await supabase
+      .from("user_leagues")
+      .select("user_id")
+      .eq("user_id", userId)
+      .eq("league_id", leagueId)
+      .limit(1);
+
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("Error checking user_leagues:", checkError);
+      return;
+    }
+
+    if (!existing || existing.length === 0) {
+      const { error: insertError } = await supabase
+        .from("user_leagues")
+        .insert({ user_id: userId, league_id: leagueId, role: "moderator" });
+      if (insertError) {
+        console.error(
+          "Error inserting user_leagues moderator entry:",
+          insertError
+        );
+      }
+    }
+  } catch (err) {
+    console.error("Exception ensuring user_leagues moderator entry:", err);
+  }
+};
 
 // League tier configurations
 const LEAGUE_TIERS = {
   managed: {
     name: "Managed League",
     description: "Professional league managed by our development team",
-    priceId: process.env.STRIPE_MANAGED_LEAGUE_PRICE_ID,
-    amount: 3999, // temporary price €39.99 in cents
+    priceId: STRIPE_PRICE_IDS.managed,
+    amount: 3999,
     currency: "eur",
     features: [
       "Professional league management",
@@ -26,8 +54,8 @@ const LEAGUE_TIERS = {
   self_managed: {
     name: "Self-Managed League",
     description: "League managed by you with optional support",
-    priceId: process.env.STRIPE_SELF_MANAGED_LEAGUE_PRICE_ID,
-    amount: 3999, // €39.99 in cents (fallback if no priceId)
+    priceId: STRIPE_PRICE_IDS.self_managed,
+    amount: 3999,
     currency: "eur",
     features: [
       "Full league control",
@@ -97,29 +125,18 @@ const createLeagueCheckoutSession = async (req, res) => {
     }
 
     // Create Stripe checkout session
+    // Require configured priceId; we no longer allow hardcoded amounts
+    const usePriceId = LEAGUE_TIERS[tier].priceId;
+    if (!usePriceId) {
+      return res
+        .status(500)
+        .json({ error: "Missing Stripe price ID for tier" });
+    }
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       payment_method_types: ["card"],
-      line_items: [
-        LEAGUE_TIERS[tier].priceId
-          ? { price: LEAGUE_TIERS[tier].priceId, quantity: 1 }
-          : {
-              price_data: {
-                currency: LEAGUE_TIERS[tier].currency,
-                product_data: {
-                  name: `${LEAGUE_TIERS[tier].name} - ${leagueName}`,
-                  description: LEAGUE_TIERS[tier].description,
-                  metadata: {
-                    tier: tier,
-                    league_name: leagueName,
-                    user_id: userId,
-                  },
-                },
-                unit_amount: LEAGUE_TIERS[tier].amount,
-              },
-              quantity: 1,
-            },
-      ],
+      line_items: [{ price: usePriceId, quantity: 1 }],
       mode: "payment",
       success_url: `${process.env.FRONTEND_URL}/league-success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.FRONTEND_URL}/create-league?cancelled=true`,
@@ -231,29 +248,8 @@ const handleLeaguePaymentWebhook = async (req, res) => {
           throw new Error("Failed to create league subscription");
         }
 
-        // Add creator as moderator to the league (following same pattern as LeaguesController)
-        try {
-          const { data: userLeagueData, error: userLeagueError } =
-            await supabase
-              .from("user_leagues")
-              .insert({
-                user_id: userId,
-                league_id: newLeague.id,
-                role: "moderator",
-              })
-              .select();
-
-          if (userLeagueError) {
-            console.error("Error adding user to league:", userLeagueError);
-          } else {
-            console.log(
-              "Successfully added user to user_leagues:",
-              userLeagueData
-            );
-          }
-        } catch (insertError) {
-          console.error("Exception adding user to league:", insertError);
-        }
+        // Add creator as moderator to the league
+        await ensureUserLeagueModerator(userId, newLeague.id);
 
         // Create leaderboard entry for the creator (following same pattern as LeaguesController)
         const { error: leaderboardError } = await supabase
@@ -373,6 +369,91 @@ const getCheckoutSessionStatus = async (req, res) => {
       }
     }
 
+    // Fallback: if payment succeeded but webhook hasn't created the league yet,
+    // create it here to avoid race conditions in local/dev setups
+    if (
+      !league &&
+      session?.payment_status === "paid" &&
+      leagueName &&
+      userId &&
+      tier
+    ) {
+      try {
+        // Create league
+        const { data: newLeague, error: leagueError } = await supabase
+          .from("leagues")
+          .insert({
+            league_name: leagueName,
+            is_private: true,
+            tier: tier,
+            created_by: userId,
+            status: "active",
+          })
+          .select()
+          .single();
+
+        if (leagueError) {
+          console.error("Fallback: error creating league:", leagueError);
+          throw leagueError;
+        }
+
+        league = newLeague;
+
+        // Create subscription record
+        const expiresAt = new Date();
+        expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+        const { error: subscriptionError } = await supabase
+          .from("league_subscriptions")
+          .insert({
+            league_id: newLeague.id,
+            user_id: userId,
+            stripe_subscription_id: session.subscription || null,
+            stripe_customer_id: session.customer,
+            status: "active",
+            tier: tier,
+            amount_paid: session.amount_total,
+            currency: session.currency,
+            expires_at: expiresAt.toISOString(),
+          });
+        if (subscriptionError) {
+          console.error(
+            "Fallback: error creating league subscription:",
+            subscriptionError
+          );
+        }
+
+        // Ensure creator is moderator in user_leagues
+        await ensureUserLeagueModerator(userId, newLeague.id);
+
+        // Create leaderboard entry
+        const { error: leaderboardError } = await supabase
+          .from("leaderboard")
+          .insert({
+            user_id: userId,
+            league_id: newLeague.id,
+            points: 0,
+            full_correct_quinipolos: 0,
+            n_quinipolos_participated: 0,
+          });
+        if (leaderboardError) {
+          console.error(
+            "Fallback: error creating leaderboard entry:",
+            leaderboardError
+          );
+        }
+      } catch (fallbackErr) {
+        console.error(
+          "Fallback: failed to finalize league after paid session:",
+          fallbackErr
+        );
+      }
+    }
+
+    // Ensure membership also for pre-existing league
+    if (league && userId) {
+      await ensureUserLeagueModerator(userId, league.id);
+    }
     return res.status(200).json({ session, league });
   } catch (error) {
     console.error("Error fetching checkout session:", error);

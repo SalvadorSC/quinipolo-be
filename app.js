@@ -14,7 +14,6 @@ const authRoutes = require("./routes/auth.js");
 const leaguesRoutes = require("./routes/leagues.js");
 const usersRoutes = require("./routes/users.js");
 const quinipolosRoutes = require("./routes/quinipolos.js");
-const subscriptionsRoutes = require("./routes/subscriptions.js");
 const leagueStripeRoutes = require("./routes/leagueStripe.js");
 const LeagueStripeController = require("./controllers/LeagueStripeController");
 const teamsRoutes = require("./routes/teams.js");
@@ -55,8 +54,6 @@ app.use("/api/leagues", leaguesRoutes);
 app.use("/api/users", usersRoutes);
 
 app.use("/api/quinipolos", quinipolosRoutes);
-
-app.use("/api/subscriptions", subscriptionsRoutes);
 
 app.use("/api/league-stripe", leagueStripeRoutes);
 

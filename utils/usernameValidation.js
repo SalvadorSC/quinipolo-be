@@ -37,11 +37,17 @@ async function validateUsername(username, excludeUserId = null) {
     };
   }
 
-  // Security measure: prevent "quinipolo" in username
-  if (trimmedUsername.toLowerCase().includes("quinipolo")) {
+  // Prevent restricted words in username (configurable)
+  const {
+    RESTRICTED_USERNAMES,
+    SPANISH_SWEAR_AND_HATE_WORDS,
+  } = require("../config");
+  const lower = trimmedUsername.toLowerCase();
+  const banned = [...RESTRICTED_USERNAMES, ...SPANISH_SWEAR_AND_HATE_WORDS];
+  if (banned.some((word) => lower.includes(word.toLowerCase()))) {
     return {
       isValid: false,
-      error: "Username cannot contain 'quinipolo' for security reasons",
+      error: "Username cannot contain restricted words",
     };
   }
 

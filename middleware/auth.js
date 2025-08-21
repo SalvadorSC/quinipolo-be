@@ -11,7 +11,7 @@ async function authenticateToken(req, res, next) {
     return res.sendStatus(403);
   }
   req.user = data.user;
-    next();
+  next();
 }
 
-module.exports = { authenticateToken }; 
+module.exports = { authenticateToken };

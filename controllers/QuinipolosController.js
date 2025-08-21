@@ -1030,6 +1030,4 @@ module.exports = {
   getQuinipoloAnswersAndCorrections,
   editQuinipoloCorrection,
   setQuinipoloAsDeleted,
-
-  // fixUserScores,
 };

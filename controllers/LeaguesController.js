@@ -3,6 +3,7 @@ const Leaderboard = require("../models/Leaderboard");
 const User = require("../models/User");
 const { createLeaderboard } = require("./LeaderboardController");
 const { supabase } = require("../services/supabaseClient");
+const { GLOBAL_LEAGUE_ID } = require("../config");
 
 const getAllLeaguesData = async (req, res) => {
   try {
@@ -367,45 +368,33 @@ const joinLeague = async (req, res) => {
 //   }
 // };
 
-// Ensure global league exists
-const ensureGlobalLeagueExists = async () => {
+// Check if a league exists by ID. Returns league id if exists, null if not found, false on error
+const checkLeagueExistsById = async (leagueId) => {
   try {
-    // Check if global league exists by Supabase ID
-    const { data: globalLeague, error: checkError } = await supabase
+    const { data: league, error } = await supabase
       .from("leagues")
-      .select("*")
-      .eq("id", "351a1949-f6c5-4940-ac70-1c7dd08e8b1a")
+      .select("id")
+      .eq("id", leagueId)
       .single();
 
-    if (checkError && checkError.code === "PGRST116") {
-      // Global league doesn't exist, create it with a proper UUID
-      const { data: newLeague, error: createError } = await supabase
-        .from("leagues")
-        .insert({
-          league_name: "Global",
-          is_private: false,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error("Error creating global league:", createError);
-        return false;
+    if (error) {
+      if (error.code === "PGRST116") {
+        return null; // not found
       }
-      console.log("Global league created successfully with ID:", newLeague.id);
-      return newLeague.id;
-    } else if (checkError) {
-      console.error("Error checking global league:", checkError);
+      console.error("Error checking league by id:", error);
       return false;
     }
 
-    return globalLeague.id; // Return the existing global league ID
+    return league.id;
   } catch (error) {
-    console.error("Error ensuring global league exists:", error);
+    console.error("Error checking league existence:", error);
     return false;
   }
+};
+
+// Wrapper: check if the Global league exists by ID
+const ensureGlobalLeagueExists = async () => {
+  return await checkLeagueExistsById(GLOBAL_LEAGUE_ID);
 };
 
 // Supabase version of joinLeagueById
