@@ -1,68 +1,92 @@
 // controllers/LeaguesController.js
 const Leaderboard = require("../models/Leaderboard");
 const User = require("../models/User");
-const { createLeaderboard } = require("./LeaderboardController");
 const { supabase } = require("../services/supabaseClient");
 const { GLOBAL_LEAGUE_ID } = require("../config");
 
 const getAllLeaguesData = async (req, res) => {
   try {
-    // 1. Get all leagues
-    const { data: leagues, error: leaguesError } = await supabase
-      .from("leagues")
-      .select("*");
-    if (leaguesError) {
-      return res.status(500).json({ error: leaguesError.message });
-    }
-
-    // 2. For each league, get participants (user_id, role) and usernames
-    const result = await Promise.all(
-      leagues.map(async (league) => {
-        // Fetch user_leagues with roles
-        const { data: userLeagues, error: userLeaguesError } = await supabase
-          .from("user_leagues")
-          .select("user_id, role")
-          .eq("league_id", league.id);
-
-        let participants = [];
-        if (userLeagues && userLeagues.length > 0) {
-          const userIds = userLeagues.map((u) => u.user_id);
-          // Fetch usernames
-          const { data: profiles, error: profilesError } = await supabase
-            .from("profiles")
-            .select("id, username")
-            .in("id", userIds);
-
-          if (profiles) {
-            participants = userLeagues.map((ul) => ({
-              user_id: ul.user_id,
-              username:
-                profiles.find((p) => p.id === ul.user_id)?.username ||
-                "unknown",
-              role: ul.role,
-            }));
-          }
-        }
-
-        // Petitions fields (default to [] if missing)
-        const participantPetitions = league.participant_petitions || [];
-        const moderatorPetitions = league.moderator_petitions || [];
-
-        return {
-          ...league,
-          participants,
-          participantsCount: participants.length,
-          participantPetitions,
-          moderatorPetitions,
-        };
-      })
-    );
-
+    const result = await buildAllLeaguesResponse();
     res.status(200).json(result);
   } catch (error) {
     console.error("Error fetching leagues:", error);
     res.status(500).send("Internal Server Error");
   }
+};
+
+// Helper to build enriched leagues list
+const buildAllLeaguesResponse = async () => {
+  const { data: leagues, error: leaguesError } = await supabase
+    .from("leagues")
+    .select("*");
+  if (leaguesError) throw leaguesError;
+
+  const result = await Promise.all(
+    leagues.map(async (league) => {
+      // Fetch user_leagues with roles
+      const { data: userLeagues } = await supabase
+        .from("user_leagues")
+        .select("user_id, role")
+        .eq("league_id", league.id);
+
+      let participants = [];
+      if (userLeagues && userLeagues.length > 0) {
+        const userIds = userLeagues.map((u) => u.user_id);
+        // Fetch usernames
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", userIds);
+
+        if (profiles) {
+          participants = userLeagues.map((ul) => ({
+            user_id: ul.user_id,
+            username:
+              profiles.find((p) => p.id === ul.user_id)?.username || "unknown",
+            role: ul.role,
+          }));
+        }
+      }
+
+      // Petitions from league_petitions table
+      let participantPetitions = [];
+      let moderatorPetitions = [];
+      const { data: petitionsData } = await supabase
+        .from("league_petitions")
+        .select("id, user_id, username, status, type, date")
+        .eq("league_id", league.id);
+      if (petitionsData) {
+        participantPetitions = petitionsData
+          .filter((p) => p.type === "participant")
+          .map((p) => ({
+            _id: p.id,
+            userId: p.user_id,
+            username: p.username,
+            status: p.status,
+            date: p.date,
+          }));
+        moderatorPetitions = petitionsData
+          .filter((p) => p.type === "moderator")
+          .map((p) => ({
+            _id: p.id,
+            userId: p.user_id,
+            username: p.username,
+            status: p.status,
+            date: p.date,
+          }));
+      }
+
+      return {
+        ...league,
+        participants,
+        participantsCount: participants.length,
+        participantPetitions,
+        moderatorPetitions,
+      };
+    })
+  );
+
+  return result;
 };
 
 const getLeagueData = async (req, res) => {
@@ -115,9 +139,33 @@ const getLeagueData = async (req, res) => {
       }));
     }
 
-    // 4. Get moderator petitions and participant petitions
-    const participantPetitions = league.participant_petitions || [];
-    const moderatorPetitions = league.moderator_petitions || [];
+    // 4. Get moderator petitions and participant petitions from league_petitions table
+    let participantPetitions = [];
+    let moderatorPetitions = [];
+    const { data: petitionsData } = await supabase
+      .from("league_petitions")
+      .select("id, user_id, username, status, type, date")
+      .eq("league_id", leagueId);
+    if (petitionsData) {
+      participantPetitions = petitionsData
+        .filter((p) => p.type === "participant")
+        .map((p) => ({
+          _id: p.id,
+          userId: p.user_id,
+          username: p.username,
+          status: p.status,
+          date: p.date,
+        }));
+      moderatorPetitions = petitionsData
+        .filter((p) => p.type === "moderator")
+        .map((p) => ({
+          _id: p.id,
+          userId: p.user_id,
+          username: p.username,
+          status: p.status,
+          date: p.date,
+        }));
+    }
 
     // 5. Get quinipolos to answer and correct
     const { data: quinipolosToAnswer, error: quinipolosError } = await supabase
@@ -502,50 +550,162 @@ const addLeagueImage = async (req, res) => {
   }
 };
 
+// Helper to map petition type to Supabase JSONB column name
+const getPetitionColumnName = (petitionType) =>
+  petitionType === "moderator"
+    ? "moderator_petitions"
+    : "participant_petitions";
+
+// Build league response similar to getLeagueData
+const buildLeagueResponse = async (leagueId) => {
+  const { data: league, error: leagueError } = await supabase
+    .from("leagues")
+    .select(
+      `
+        *,
+        creator:profiles!leagues_created_by_fkey(username, full_name)
+      `
+    )
+    .eq("id", leagueId)
+    .single();
+
+  if (leagueError || !league)
+    throw leagueError || new Error("League not found");
+
+  const { data: userLeagues } = await supabase
+    .from("user_leagues")
+    .select("user_id, role")
+    .eq("league_id", leagueId);
+
+  const userIds = (userLeagues || []).map((u) => u.user_id);
+  let profiles = [];
+  if (userIds.length > 0) {
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("id, username")
+      .in("id", userIds);
+    profiles = profilesData || [];
+  }
+
+  const participants = (userLeagues || []).map((ul) => ({
+    user_id: ul.user_id,
+    username: profiles.find((p) => p.id === ul.user_id)?.username || "unknown",
+    role: ul.role,
+  }));
+
+  const participantPetitions = league.participant_petitions || [];
+  const moderatorPetitions = league.moderator_petitions || [];
+
+  const { data: quinipolosToAnswer } = await supabase
+    .from("quinipolos")
+    .select("*")
+    .eq("league_id", leagueId)
+    .eq("has_been_corrected", false)
+    .eq("is_deleted", false)
+    .gte("end_date", new Date().toISOString());
+
+  const { data: leaguesToCorrect } = await supabase
+    .from("quinipolos")
+    .select("*")
+    .eq("league_id", leagueId)
+    .eq("has_been_corrected", false)
+    .eq("is_deleted", false)
+    .lt("end_date", new Date().toISOString());
+
+  return {
+    ...league,
+    participants,
+    participantPetitions,
+    moderatorPetitions,
+    quinipolosToAnswer: quinipolosToAnswer || [],
+    leaguesToCorrect: leaguesToCorrect || [],
+    moderatorArray: participants
+      .filter((p) => p.role === "moderator")
+      .map((p) => p.username),
+  };
+};
+
 const createPetition = async (req, res, petitionType) => {
-  const petitionField = `${petitionType}Petitions`; // moderatorPetitions, participantPetitions
-
-  // find if user has a pending petition in the league
-  const userHasPendingPetition = await Leagues.findOne({
-    leagueId: req.params.leagueId,
-    [`${petitionField}.userId`]: req.body.userId,
-    [`${petitionField}.status`]: "pending",
-  });
-
-  // find if user had a cancelled petition in the league
-  const userHasCancelledPetition = await Leagues.findOne({
-    leagueId: req.params.leagueId,
-    [`${petitionField}.userId`]: req.body.userId,
-    [`${petitionField}.status`]: "cancelled",
-  });
-
-  // if user had a pending petition, return an error
-  if (userHasPendingPetition) {
-    return res.status(400).send("User already has a pending petition");
-  }
-
-  // if user has a cancelled petition, change it to pending, update date, and return the league object
-  if (userHasCancelledPetition) {
-    const league = await Leagues.findOne({ leagueId: req.params.leagueId });
-    const petition = league[petitionField].id(
-      userHasCancelledPetition[petitionField][0]._id
-    );
-    petition.status = "pending";
-    petition.date = new Date();
-    await league.save();
-    return res.status(200).json(league);
-  }
-
-  // if user has no pending or cancelled petitions, create a new petition
   try {
-    const league = await Leagues.findOne({ leagueId: req.params.leagueId });
-    league[petitionField].push({
-      ...req.body,
-      status: "pending",
-      date: new Date(),
-    });
-    await league.save();
-    res.status(200).json(league);
+    const leagueId = req.params.leagueId;
+    const { userId, username } = req.body;
+
+    // Ensure league exists
+    const { error: leagueError } = await supabase
+      .from("leagues")
+      .select("id")
+      .eq("id", leagueId)
+      .single();
+    if (leagueError) {
+      if (leagueError.code === "PGRST116") {
+        return res.status(404).json({ error: "League not found" });
+      }
+      console.error("Supabase error fetching league:", leagueError);
+      return res
+        .status(500)
+        .json({ error: leagueError?.message || "Error fetching league" });
+    }
+
+    // Check existing pending
+    const { data: existingPending, error: pendingError } = await supabase
+      .from("league_petitions")
+      .select("id")
+      .eq("league_id", leagueId)
+      .eq("user_id", userId)
+      .eq("type", petitionType)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (pendingError && pendingError.code !== "PGRST116") {
+      console.error("Error checking pending petition:", pendingError);
+      return res.status(500).send("Internal Server Error");
+    }
+    if (existingPending) {
+      return res.status(400).send("User already has a pending petition");
+    }
+
+    // Flip cancelled to pending if exists
+    const { data: cancelled, error: cancelledError } = await supabase
+      .from("league_petitions")
+      .select("id")
+      .eq("league_id", leagueId)
+      .eq("user_id", userId)
+      .eq("type", petitionType)
+      .eq("status", "cancelled")
+      .maybeSingle();
+    if (cancelledError && cancelledError.code !== "PGRST116") {
+      console.error("Error checking cancelled petition:", cancelledError);
+      return res.status(500).send("Internal Server Error");
+    }
+
+    if (cancelled) {
+      const { error: updateErr } = await supabase
+        .from("league_petitions")
+        .update({ status: "pending", date: new Date().toISOString() })
+        .eq("id", cancelled.id);
+      if (updateErr) {
+        console.error("Error updating petition to pending:", updateErr);
+        return res.status(500).send("Internal Server Error");
+      }
+    } else {
+      const { error: insertErr } = await supabase
+        .from("league_petitions")
+        .insert({
+          league_id: leagueId,
+          user_id: userId,
+          username,
+          type: petitionType,
+          status: "pending",
+          date: new Date().toISOString(),
+        });
+      if (insertErr) {
+        console.error("Error creating petition:", insertErr);
+        return res.status(500).send("Internal Server Error");
+      }
+    }
+
+    // For LeagueList flow, return full list
+    const listResponse = await buildAllLeaguesResponse();
+    return res.status(200).json(listResponse);
   } catch (error) {
     console.error(`Error creating ${petitionType} petition:`, error);
     res.status(500).send("Internal Server Error");
@@ -559,24 +719,108 @@ const updatePetitionStatus = async (
   newStatus,
   addToArray
 ) => {
-  const petitionField = `${petitionType}Petitions`;
-  const arrayField =
-    petitionType === "participant"
-      ? `${petitionType}s`
-      : `${petitionType}Array`;
   try {
-    const league = await Leagues.findOne({ leagueId: req.params.leagueId });
-    const petition = league[petitionField].id(req.params.petitionId);
+    const leagueId = req.params.leagueId;
+    const petitionId = req.params.petitionId;
 
-    petition.status = newStatus;
-
-    console.log(arrayField);
-    if (addToArray) {
-      league[arrayField].push(petition.username);
+    // Fetch petition row
+    const { data: petitionRow, error: petitionError } = await supabase
+      .from("league_petitions")
+      .select("id, user_id, username, type, status")
+      .eq("id", petitionId)
+      .eq("league_id", leagueId)
+      .maybeSingle();
+    if (petitionError && petitionError.code !== "PGRST116") {
+      console.error("Error fetching petition:", petitionError);
+      return res.status(500).send("Internal Server Error");
+    }
+    if (!petitionRow) {
+      return res.status(404).json({ error: "Petition not found" });
     }
 
-    await league.save();
-    res.status(200).json(league);
+    // Update status
+    const { error: updateError } = await supabase
+      .from("league_petitions")
+      .update({ status: newStatus })
+      .eq("id", petitionId)
+      .eq("league_id", leagueId);
+    if (updateError) {
+      console.error(`Error updating ${petitionType} petition:`, updateError);
+      return res.status(500).send("Internal Server Error");
+    }
+
+    // If accepted, update user_leagues/leaderboard roles or membership
+    if (addToArray && newStatus === "accepted") {
+      // Ensure user is in user_leagues
+      const { data: existingUserLeague, error: checkError } = await supabase
+        .from("user_leagues")
+        .select("*")
+        .eq("user_id", petitionRow.user_id)
+        .eq("league_id", leagueId)
+        .single();
+
+      if (checkError && checkError.code !== "PGRST116") {
+        console.error("Error checking user_leagues:", checkError);
+      }
+
+      const roleToSet =
+        petitionType === "moderator" ? "moderator" : "participant";
+
+      if (existingUserLeague) {
+        // Update role if needed
+        if (existingUserLeague.role !== roleToSet) {
+          const { error: roleUpdateError } = await supabase
+            .from("user_leagues")
+            .update({ role: roleToSet })
+            .eq("user_id", petitionRow.user_id)
+            .eq("league_id", leagueId);
+          if (roleUpdateError) {
+            console.error("Error updating role:", roleUpdateError);
+          }
+        }
+      } else {
+        // Insert membership
+        const { error: insertError } = await supabase
+          .from("user_leagues")
+          .insert({
+            user_id: petitionRow.user_id,
+            league_id: leagueId,
+            role: roleToSet,
+          });
+        if (insertError) {
+          console.error("Error inserting user_leagues:", insertError);
+        }
+      }
+
+      // Ensure leaderboard entry exists
+      const { data: existingLeaderboard, error: leaderboardCheckError } =
+        await supabase
+          .from("leaderboard")
+          .select("*")
+          .eq("user_id", petitionRow.user_id)
+          .eq("league_id", leagueId)
+          .single();
+      if (leaderboardCheckError && leaderboardCheckError.code !== "PGRST116") {
+        console.error("Error checking leaderboard:", leaderboardCheckError);
+      }
+      if (!existingLeaderboard) {
+        const { error: leaderboardError } = await supabase
+          .from("leaderboard")
+          .insert({
+            user_id: petitionRow.user_id,
+            league_id: leagueId,
+            points: 0,
+            n_quinipolos_participated: 0,
+            full_correct_quinipolos: 0,
+          });
+        if (leaderboardError) {
+          console.error("Error inserting leaderboard:", leaderboardError);
+        }
+      }
+    }
+
+    const response = await buildLeagueResponse(leagueId);
+    return res.status(200).json(response);
   } catch (error) {
     console.error(`Error updating ${petitionType} petition:`, error);
     res.status(500).send("Internal Server Error");
@@ -584,11 +828,40 @@ const updatePetitionStatus = async (
 };
 
 const getPetitions = async (req, res, petitionType) => {
-  const petitionField = `${petitionType}Petitions`;
-
   try {
-    const league = await Leagues.findOne({ leagueId: req.params.leagueId });
-    res.status(200).json(league[petitionField]);
+    const leagueId = req.params.leagueId;
+    // Ensure league exists
+    const { error: leagueError } = await supabase
+      .from("leagues")
+      .select("id")
+      .eq("id", leagueId)
+      .single();
+    if (leagueError) {
+      if (leagueError.code === "PGRST116") {
+        return res.status(404).json({ error: "League not found" });
+      }
+      console.error("Supabase error fetching league:", leagueError);
+      return res
+        .status(500)
+        .json({ error: leagueError?.message || "Error fetching league" });
+    }
+    const { data, error } = await supabase
+      .from("league_petitions")
+      .select("id, user_id, username, status, type, date")
+      .eq("league_id", leagueId)
+      .eq("type", petitionType);
+    if (error) {
+      console.error("Error fetching petitions:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+    const mapped = (data || []).map((p) => ({
+      _id: p.id,
+      userId: p.user_id,
+      username: p.username,
+      status: p.status,
+      date: p.date,
+    }));
+    res.status(200).json(mapped);
   } catch (error) {
     console.error(`Error fetching ${petitionType} petitions:`, error);
     res.status(500).send("Internal Server Error");
