@@ -9,6 +9,20 @@ const { authenticateToken } = require("../middleware/auth");
 
 router.post("/", QuinipolosController.createNewQuinipolo);
 
+// Create quinipolo for all leagues (admin only)
+router.post(
+  "/all-leagues",
+  authenticateToken,
+  QuinipolosController.createQuinipoloForAllLeagues
+);
+
+// Create quinipolo for managed leagues only (admin only)
+router.post(
+  "/managed-leagues",
+  authenticateToken,
+  QuinipolosController.createQuinipoloForManagedLeagues
+);
+
 // Get All Quinipolos
 router.get("/", QuinipolosController.getAllQuinipolo);
 

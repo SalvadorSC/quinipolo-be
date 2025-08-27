@@ -156,6 +156,237 @@ const createNewQuinipolo = async (req, res) => {
   }
 };
 
+const createQuinipoloForAllLeagues = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { quinipolo, end_date, creation_date } = req.body;
+
+    // Check if user has admin privileges
+    const { data: userProfile, error: userError } = await supabase
+      .from("profiles")
+      .select("role, username")
+      .eq("id", userId)
+      .single();
+
+    if (userError || !userProfile) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if user has system admin role
+    if (userProfile.role !== "admin" && userProfile.role !== "system_admin") {
+      return res.status(403).json({
+        error:
+          "Insufficient permissions. Only system administrators can create quinipolos for all leagues.",
+      });
+    }
+
+    if (!end_date) {
+      return res.status(400).json({ error: "End date is required" });
+    }
+
+    // Get all active leagues
+    const { data: leagues, error: leaguesError } = await supabase
+      .from("leagues")
+      .select("id, league_name")
+      .eq("status", "active");
+
+    if (leaguesError) {
+      console.error("Error fetching leagues:", leaguesError);
+      return res.status(500).json({ error: "Failed to fetch leagues" });
+    }
+
+    if (!leagues || leagues.length === 0) {
+      return res.status(404).json({ error: "No active leagues found" });
+    }
+
+    // Create quinipolo for each league
+    const createdQuinipolos = [];
+    const errors = [];
+
+    for (const league of leagues) {
+      try {
+        const { data: newQuinipolo, error: createError } = await supabase
+          .from("quinipolos")
+          .insert({
+            league_id: league.id,
+            quinipolo: quinipolo,
+            end_date: end_date,
+            has_been_corrected: false,
+            creation_date: creation_date || new Date().toISOString(),
+            is_deleted: false,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error(
+            `Error creating quinipolo for league ${league.league_name}:`,
+            createError
+          );
+          errors.push({
+            league: league.league_name,
+            error: createError.message,
+          });
+        } else {
+          createdQuinipolos.push({
+            ...newQuinipolo,
+            league_name: league.league_name,
+          });
+        }
+      } catch (error) {
+        console.error(
+          `Error creating quinipolo for league ${league.league_name}:`,
+          error
+        );
+        errors.push({
+          league: league.league_name,
+          error: error.message,
+        });
+      }
+    }
+
+    // Extract teams from quinipolo data and add to teams collection
+    const teams = extractTeamsFromQuinipolo(quinipolo);
+    if (teams) {
+      try {
+        await addNewTeams(teams);
+      } catch (error) {
+        console.error("Error adding teams:", error);
+      }
+    }
+
+    const response = {
+      message: `Successfully created quinipolos for ${createdQuinipolos.length} out of ${leagues.length} leagues`,
+      createdQuinipolos,
+      errors: errors.length > 0 ? errors : undefined,
+      totalLeagues: leagues.length,
+      successfulCreations: createdQuinipolos.length,
+      failedCreations: errors.length,
+    };
+
+    res.status(201).json(response);
+  } catch (error) {
+    console.error("Error creating quinipolos for all leagues:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+const createQuinipoloForManagedLeagues = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { quinipolo, end_date, creation_date } = req.body;
+
+    // Check if user has admin privileges
+    const { data: userProfile, error: userError } = await supabase
+      .from("profiles")
+      .select("role, username")
+      .eq("id", userId)
+      .single();
+
+    if (userError || !userProfile) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if user has system admin role
+    if (userProfile.role !== "admin" && userProfile.role !== "system_admin") {
+      return res.status(403).json({
+        error:
+          "Insufficient permissions. Only system administrators can create quinipolos for managed leagues.",
+      });
+    }
+
+    if (!end_date) {
+      return res.status(400).json({ error: "End date is required" });
+    }
+
+    // Get all active managed leagues only
+    const { data: leagues, error: leaguesError } = await supabase
+      .from("leagues")
+      .select("id, league_name")
+      .eq("status", "active")
+      .eq("tier", "managed");
+
+    if (leaguesError) {
+      console.error("Error fetching managed leagues:", leaguesError);
+      return res.status(500).json({ error: "Failed to fetch managed leagues" });
+    }
+
+    if (!leagues || leagues.length === 0) {
+      return res.status(404).json({ error: "No active managed leagues found" });
+    }
+
+    // Create quinipolo for each managed league
+    const createdQuinipolos = [];
+    const errors = [];
+
+    for (const league of leagues) {
+      try {
+        const { data: newQuinipolo, error: createError } = await supabase
+          .from("quinipolos")
+          .insert({
+            league_id: league.id,
+            quinipolo: quinipolo,
+            end_date: end_date,
+            has_been_corrected: false,
+            creation_date: creation_date || new Date().toISOString(),
+            is_deleted: false,
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error(
+            `Error creating quinipolo for managed league ${league.league_name}:`,
+            createError
+          );
+          errors.push({
+            league: league.league_name,
+            error: createError.message,
+          });
+        } else {
+          createdQuinipolos.push({
+            ...newQuinipolo,
+            league_name: league.league_name,
+          });
+        }
+      } catch (error) {
+        console.error(
+          `Error creating quinipolo for managed league ${league.league_name}:`,
+          error
+        );
+        errors.push({
+          league: league.league_name,
+          error: error.message,
+        });
+      }
+    }
+
+    // Extract teams from quinipolo data and add to teams collection
+    const teams = extractTeamsFromQuinipolo(quinipolo);
+    if (teams) {
+      try {
+        await addNewTeams(teams);
+      } catch (error) {
+        console.error("Error adding teams:", error);
+      }
+    }
+
+    const response = {
+      message: `Successfully created quinipolos for ${createdQuinipolos.length} out of ${leagues.length} managed leagues`,
+      createdQuinipolos,
+      errors: errors.length > 0 ? errors : undefined,
+      totalLeagues: leagues.length,
+      successfulCreations: createdQuinipolos.length,
+      failedCreations: errors.length,
+    };
+
+    res.status(201).json(response);
+  } catch (error) {
+    console.error("Error creating quinipolos for managed leagues:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 const extractTeamsFromQuinipolo = (quinipoloItems) => {
   const teams = {
     waterpolo: new Set(),
@@ -1030,4 +1261,6 @@ module.exports = {
   getQuinipoloAnswersAndCorrections,
   editQuinipoloCorrection,
   setQuinipoloAsDeleted,
+  createQuinipoloForAllLeagues,
+  createQuinipoloForManagedLeagues,
 };
