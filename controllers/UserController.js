@@ -191,6 +191,8 @@ const getAllUserInformation = async (req, res) => {
     userLeagues: userLeagues, // Include full userLeagues with roles
     emailAddress: profile.email, // Only from profiles
     username: profile.username,
+    birthday: profile.birthday,
+    isUserOver18: profile.is_user_over_18,
   };
 
   res.status(200).json(userData);
