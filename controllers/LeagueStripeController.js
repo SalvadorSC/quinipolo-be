@@ -41,7 +41,7 @@ const LEAGUE_TIERS = {
     name: "Managed League",
     description: "Professional league managed by our development team",
     priceId: STRIPE_PRICE_IDS.managed,
-    amount: 3999,
+    amount: 2999,
     currency: "eur",
     features: [
       "Professional league management",
@@ -55,7 +55,7 @@ const LEAGUE_TIERS = {
     name: "Self-Managed League",
     description: "League managed by you with optional support",
     priceId: STRIPE_PRICE_IDS.self_managed,
-    amount: 3999,
+    amount: 2999,
     currency: "eur",
     features: [
       "Full league control",
