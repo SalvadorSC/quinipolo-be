@@ -38,30 +38,30 @@ const ensureUserLeagueModerator = async (userId, leagueId) => {
 // League tier configurations
 const LEAGUE_TIERS = {
   managed: {
-    name: "Managed League",
-    description: "Professional league managed by our development team",
+    name: "leagueTierManagedName",
+    description: "leagueTierManagedDescription",
     priceId: STRIPE_PRICE_IDS.managed,
     amount: 2999,
     currency: "eur",
     features: [
-      "Professional league management",
-      "24/7 support",
-      "Advanced analytics",
-      "Custom branding",
-      "Priority support",
+      "featureProfessionalManagement",
+      "feature247Support",
+      "featureAdvancedAnalytics",
+      "featureCustomBranding",
+      "featurePrioritySupport",
     ],
   },
   self_managed: {
-    name: "Self-Managed League",
-    description: "League managed by you with optional support",
+    name: "leagueTierSelfManagedName",
+    description: "leagueTierSelfManagedDescription",
     priceId: STRIPE_PRICE_IDS.self_managed,
     amount: 2999,
     currency: "eur",
     features: [
-      "Full league control",
-      "Basic support",
-      "Standard analytics",
-      "Community features",
+      "featureFullControl",
+      "featureBasicSupport",
+      "featureStandardAnalytics",
+      "featureCommunityFeatures",
     ],
   },
 };
