@@ -109,6 +109,8 @@ const getLeagueData = async (req, res) => {
       return res.status(404).json({ error: "League not found" });
     }
 
+    // FE will handle hiding special leagues like "Test" for non-moderators
+
     // 2. Get user_ids and roles from user_leagues
     const { data: userLeagues, error: userLeaguesError } = await supabase
       .from("user_leagues")
@@ -203,12 +205,13 @@ const getLeagueData = async (req, res) => {
 // create new league - Updated for Supabase and Stripe integration
 const createNewLeague = async (req, res) => {
   try {
-    const { name, leagueName, isPrivate, tier, userId } = req.body;
+    const { leagueName, isPrivate, tier, userId } = req.body;
 
-    if (!name || !tier || !userId) {
+    // Accept either `name` or `leagueName` for backwards compatibility
+    if (!leagueName || !tier || !userId) {
       return res
         .status(400)
-        .json({ error: "Name, tier, and userId are required" });
+        .json({ error: "Name or leagueName, tier, and userId are required" });
     }
 
     // Check if user has permission to create leagues
@@ -229,7 +232,8 @@ const createNewLeague = async (req, res) => {
     const { data: newLeague, error: leagueError } = await supabase
       .from("leagues")
       .insert({
-        league_name: leagueName || name,
+        league_name: leagueName,
+        description: req.body.description || null,
         is_private: isPrivate || false,
         tier: tier,
         created_by: userId,
@@ -593,8 +597,33 @@ const buildLeagueResponse = async (leagueId) => {
     role: ul.role,
   }));
 
-  const participantPetitions = league.participant_petitions || [];
-  const moderatorPetitions = league.moderator_petitions || [];
+  // Fetch petitions from league_petitions table (align with getLeagueData)
+  let participantPetitions = [];
+  let moderatorPetitions = [];
+  const { data: petitionsData, error: petitionsError } = await supabase
+    .from("league_petitions")
+    .select("id, user_id, username, status, type, date")
+    .eq("league_id", leagueId);
+  if (!petitionsError && petitionsData) {
+    participantPetitions = petitionsData
+      .filter((p) => p.type === "participant")
+      .map((p) => ({
+        _id: p.id,
+        userId: p.user_id,
+        username: p.username,
+        status: p.status,
+        date: p.date,
+      }));
+    moderatorPetitions = petitionsData
+      .filter((p) => p.type === "moderator")
+      .map((p) => ({
+        _id: p.id,
+        userId: p.user_id,
+        username: p.username,
+        status: p.status,
+        date: p.date,
+      }));
+  }
 
   const { data: quinipolosToAnswer } = await supabase
     .from("quinipolos")
