@@ -16,6 +16,7 @@ router.get("/", LeaguesController.getAllLeaguesData);
 router.get("/:leagueId", LeaguesController.getLeagueData);
 router.post("/", LeaguesController.createNewLeague);
 router.put("/:leagueId", LeaguesController.updateLeague);
+router.put("/:leagueId/moderators", LeaguesController.updateLeagueModerators);
 router.delete("/:leagueId", LeaguesController.deleteLeague);
 router.put("/:leagueId/join", LeaguesController.joinLeague);
 router.put("/:leagueId/addImage", LeaguesController.addLeagueImage);

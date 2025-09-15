@@ -449,6 +449,117 @@ const ensureGlobalLeagueExists = async () => {
   return await checkLeagueExistsById(GLOBAL_LEAGUE_ID);
 };
 
+// Update moderators for a league: set provided user_ids as moderators, others as participants
+const updateLeagueModerators = async (req, res) => {
+  try {
+    const leagueId = req.params.leagueId;
+    const { moderatorIds } = req.body;
+
+    if (!Array.isArray(moderatorIds)) {
+      return res.status(400).json({ error: "moderatorIds must be an array" });
+    }
+
+    // Ensure league exists and retrieve creator (cannot be demoted)
+    const { data: leagueRow, error: leagueErr } = await supabase
+      .from("leagues")
+      .select("id, created_by")
+      .eq("id", leagueId)
+      .single();
+    if (leagueErr) {
+      if (leagueErr.code === "PGRST116") {
+        return res.status(404).json({ error: "League not found" });
+      }
+      console.error("Error fetching league:", leagueErr);
+      return res.status(500).json({ error: leagueErr.message || "Error" });
+    }
+
+    const creatorId = leagueRow.created_by;
+
+    // Fetch current memberships
+    const { data: userLeagues, error: ulErr } = await supabase
+      .from("user_leagues")
+      .select("user_id, role")
+      .eq("league_id", leagueId);
+    if (ulErr) {
+      console.error("Error fetching user_leagues:", ulErr);
+      return res.status(500).json({ error: ulErr.message || "Error" });
+    }
+
+    const currentUserIds = new Set((userLeagues || []).map((u) => u.user_id));
+    const moderatorIdSet = new Set(moderatorIds);
+
+    // Ensure creator stays moderator
+    if (creatorId && !moderatorIdSet.has(creatorId)) {
+      moderatorIdSet.add(creatorId);
+    }
+
+    // Upsert memberships for provided moderatorIds
+    for (const userId of moderatorIdSet) {
+      if (currentUserIds.has(userId)) {
+        const current = (userLeagues || []).find((u) => u.user_id === userId);
+        if (current && current.role !== "moderator") {
+          const { error: updErr } = await supabase
+            .from("user_leagues")
+            .update({ role: "moderator" })
+            .eq("user_id", userId)
+            .eq("league_id", leagueId);
+          if (updErr) console.error("Error promoting to moderator:", updErr);
+        }
+      } else {
+        const { error: insErr } = await supabase
+          .from("user_leagues")
+          .insert({ user_id: userId, league_id: leagueId, role: "moderator" });
+        if (insErr)
+          console.error("Error inserting moderator membership:", insErr);
+
+        // Ensure leaderboard entry exists
+        const { data: existingLb, error: lbCheckErr } = await supabase
+          .from("leaderboard")
+          .select("user_id")
+          .eq("user_id", userId)
+          .eq("league_id", leagueId)
+          .maybeSingle();
+        if (!existingLb && !lbCheckErr) {
+          const { error: lbInsErr } = await supabase
+            .from("leaderboard")
+            .insert({
+              user_id: userId,
+              league_id: leagueId,
+              points: 0,
+              n_quinipolos_participated: 0,
+              full_correct_quinipolos: 0,
+            });
+          if (lbInsErr) console.error("Error inserting leaderboard:", lbInsErr);
+        }
+      }
+    }
+
+    // Demote any existing moderators not in the list (except creator)
+    for (const ul of userLeagues || []) {
+      const shouldBeModerator = moderatorIdSet.has(ul.user_id);
+      if (
+        !shouldBeModerator &&
+        ul.role === "moderator" &&
+        ul.user_id !== creatorId
+      ) {
+        const { error: demoteErr } = await supabase
+          .from("user_leagues")
+          .update({ role: "participant" })
+          .eq("user_id", ul.user_id)
+          .eq("league_id", leagueId);
+        if (demoteErr) console.error("Error demoting moderator:", demoteErr);
+      }
+    }
+
+    // Return updated league view aligned to getLeagueData
+    const response = await buildLeagueResponse(leagueId);
+    return res.status(200).json(response);
+  } catch (err) {
+    console.error("Error updating league moderators:", err);
+    return res.status(500).send("Internal Server Error");
+  }
+};
+
 // Supabase version of joinLeagueById
 const joinLeagueByIdSupabase = async (leagueId, userId, username) => {
   try {
@@ -949,4 +1060,5 @@ module.exports = {
   getParticipantPetitions,
   joinLeagueByIdSupabase,
   ensureGlobalLeagueExists,
+  updateLeagueModerators,
 };
