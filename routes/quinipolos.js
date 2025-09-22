@@ -38,6 +38,7 @@ router.get(
 
 router.post(
   "/quinipolo/:id/submit-correction",
+  authenticateToken,
   QuinipolosController.correctQuinipolo
 );
 
@@ -51,6 +52,7 @@ router.get(
 // Edit a quinipolo correction
 router.post(
   "/quinipolo/:id/submit-correction-edit",
+  authenticateToken,
   QuinipolosController.editQuinipoloCorrection
 );
 

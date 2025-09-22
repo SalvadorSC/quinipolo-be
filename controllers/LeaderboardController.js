@@ -34,15 +34,16 @@ const updateLeaderboard = async (
     if (existingEntry) {
       // Update existing entry
       console.log("Updating existing leaderboard entry");
+      const currentPoints = existingEntry.points ?? 0;
+      const currentParticipated = existingEntry.n_quinipolos_participated ?? 0;
+      const currentFullCorrect = existingEntry.full_correct_quinipolos ?? 0;
       const { data: updatedEntry, error: updateError } = await supabase
         .from("leaderboard")
         .update({
-          points: existingEntry.points + points,
-          n_quinipolos_participated:
-            existingEntry.n_quinipolos_participated + 1,
+          points: currentPoints + points,
+          n_quinipolos_participated: currentParticipated + 1,
           full_correct_quinipolos:
-            existingEntry.full_correct_quinipolos +
-            (fullCorrectQuinipolo ? 1 : 0),
+            currentFullCorrect + (fullCorrectQuinipolo ? 1 : 0),
         })
         .eq("user_id", user.id)
         .eq("league_id", leagueId)
@@ -50,7 +51,12 @@ const updateLeaderboard = async (
         .single();
 
       if (updateError) {
-        throw new Error("Error updating leaderboard entry");
+        console.error("Supabase update error (leaderboard)", updateError);
+        throw new Error(
+          `Error updating leaderboard entry: ${
+            updateError.message || updateError
+          }`
+        );
       }
 
       return {
