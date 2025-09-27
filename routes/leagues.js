@@ -77,4 +77,18 @@ router.get(
   LeaderboardController.getLeaderboardByLeagueId
 );
 
+// Share link routes
+router.post("/:leagueId/share-link", LeaguesController.generateShareLink);
+router.get("/:leagueId/share-links", LeaguesController.getShareLinks);
+router.put(
+  "/:leagueId/share-links/:shareLinkId/deactivate",
+  LeaguesController.deactivateShareLink
+);
+
+// Join league via share link (public route)
+router.post(
+  "/join-by-link/:shareToken",
+  LeaguesController.joinLeagueByShareLink
+);
+
 module.exports = router;

@@ -1040,6 +1040,253 @@ const getModerationPetitions = (req, res) =>
 const getParticipantPetitions = (req, res) =>
   getPetitions(req, res, "participant");
 
+// SHARE LINK FUNCTIONALITY
+const generateShareLink = async (req, res) => {
+  try {
+    const leagueId = req.params.leagueId;
+    const { userId, expiresInDays = 7, maxUses = null } = req.body;
+
+    // Verify user is a moderator of the league
+    const { data: userLeague, error: userLeagueError } = await supabase
+      .from("user_leagues")
+      .select("role")
+      .eq("league_id", leagueId)
+      .eq("user_id", userId)
+      .single();
+
+    if (userLeagueError || !userLeague || userLeague.role !== "moderator") {
+      return res
+        .status(403)
+        .json({ error: "Only moderators can generate share links" });
+    }
+
+    // Generate secure random token
+    const crypto = require("crypto");
+    const shareToken = crypto.randomBytes(32).toString("hex");
+
+    // Calculate expiration date
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + (expiresInDays || 7));
+
+    // Create share link
+    const { data: shareLink, error: shareLinkError } = await supabase
+      .from("league_share_links")
+      .insert({
+        league_id: leagueId,
+        created_by: userId,
+        share_token: shareToken,
+        expires_at: expiresAt.toISOString(),
+        max_uses: maxUses,
+        uses_count: 0,
+        is_active: true,
+      })
+      .select()
+      .single();
+
+    if (shareLinkError) {
+      console.error("Error creating share link:", shareLinkError);
+      return res.status(500).json({ error: "Failed to create share link" });
+    }
+
+    // Return only the share token - frontend will build the complete URL
+    res.status(201).json({
+      shareToken,
+      expiresAt: shareLink.expires_at,
+      maxUses: shareLink.max_uses,
+      usesCount: shareLink.uses_count,
+    });
+  } catch (error) {
+    console.error("Error generating share link:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+const joinLeagueByShareLink = async (req, res) => {
+  try {
+    const { shareToken } = req.params;
+    const { userId, username } = req.body;
+
+    // Find the share link
+    const { data: shareLink, error: shareLinkError } = await supabase
+      .from("league_share_links")
+      .select("*")
+      .eq("share_token", shareToken)
+      .eq("is_active", true)
+      .single();
+
+    if (shareLinkError || !shareLink) {
+      return res.status(404).json({ error: "Invalid or expired share link" });
+    }
+
+    // Check if link has expired
+    if (new Date() > new Date(shareLink.expires_at)) {
+      return res.status(410).json({ error: "Share link has expired" });
+    }
+
+    // Check if link has reached max uses
+    if (shareLink.max_uses && shareLink.uses_count >= shareLink.max_uses) {
+      return res
+        .status(410)
+        .json({ error: "Share link has reached maximum uses" });
+    }
+
+    // Check if user is already in the league
+    const { data: existingUserLeague, error: checkError } = await supabase
+      .from("user_leagues")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("league_id", shareLink.league_id)
+      .single();
+
+    if (checkError && checkError.code !== "PGRST116") {
+      console.error("Error checking existing user league:", checkError);
+      return res
+        .status(500)
+        .json({ error: "Error checking league membership" });
+    }
+
+    if (existingUserLeague) {
+      return res
+        .status(400)
+        .json({ error: "User is already a member of this league" });
+    }
+
+    // Add user to the league
+    await joinLeagueByIdSupabase(shareLink.league_id, userId, username);
+
+    // Increment uses count
+    const { error: updateError } = await supabase
+      .from("league_share_links")
+      .update({
+        uses_count: shareLink.uses_count + 1,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", shareLink.id);
+
+    if (updateError) {
+      console.error("Error updating share link usage:", updateError);
+      // Don't fail the request, just log the error
+    }
+
+    // Get league information to return
+    const { data: league, error: leagueError } = await supabase
+      .from("leagues")
+      .select("id, league_name, description")
+      .eq("id", shareLink.league_id)
+      .single();
+
+    if (leagueError) {
+      console.error("Error fetching league:", leagueError);
+      return res
+        .status(500)
+        .json({ error: "Error fetching league information" });
+    }
+
+    res.status(200).json({
+      message: "Successfully joined league",
+      league: {
+        id: league.id,
+        league_name: league.league_name,
+        description: league.description,
+      },
+    });
+  } catch (error) {
+    console.error("Error joining league by share link:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+const getShareLinks = async (req, res) => {
+  try {
+    const leagueId = req.params.leagueId;
+    const { userId } = req.query;
+
+    // Verify user is a moderator of the league
+    const { data: userLeague, error: userLeagueError } = await supabase
+      .from("user_leagues")
+      .select("role")
+      .eq("league_id", leagueId)
+      .eq("user_id", userId)
+      .single();
+
+    if (userLeagueError || !userLeague || userLeague.role !== "moderator") {
+      return res
+        .status(403)
+        .json({ error: "Only moderators can view share links" });
+    }
+
+    // Get all share links for the league
+    const { data: shareLinks, error: shareLinksError } = await supabase
+      .from("league_share_links")
+      .select("*")
+      .eq("league_id", leagueId)
+      .order("created_at", { ascending: false });
+
+    if (shareLinksError) {
+      console.error("Error fetching share links:", shareLinksError);
+      return res.status(500).json({ error: "Error fetching share links" });
+    }
+
+    // Format the response - frontend will build the complete URL
+    const formattedLinks = shareLinks.map((link) => ({
+      id: link.id,
+      shareToken: link.share_token,
+      expiresAt: link.expires_at,
+      maxUses: link.max_uses,
+      usesCount: link.uses_count,
+      isActive: link.is_active,
+      createdAt: link.created_at,
+      createdBy: link.created_by,
+    }));
+
+    res.status(200).json(formattedLinks);
+  } catch (error) {
+    console.error("Error fetching share links:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+const deactivateShareLink = async (req, res) => {
+  try {
+    const { leagueId, shareLinkId } = req.params;
+    const { userId } = req.body;
+
+    // Verify user is a moderator of the league
+    const { data: userLeague, error: userLeagueError } = await supabase
+      .from("user_leagues")
+      .select("role")
+      .eq("league_id", leagueId)
+      .eq("user_id", userId)
+      .single();
+
+    if (userLeagueError || !userLeague || userLeague.role !== "moderator") {
+      return res
+        .status(403)
+        .json({ error: "Only moderators can deactivate share links" });
+    }
+
+    // Deactivate the share link
+    const { error: updateError } = await supabase
+      .from("league_share_links")
+      .update({
+        is_active: false,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", shareLinkId)
+      .eq("league_id", leagueId);
+
+    if (updateError) {
+      console.error("Error deactivating share link:", updateError);
+      return res.status(500).json({ error: "Error deactivating share link" });
+    }
+
+    res.status(200).json({ message: "Share link deactivated successfully" });
+  } catch (error) {
+    console.error("Error deactivating share link:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
 module.exports = {
   getAllLeaguesData,
   getLeagueData,
@@ -1061,4 +1308,8 @@ module.exports = {
   joinLeagueByIdSupabase,
   ensureGlobalLeagueExists,
   updateLeagueModerators,
+  generateShareLink,
+  joinLeagueByShareLink,
+  getShareLinks,
+  deactivateShareLink,
 };
