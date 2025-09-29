@@ -2,7 +2,10 @@
 const {
   getQuinipoloAnswerByUsernameAndQuinipoloId,
 } = require("./AnswerController");
-const { updateLeaderboard } = require("./LeaderboardController");
+const {
+  updateLeaderboard,
+  updateLeaderboardBatch,
+} = require("./LeaderboardController");
 const { supabase } = require("../services/supabaseClient");
 
 /**
@@ -759,9 +762,7 @@ const processAndCorrectAnswers = async (
     throw error;
   }
 
-  let feedbackForModerator = [];
-
-  // Get league ID
+  // Get league ID and correction version
   const { data: quinipolo, error: quinipoloError } = await supabase
     .from("quinipolos")
     .select("league_id, correction_count")
@@ -775,88 +776,129 @@ const processAndCorrectAnswers = async (
   const leagueId = quinipolo.league_id;
   const newCorrectionVersion = (quinipolo.correction_count || 0) + 1;
 
-  for (let answer of answers) {
+  // Compute per-answer points and deltas
+  const perAnswer = answers.map((answer) => {
     let points = 0;
     let correct15thGame = false;
-
-    // Calculate points for each answer
-    answer.answers.forEach((userAnswer) => {
+    for (const userAnswer of answer.answers) {
       const correct = correctedAnswers.find(
         (c) => c.matchNumber === userAnswer.matchNumber
       );
-      if (correct) {
-        if (
+      if (!correct) continue;
+      if (
+        userAnswer.chosenWinner === correct.chosenWinner &&
+        userAnswer.matchNumber !== 15
+      ) {
+        points += 1;
+      }
+      if (userAnswer.matchNumber === 15) {
+        const exact15th =
           userAnswer.chosenWinner === correct.chosenWinner &&
-          userAnswer.matchNumber !== 15
-        ) {
-          points += 1; // Basic point for correct winner
-        }
-
-        // Special handling for the 15th question
-        if (userAnswer.matchNumber === 15) {
-          correct15thGame =
-            userAnswer.chosenWinner === correct.chosenWinner &&
-            userAnswer.goalsHomeTeam === correct.goalsHomeTeam &&
-            userAnswer.goalsAwayTeam === correct.goalsAwayTeam;
-          if (correct15thGame) {
-            points += 1;
-          }
+          userAnswer.goalsHomeTeam === correct.goalsHomeTeam &&
+          userAnswer.goalsAwayTeam === correct.goalsAwayTeam;
+        if (exact15th) {
+          correct15thGame = true;
+          points += 1;
         }
       }
-    });
-
+    }
     const fullCorrectQuinipolo = points === 15 && correct15thGame;
-
-    // Get username from user_id for leaderboard update
-    const { data: userProfile } = await supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", answer.user_id)
-      .single();
-
-    const username = userProfile?.username || answer.user_id;
-
-    // Calculate point difference for edits
-    let pointsDifference = points;
-    if (isEdit) {
-      // For edits, calculate the difference from previous points
-      pointsDifference = points - (answer.points_earned || 0);
-    }
-
-    // Update points in the leaderboard
-    const userLeaderboardUpdate = await updateLeaderboard(
-      username,
-      leagueId,
+    const pointsDifference = isEdit
+      ? points - (answer.points_earned || 0)
+      : points;
+    const fullCorrectDelta = isEdit
+      ? (fullCorrectQuinipolo ? 1 : 0) -
+        (answer.points_earned === 15 && (answer.correct15thGame || false)
+          ? 1
+          : 0)
+      : fullCorrectQuinipolo
+      ? 1
+      : 0;
+    const participatedDelta = isEdit ? 0 : 1;
+    return {
+      answer,
+      user_id: answer.user_id,
+      points,
+      correct15thGame,
       pointsDifference,
-      fullCorrectQuinipolo
-    );
+      fullCorrectDelta,
+      participatedDelta,
+    };
+  });
 
-    // Update the answer with new correction data
-    const { error: updateError } = await supabase
-      .from("answers")
-      .update({
-        corrected: true,
-        points_earned: points,
+  // Bulk fetch usernames
+  const userIds = Array.from(new Set(perAnswer.map((r) => r.user_id)));
+  const { data: profiles, error: profilesError } = await supabase
+    .from("profiles")
+    .select("id, username")
+    .in("id", userIds);
+  if (profilesError) throw profilesError;
+  const idToUsername = new Map((profiles || []).map((p) => [p.id, p.username]));
+
+  // Build leaderboard deltas for batch update
+  const deltas = perAnswer.map((r) => ({
+    user_id: r.user_id,
+    pointsDelta: r.pointsDifference,
+    fullCorrectDelta: r.fullCorrectDelta,
+    participatedDelta: r.participatedDelta,
+  }));
+
+  // Apply batch leaderboard update
+  const updatedRows = await updateLeaderboardBatch(leagueId, deltas);
+  const updatedByUserId = new Map(updatedRows.map((u) => [u.user_id, u]));
+
+  // Snapshot leaderboard history per user for this quinipolo and version
+  try {
+    const historyRows = perAnswer.map((r) => {
+      const updated = updatedByUserId.get(r.user_id);
+      return {
+        quinipolo_id: quinipoloId,
+        league_id: leagueId,
+        user_id: r.user_id,
+        points_delta: r.pointsDifference,
+        total_points_after: updated ? updated.points ?? 0 : 0,
+        full_correct_delta: r.fullCorrectDelta,
+        participated_delta: r.participatedDelta,
         correction_version: newCorrectionVersion,
-        last_corrected_at: new Date().toISOString(),
-      })
-      .eq("id", answer.id);
-
-    if (updateError) {
-      console.warn("Failed to update answer correction data:", updateError);
-    }
-
-    // Gather feedback for the moderator
-    feedbackForModerator.push({
-      username: userLeaderboardUpdate.username,
-      pointsEarned: pointsDifference,
-      totalPoints: userLeaderboardUpdate.totalPoints,
-      correct15thGame: correct15thGame,
-      nQuinipolosParticipated: userLeaderboardUpdate.nQuinipolosParticipated,
+      };
     });
+
+    if (historyRows.length > 0) {
+      const { error: historyInsertError } = await supabase
+        .from("leaderboard_history")
+        .upsert(historyRows, {
+          onConflict: "quinipolo_id,user_id,correction_version",
+        });
+      if (historyInsertError) {
+        console.warn(
+          "Failed to insert leaderboard history:",
+          historyInsertError
+        );
+      }
+    }
+  } catch (e) {
+    console.warn("Unexpected error while inserting leaderboard history:", e);
   }
 
-  // Update quinipolo correction metadata
+  // Concurrently update answers
+  const concurrency = 10;
+  for (let i = 0; i < perAnswer.length; i += concurrency) {
+    const slice = perAnswer.slice(i, i + concurrency);
+    const updates = slice.map((r) =>
+      supabase
+        .from("answers")
+        .update({
+          corrected: true,
+          points_earned: r.points,
+          correction_version: newCorrectionVersion,
+          last_corrected_at: new Date().toISOString(),
+        })
+        .eq("id", r.answer.id)
+    );
+    await Promise.allSettled(updates);
+  }
+
+  // Update quinipolo metadata
   const { error: quinipoloUpdateError } = await supabase
     .from("quinipolos")
     .update({
@@ -864,13 +906,26 @@ const processAndCorrectAnswers = async (
       last_corrected_by: moderatorId,
     })
     .eq("id", quinipoloId);
-
   if (quinipoloUpdateError) {
     console.warn(
       "Failed to update quinipolo correction metadata:",
       quinipoloUpdateError
     );
   }
+
+  // Build feedback
+  const feedbackForModerator = perAnswer.map((r) => {
+    const updated = updatedByUserId.get(r.user_id);
+    return {
+      username: idToUsername.get(r.user_id) || r.user_id,
+      pointsEarned: r.pointsDifference,
+      totalPoints: updated ? updated.points : undefined,
+      correct15thGame: r.correct15thGame,
+      nQuinipolosParticipated: updated
+        ? updated.n_quinipolos_participated
+        : undefined,
+    };
+  });
 
   return feedbackForModerator;
 };
@@ -880,10 +935,10 @@ const correctQuinipolo = async (req, res) => {
   const { answers } = req.body;
 
   try {
-    // Check if quinipolo exists
+    // Check if quinipolo exists and get league_id
     const { data: quinipolo, error: quinipoloError } = await supabase
       .from("quinipolos")
-      .select("id")
+      .select("id, league_id")
       .eq("id", id)
       .single();
 
@@ -936,9 +991,44 @@ const correctQuinipolo = async (req, res) => {
       });
     }
 
-    res
-      .status(200)
-      .json({ message: "Quinipolo corrected successfully", results });
+    // Fetch full participants leaderboard for the league (to include non-respondents)
+    let participantsLeaderboard = [];
+    try {
+      const { data: leaderboardRows, error: leaderboardError } = await supabase
+        .from("leaderboard")
+        .select(
+          "user_id, points, n_quinipolos_participated, full_correct_quinipolos"
+        )
+        .eq("league_id", quinipolo.league_id)
+        .order("points", { ascending: false });
+
+      if (!leaderboardError && leaderboardRows && leaderboardRows.length > 0) {
+        const userIds = leaderboardRows.map((row) => row.user_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", userIds);
+        const userMap = Object.fromEntries(
+          (profiles || []).map((p) => [p.id, p.username])
+        );
+        participantsLeaderboard = leaderboardRows.map((row) => ({
+          username: userMap[row.user_id] || "unknown",
+          points: row.points,
+          totalPoints: row.points,
+          nQuinipolosParticipated: row.n_quinipolos_participated,
+          fullCorrectQuinipolos: row.full_correct_quinipolos,
+        }));
+      }
+    } catch (e) {
+      console.warn("Failed to fetch participants leaderboard:", e);
+    }
+
+    res.status(200).json({
+      message: "Quinipolo corrected successfully",
+      results,
+      leagueId: quinipolo.league_id,
+      participantsLeaderboard,
+    });
   } catch (error) {
     res.status(500).json({
       message: "Quinipolo could not be corrected. Please try again later",
@@ -1080,9 +1170,43 @@ const editQuinipoloCorrection = async (req, res) => {
       });
     }
 
+    // Fetch full participants leaderboard for the league (to include non-respondents)
+    let participantsLeaderboard = [];
+    try {
+      const { data: leaderboardRows, error: leaderboardError } = await supabase
+        .from("leaderboard")
+        .select(
+          "user_id, points, n_quinipolos_participated, full_correct_quinipolos"
+        )
+        .eq("league_id", quinipolo.league_id)
+        .order("points", { ascending: false });
+
+      if (!leaderboardError && leaderboardRows && leaderboardRows.length > 0) {
+        const userIds = leaderboardRows.map((row) => row.user_id);
+        const { data: profiles } = await supabase
+          .from("profiles")
+          .select("id, username")
+          .in("id", userIds);
+        const userMap = Object.fromEntries(
+          (profiles || []).map((p) => [p.id, p.username])
+        );
+        participantsLeaderboard = leaderboardRows.map((row) => ({
+          username: userMap[row.user_id] || "unknown",
+          points: row.points,
+          totalPoints: row.points,
+          nQuinipolosParticipated: row.n_quinipolos_participated,
+          fullCorrectQuinipolos: row.full_correct_quinipolos,
+        }));
+      }
+    } catch (e) {
+      console.warn("Failed to fetch participants leaderboard (edit):", e);
+    }
+
     res.status(200).json({
       message: "Quinipolo correction edited successfully",
       results: results,
+      leagueId: quinipolo.league_id,
+      participantsLeaderboard,
     });
   } catch (error) {
     console.error("Error editing quinipolo correction:", error);

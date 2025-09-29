@@ -30,44 +30,7 @@ const getUserRole = async (req, res) => {
   }
 };
 
-const getUserBasicData = async (req, res) => {
-  try {
-    console.log("Fetching user's data", req.params.username);
-    const user = await User.getUserByUsername(req.params.username);
-
-    let quinipolosToAnswer = [];
-    let leaguesInfo = [];
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if (user.leagues && user.leagues.length > 0) {
-      // TODO: Refactor Leagues and Quinipolo to use Supabase if not already
-      const leaguePromises = user.leagues.map(async (leagueId) => {
-        // Placeholder: fetch league and quinipolos from Supabase
-        // const league = await Leagues.getLeagueById(leagueId);
-        // const quinipolos = await Quinipolo.getActiveByLeagueId(leagueId);
-        // For now, fallback to old logic or leave as TODO
-        return [];
-      });
-
-      const results = await Promise.all(leaguePromises);
-      quinipolosToAnswer = results.flat();
-    }
-
-    res.status(200).json({
-      role: user.role,
-      leagues: leaguesInfo,
-      quinipolosToAnswer: quinipolosToAnswer,
-      userLeagues: user.userLeagues,
-      userId: user.id,
-      username: user.username,
-    });
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).send("Internal Server Error");
-  }
-};
+// Removed legacy getUserBasicData endpoint (used username, deprecated)
 
 const createUser = async (req, res) => {
   try {
@@ -249,7 +212,6 @@ module.exports = {
   getAllUsers,
   createUser,
   getUserRole,
-  getUserBasicData,
   getUserName,
   updateUserSubscription,
   checkLeaguesAndUpdateUser,

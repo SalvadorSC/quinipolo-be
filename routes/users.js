@@ -27,7 +27,7 @@ router.get(
 router.patch("/me/profile", authenticateToken, UserController.updateMyProfile);
 
 // Get user's basic data
-router.get("/user/data/:username", UserController.getUserBasicData);
+// Deprecated: removed endpoint for fetching user basic data by username
 
 // Get an user's role
 router.get("/api/user/role/:email", UserController.getUserRole);
