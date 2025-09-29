@@ -19,7 +19,7 @@ router.put("/:leagueId", LeaguesController.updateLeague);
 router.put("/:leagueId/moderators", LeaguesController.updateLeagueModerators);
 router.delete("/:leagueId", LeaguesController.deleteLeague);
 router.put("/:leagueId/join", LeaguesController.joinLeague);
-router.put("/:leagueId/addImage", LeaguesController.addLeagueImage);
+// Legacy image route removed; icon is handled via leagues table and standard update
 router.post(
   "/:leagueId/request-moderator",
   LeaguesController.createModerationPetition

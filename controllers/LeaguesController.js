@@ -206,6 +206,23 @@ const getLeagueData = async (req, res) => {
 const createNewLeague = async (req, res) => {
   try {
     const { leagueName, isPrivate, tier, userId } = req.body;
+    // Accept either icon_style or iconStyle (camelCase) from request. For
+    // backwards compatibility, if legacy flat fields are provided, compose
+    // a minimal icon_style object from them.
+    const iconStyle =
+      req.body.icon_style ||
+      req.body.iconStyle ||
+      (req.body.icon ||
+      req.body.accent_color ||
+      req.body.accentColor ||
+      req.body.icon_color ||
+      req.body.iconColor
+        ? {
+            icon: req.body.icon || null,
+            accent_color: req.body.accent_color || req.body.accentColor || null,
+            icon_color: req.body.icon_color || req.body.iconColor || null,
+          }
+        : null);
 
     // Accept either `name` or `leagueName` for backwards compatibility
     if (!leagueName || !tier || !userId) {
@@ -238,6 +255,7 @@ const createNewLeague = async (req, res) => {
         tier: tier,
         created_by: userId,
         status: "active",
+        icon_style: iconStyle,
       })
       .select()
       .single();
@@ -275,6 +293,9 @@ const createNewLeague = async (req, res) => {
       console.error("Error creating leaderboard entry:", leaderboardError);
     }
 
+    // Normalize response fields for FE compatibility
+    const normalizedAccent = newLeague.icon_style?.accent_color || null;
+    const normalizedIcon = newLeague.icon_style?.icon || null;
     res.status(201).json({
       id: newLeague.id,
       league_name: newLeague.league_name,
@@ -282,6 +303,9 @@ const createNewLeague = async (req, res) => {
       tier: newLeague.tier,
       createdBy: newLeague.created_by,
       status: newLeague.status,
+      icon: normalizedIcon,
+      icon_style: newLeague.icon_style || null,
+      accent_color: normalizedAccent,
     });
   } catch (error) {
     console.error("Error creating league:", error);
@@ -293,6 +317,21 @@ const updateLeague = async (req, res) => {
   try {
     const leagueId = req.params.leagueId;
     const { leagueName, description } = req.body;
+    // Accept either icon_style or iconStyle; compose from legacy flat fields if present
+    const iconStyle =
+      req.body.icon_style ||
+      req.body.iconStyle ||
+      (req.body.icon ||
+      req.body.accent_color ||
+      req.body.accentColor ||
+      req.body.icon_color ||
+      req.body.iconColor
+        ? {
+            icon: req.body.icon || null,
+            accent_color: req.body.accent_color || req.body.accentColor || null,
+            icon_color: req.body.icon_color || req.body.iconColor || null,
+          }
+        : null);
 
     // Update the league in Supabase
     const { data: updatedLeague, error: updateError } = await supabase
@@ -300,6 +339,7 @@ const updateLeague = async (req, res) => {
       .update({
         league_name: leagueName,
         description: description,
+        icon_style: iconStyle,
         updated_at: new Date().toISOString(),
       })
       .eq("id", leagueId)
@@ -308,7 +348,9 @@ const updateLeague = async (req, res) => {
 
     if (updateError) {
       console.error("Error updating league:", updateError);
-      return res.status(500).json({ error: "Failed to update league" });
+      return res
+        .status(500)
+        .json({ error: updateError?.message || "Failed to update league" });
     }
 
     res.status(200).json(updatedLeague);
@@ -651,19 +693,7 @@ const joinLeagueByIdSupabase = async (leagueId, userId, username) => {
   }
 };
 
-const addLeagueImage = async (req, res) => {
-  try {
-    const league = await Leagues.findOneAndUpdate(
-      { leagueId: req.params.leagueId },
-      { leagueImage: req.body.leagueImage },
-      { new: true }
-    );
-    res.status(200).json(league);
-  } catch (error) {
-    console.error("Error adding league image:", error);
-    res.status(500).send("Internal Server Error");
-  }
-};
+// Legacy addLeagueImage removed (Mongo-based). Use icon field in Supabase `leagues` instead.
 
 // Helper to map petition type to Supabase JSONB column name
 const getPetitionColumnName = (petitionType) =>
@@ -754,6 +784,8 @@ const buildLeagueResponse = async (leagueId) => {
 
   return {
     ...league,
+    icon: league.icon_style?.icon,
+    accent_color: league.icon_style?.accent_color,
     participants,
     participantPetitions,
     moderatorPetitions,
@@ -1294,7 +1326,6 @@ module.exports = {
   deleteLeague,
   updateLeague,
   joinLeague,
-  addLeagueImage,
   createModerationPetition,
   getModerationPetitions,
   acceptModerationPetition,

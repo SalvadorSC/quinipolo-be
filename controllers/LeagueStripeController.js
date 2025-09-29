@@ -198,6 +198,9 @@ const handleLeaguePaymentWebhook = async (req, res) => {
           league_description: leagueDescription,
           is_private: isPrivate,
           user_id: userId,
+          icon,
+          accent_color: accentColor,
+          icon_style: iconStyle,
         } = session.metadata;
 
         console.log("Extracted metadata:", {
@@ -217,6 +220,9 @@ const handleLeaguePaymentWebhook = async (req, res) => {
             tier: tier,
             created_by: userId,
             status: "active",
+            icon: icon || null,
+            accent_color: accentColor || null,
+            icon_style: iconStyle || null,
           })
           .select()
           .single();
