@@ -70,6 +70,7 @@ const LEAGUE_TIERS = {
 const createLeagueCheckoutSession = async (req, res) => {
   try {
     const { tier, leagueName, leagueDescription, isPrivate, userId } = req.body;
+    const iconStyleFromBody = req.body.iconStyle || req.body.icon_style || null;
 
     if (!tier || !LEAGUE_TIERS[tier]) {
       return res.status(400).json({ error: "Invalid tier specified" });
@@ -146,6 +147,10 @@ const createLeagueCheckoutSession = async (req, res) => {
         league_description: leagueDescription || "",
         is_private: isPrivate ? "true" : "false",
         user_id: userId,
+        // Pass branding through checkout as JSON string (Stripe metadata requires strings)
+        ...(iconStyleFromBody
+          ? { icon_style: JSON.stringify(iconStyleFromBody) }
+          : {}),
       },
       /* discounts: [
         {
@@ -209,6 +214,20 @@ const handleLeaguePaymentWebhook = async (req, res) => {
           userId,
         });
 
+        // Normalize icon_style (may arrive as JSON string)
+        let parsedIconStyle = null;
+        if (iconStyle) {
+          if (typeof iconStyle === "string") {
+            try {
+              parsedIconStyle = JSON.parse(iconStyle);
+            } catch (_) {
+              parsedIconStyle = null;
+            }
+          } else if (typeof iconStyle === "object") {
+            parsedIconStyle = iconStyle;
+          }
+        }
+
         // Create the league in Supabase (align with DB schema)
         const { data: newLeague, error: leagueError } = await supabase
           .from("leagues")
@@ -218,7 +237,7 @@ const handleLeaguePaymentWebhook = async (req, res) => {
             tier: tier,
             created_by: userId,
             status: "active",
-            icon_style: iconStyle || null,
+            icon_style: parsedIconStyle || null,
           })
           .select()
           .single();
