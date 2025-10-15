@@ -7,6 +7,10 @@ const {
   updateLeaderboardBatch,
 } = require("./LeaderboardController");
 const { supabase } = require("../services/supabaseClient");
+const {
+  computeAveragePoints,
+} = require("../services/stats/computeAveragePoints");
+const { computeMostFailed } = require("../services/stats/computeMostFailed");
 
 /**
  * Adds new teams to the Supabase 'teams' table.
@@ -938,7 +942,7 @@ const correctQuinipolo = async (req, res) => {
     // Check if quinipolo exists and get league_id
     const { data: quinipolo, error: quinipoloError } = await supabase
       .from("quinipolos")
-      .select("id, league_id")
+      .select("id, league_id, quinipolo")
       .eq("id", id)
       .single();
 
@@ -991,6 +995,13 @@ const correctQuinipolo = async (req, res) => {
       });
     }
 
+    // Compute stats for this correction via services
+    const averagePointsThisQuinipolo = computeAveragePoints(results);
+    const surveyItems = Array.isArray(quinipolo?.quinipolo)
+      ? quinipolo.quinipolo
+      : [];
+    const mostFailed = await computeMostFailed(id, answers, surveyItems);
+
     // Fetch full participants leaderboard for the league (to include non-respondents)
     let participantsLeaderboard = [];
     try {
@@ -1028,6 +1039,8 @@ const correctQuinipolo = async (req, res) => {
       results,
       leagueId: quinipolo.league_id,
       participantsLeaderboard,
+      averagePointsThisQuinipolo: averagePointsThisQuinipolo,
+      mostFailed,
     });
   } catch (error) {
     res.status(500).json({
@@ -1097,7 +1110,7 @@ const editQuinipoloCorrection = async (req, res) => {
     // Get current quinipolo with corrections
     const { data: quinipolo, error: quinipoloError } = await supabase
       .from("quinipolos")
-      .select("id, correct_answers, league_id")
+      .select("id, correct_answers, league_id, quinipolo")
       .eq("id", id)
       .single();
 
@@ -1170,6 +1183,13 @@ const editQuinipoloCorrection = async (req, res) => {
       });
     }
 
+    // Compute stats (same as initial correction) via services
+    const averagePointsThisQuinipolo = computeAveragePoints(results);
+    const surveyItems = Array.isArray(quinipolo?.quinipolo)
+      ? quinipolo.quinipolo
+      : [];
+    const mostFailed = await computeMostFailed(id, answers, surveyItems);
+
     // Fetch full participants leaderboard for the league (to include non-respondents)
     let participantsLeaderboard = [];
     try {
@@ -1207,6 +1227,8 @@ const editQuinipoloCorrection = async (req, res) => {
       results: results,
       leagueId: quinipolo.league_id,
       participantsLeaderboard,
+      averagePointsThisQuinipolo: averagePointsThisQuinipolo,
+      mostFailed,
     });
   } catch (error) {
     console.error("Error editing quinipolo correction:", error);
