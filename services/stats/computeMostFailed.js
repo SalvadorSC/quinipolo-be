@@ -5,6 +5,9 @@ const { supabase } = require("../../services/supabaseClient");
  * - Chooses match with highest incorrect percentage
  * - Tiebreaker: lowest matchNumber
  * - Returns team names and winners mapping for clarity
+ * - NOTE: The field `mostWrongWinner` represents the MOST CHOSEN answer overall
+ *   for that match (whether it was correct or not). Name retained for
+ *   backward-compatibility with existing clients.
  *
  * @param {string} quinipoloId
  * @param {Array<{ matchNumber: number, chosenWinner: string, goalsHomeTeam?: string, goalsAwayTeam?: string }>} correctedAnswers
@@ -27,9 +30,19 @@ async function computeMostFailed(quinipoloId, correctedAnswers, surveyItems) {
       for (const ua of row.answers || []) {
         const m = ua.matchNumber;
         if (!perMatchCounts.has(m))
-          perMatchCounts.set(m, { total: 0, wrong: 0, wrongByWinner: {} });
+          perMatchCounts.set(m, {
+            total: 0,
+            wrong: 0,
+            wrongByWinner: {},
+            totalByWinner: {}, // count of ALL selections for each option
+          });
         const counts = perMatchCounts.get(m);
         counts.total += 1;
+
+        // Track total selections regardless of correctness
+        counts.totalByWinner[ua.chosenWinner] =
+          (counts.totalByWinner[ua.chosenWinner] || 0) + 1;
+
         const correct = correctedByMatch.get(m);
         if (correct) {
           const isCorrect =
@@ -56,12 +69,13 @@ async function computeMostFailed(quinipoloId, correctedAnswers, surveyItems) {
         (Math.abs(failedPct - best.failedPercentage) < 1e-9 &&
           matchNumber < best.matchNumber)
       ) {
-        let mostWrongWinner = null;
-        let mostWrongCount = -1;
-        for (const [winner, c] of Object.entries(counts.wrongByWinner)) {
-          if (c > mostWrongCount) {
+        // Determine the most chosen option OVERALL for this match
+        let mostWrongWinner = null; // name preserved for compatibility
+        let mostChosenCount = -1;
+        for (const [winner, c] of Object.entries(counts.totalByWinner)) {
+          if (c > mostChosenCount) {
             mostWrongWinner = winner;
-            mostWrongCount = c;
+            mostChosenCount = c;
           }
         }
 
