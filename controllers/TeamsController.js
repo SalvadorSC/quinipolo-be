@@ -5,7 +5,8 @@ const getAllTeams = async (req, res) => {
   try {
     const { data: teams, error } = await supabase
       .from("teams")
-      .select("name, sport");
+      .select("name, sport, gender, alias")
+      .order("name");
 
     if (error) {
       console.error("Error fetching teams from Supabase:", error);
@@ -14,9 +15,14 @@ const getAllTeams = async (req, res) => {
 
     // Group teams by sport
     const grouped = {};
-    teams.forEach(({ name, sport }) => {
+    teams.forEach(({ name, sport, gender, alias }) => {
       if (!grouped[sport]) grouped[sport] = [];
-      grouped[sport].push(name);
+      grouped[sport].push({
+        name,
+        sport,
+        gender: gender ?? null,
+        aliases: Array.isArray(alias) ? alias : [],
+      });
     });
 
     res.status(200).json(grouped);
