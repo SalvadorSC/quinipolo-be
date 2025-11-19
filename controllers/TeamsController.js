@@ -32,4 +32,24 @@ const getAllTeams = async (req, res) => {
   }
 };
 
-module.exports = { getAllTeams };
+const getWaterpoloTeams = async (req, res) => {
+  try {
+    const { data: teams, error } = await supabase
+      .from("teams")
+      .select("*")
+      .ilike("sport", "waterpolo")
+      .order("name");
+
+    if (error) {
+      console.error("Error fetching waterpolo teams from Supabase:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+
+    res.status(200).json(teams ?? []);
+  } catch (error) {
+    console.error("Error in getWaterpoloTeams:", error);
+    res.status(500).send("Internal Server Error");
+  }
+};
+
+module.exports = { getAllTeams, getWaterpoloTeams };
