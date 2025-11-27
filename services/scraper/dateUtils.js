@@ -1,16 +1,24 @@
-const { addDays, isAfter, isBefore, parseISO, getDay, compareAsc } = require("date-fns");
+const { addDays, isAfter, isBefore, parseISO, getDay, compareAsc, subDays } = require("date-fns");
 
-function getWindowBounds(reference = new Date()) {
+function getWindowBounds(reference = new Date(), lookBackward = false, days = 7) {
+  if (lookBackward) {
+    // For backward-looking windows: last N days (end = now, start = now - N days)
+    const end = reference;
+    const start = subDays(reference, days);
+    return { start, end };
+  }
+  // Forward-looking window: next N days
   const start = reference;
-  const end = addDays(reference, 7);
+  const end = addDays(reference, days);
   return { start, end };
 }
 
 function isWithinWindow(dateIso, start, end) {
   const date = parseISO(dateIso);
+  // Include boundary dates: start <= date <= end
   return (
     (isAfter(date, start) || date.getTime() === start.getTime()) &&
-    isBefore(date, end)
+    (isBefore(date, end) || date.getTime() === end.getTime())
   );
 }
 

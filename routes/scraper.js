@@ -9,5 +9,8 @@ const { authenticateToken } = require("../middleware/auth");
 // since it's only called from the frontend by authenticated users
 router.get("/matches", ScraperController.getMatches);
 
+// Get results for a quinipolo
+router.get("/results", ScraperController.getResults);
+
 module.exports = router;
 
