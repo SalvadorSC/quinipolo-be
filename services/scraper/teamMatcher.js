@@ -32,14 +32,14 @@ async function fetchTeamMap() {
     teamMapCache = teams.map((team) => {
       // Get aliases from database
       const dbAliases = Array.isArray(team.alias) ? team.alias : [];
-      
+
       // Generate aliases from team name (like buildTeamMap.mjs does)
       const generatedAliases = buildAliases(team.name);
-      
+
       // Combine and deduplicate
       const allAliases = new Set([...dbAliases, ...generatedAliases]);
       const aliases = Array.from(allAliases);
-      
+
       return {
         id: String(team.id),
         name: String(team.name),
@@ -284,8 +284,25 @@ function getMatchDiagnostics(input) {
   };
 }
 
-function getConfidenceThresholds(name) {
+function getConfidenceThresholds(name, isChampionsLeague = false) {
   const length = name.replace(/[^a-z0-9]/gi, "").length;
+
+  // For Champions League matches, use less lenient thresholds
+  // This helps match international teams that may have different naming conventions
+  if (isChampionsLeague) {
+    if (length >= 12) {
+      return { confident: 0.95, low: 0.85 };
+    }
+    if (length >= 9) {
+      return { confident: 0.9, low: 0.8 };
+    }
+    if (length >= 6) {
+      return { confident: 0.85, low: 0.75 };
+    }
+    return { confident: 0.8, low: 0.7 };
+  }
+
+  // Original thresholds for domestic matches
   if (length >= 12) {
     return { confident: 0.92, low: 0.75 };
   }
@@ -301,8 +318,10 @@ function getConfidenceThresholds(name) {
 /**
  * Synchronous version of matchTeamName - requires team map to be pre-loaded
  * Use this when you've already called fetchTeamMap() to avoid async overhead
+ * @param {string} flashscoreName - The team name from Flashscore
+ * @param {boolean} isChampionsLeague - Whether this is a Champions League match (default: false)
  */
-function matchTeamNameSync(flashscoreName) {
+function matchTeamNameSync(flashscoreName, isChampionsLeague = false) {
   if (!flashscoreName) {
     return flashscoreName;
   }
@@ -323,21 +342,27 @@ function matchTeamNameSync(flashscoreName) {
     return flashscoreName;
   }
 
-  const thresholds = getConfidenceThresholds(flashscoreName);
+  const thresholds = getConfidenceThresholds(flashscoreName, isChampionsLeague);
 
   if (result.confidence >= thresholds.confident) {
     return result.name;
   }
 
   if (result.confidence >= thresholds.low) {
+    const context = isChampionsLeague ? " (Champions League)" : "";
     console.warn(
-      `Low-confidence match for "${flashscoreName}" -> ${result.name} (${(result.confidence * 100).toFixed(1)}%)`
+      `Low-confidence match${context} for "${flashscoreName}" -> ${
+        result.name
+      } (${(result.confidence * 100).toFixed(1)}%)`
     );
     return result.name;
   }
 
+  const context = isChampionsLeague ? " (Champions League)" : "";
   console.warn(
-    `No ID assigned for "${flashscoreName}". Closest candidate: ${result.name} (${(result.confidence * 100).toFixed(1)}%)`
+    `No ID assigned${context} for "${flashscoreName}". Closest candidate: ${
+      result.name
+    } (${(result.confidence * 100).toFixed(1)}%)`
   );
   return flashscoreName;
 }

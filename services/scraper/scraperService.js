@@ -84,8 +84,8 @@ async function fetchAndSelectMatches() {
   await fetchTeamMap();
   const normalizedMatches = matchesInWindow.map((match) => ({
     ...match,
-    homeTeam: matchTeamNameSync(match.homeTeam),
-    awayTeam: matchTeamNameSync(match.awayTeam),
+    homeTeam: matchTeamNameSync(match.homeTeam, match.isChampionsLeague),
+    awayTeam: matchTeamNameSync(match.awayTeam, match.isChampionsLeague),
   }));
 
   const quotas = computeAdjustedQuotas(normalizedMatches);
