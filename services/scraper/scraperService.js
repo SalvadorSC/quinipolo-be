@@ -170,7 +170,7 @@ function classifyDifficulty(closeness) {
   if (!Number.isFinite(closeness)) {
     return "unknown";
   }
-  if (closeness <= 1.75) {
+  if (closeness <= 2) {
     return "hard";
   }
   if (closeness <= 3.5) {
