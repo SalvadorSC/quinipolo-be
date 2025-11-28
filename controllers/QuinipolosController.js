@@ -11,6 +11,9 @@ const {
   computeAveragePoints,
 } = require("../services/stats/computeAveragePoints");
 const { computeMostFailed } = require("../services/stats/computeMostFailed");
+const {
+  computeAnswerStatistics,
+} = require("../services/stats/computeAnswerStatistics");
 
 /**
  * Adds new teams to the Supabase 'teams' table.
@@ -667,6 +670,28 @@ const getQuinipoloAnswersAndCorrections = async (req, res) => {
         .json({ message: "Error fetching answers", error: answersError });
     }
 
+    // Check if we need to compute statistics (lazy computation)
+    const deadlinePassed = new Date(quinipolo.end_date) < new Date();
+    const needsStatistics = deadlinePassed && !quinipolo.answer_statistics;
+
+    if (needsStatistics) {
+      try {
+        const statistics = await computeAnswerStatistics(id);
+        if (statistics) {
+          // Store statistics in database
+          await supabase
+            .from("quinipolos")
+            .update({ answer_statistics: statistics })
+            .eq("id", id);
+
+          quinipolo.answer_statistics = statistics;
+        }
+      } catch (error) {
+        console.warn("Failed to compute answer statistics:", error);
+        // Don't fail the request, just continue without statistics
+      }
+    }
+
     // Transform quinipolo to match expected format
     const transformedQuinipolo = {
       id: quinipolo.id,
@@ -687,6 +712,11 @@ const getQuinipoloAnswersAndCorrections = async (req, res) => {
       creationDate: quinipolo.creation_date,
       _id: quinipolo.id,
     };
+
+    // Include statistics in response if available and deadline passed
+    if (deadlinePassed && quinipolo.answer_statistics) {
+      transformedQuinipolo.answer_statistics = quinipolo.answer_statistics;
+    }
 
     if (!answers) {
       return res
@@ -942,7 +972,7 @@ const correctQuinipolo = async (req, res) => {
     // Check if quinipolo exists and get league_id
     const { data: quinipolo, error: quinipoloError } = await supabase
       .from("quinipolos")
-      .select("id, league_id, quinipolo")
+      .select("id, league_id, quinipolo, end_date")
       .eq("id", id)
       .single();
 
@@ -993,6 +1023,38 @@ const correctQuinipolo = async (req, res) => {
         message: "Failed to update quinipolo corrections",
         error: updateError,
       });
+    }
+
+    // Compute and store answer statistics (if deadline passed)
+    const deadlinePassed = new Date(quinipolo.end_date) < new Date();
+    if (deadlinePassed) {
+      try {
+        const statistics = await computeAnswerStatistics(id);
+        if (statistics) {
+          // Check if statistics already exist
+          const { data: existingStats } = await supabase
+            .from("answer_statistics")
+            .select("id")
+            .eq("quinipolo_id", id)
+            .single();
+
+          if (!existingStats) {
+            // Store statistics in database
+            await supabase.from("answer_statistics").insert({
+              quinipolo_id: id,
+              statistics: statistics,
+              computed_at: statistics.computed_at,
+              total_responses: statistics.total_responses,
+            });
+          }
+        }
+      } catch (error) {
+        console.warn(
+          "Failed to compute/store answer statistics during correction:",
+          error
+        );
+        // Don't fail the correction if statistics computation fails
+      }
     }
 
     // Compute stats for this correction via services
@@ -1110,7 +1172,7 @@ const editQuinipoloCorrection = async (req, res) => {
     // Get current quinipolo with corrections
     const { data: quinipolo, error: quinipoloError } = await supabase
       .from("quinipolos")
-      .select("id, correct_answers, league_id, quinipolo")
+      .select("id, correct_answers, league_id, quinipolo, end_date")
       .eq("id", id)
       .single();
 
@@ -1181,6 +1243,38 @@ const editQuinipoloCorrection = async (req, res) => {
         message: "Failed to update quinipolo corrections",
         error: updateError,
       });
+    }
+
+    // Compute and store answer statistics (if deadline passed)
+    const deadlinePassed = new Date(quinipolo.end_date) < new Date();
+    if (deadlinePassed) {
+      try {
+        const statistics = await computeAnswerStatistics(id);
+        if (statistics) {
+          // Check if statistics already exist
+          const { data: existingStats } = await supabase
+            .from("answer_statistics")
+            .select("id")
+            .eq("quinipolo_id", id)
+            .single();
+
+          if (!existingStats) {
+            // Store statistics in database
+            await supabase.from("answer_statistics").insert({
+              quinipolo_id: id,
+              statistics: statistics,
+              computed_at: statistics.computed_at,
+              total_responses: statistics.total_responses,
+            });
+          }
+        }
+      } catch (error) {
+        console.warn(
+          "Failed to compute/store answer statistics during correction edit:",
+          error
+        );
+        // Don't fail the correction if statistics computation fails
+      }
     }
 
     // Compute stats (same as initial correction) via services
@@ -1259,6 +1353,28 @@ const getQuinipoloCorrectedById = async (req, res) => {
       return res.status(404).json({ message: "Quinipolo not found" });
     }
 
+    // Check if we need to compute statistics (lazy computation)
+    const deadlinePassed = new Date(quinipolo.end_date) < new Date();
+    const needsStatistics = deadlinePassed && !quinipolo.answer_statistics;
+
+    if (needsStatistics) {
+      try {
+        const statistics = await computeAnswerStatistics(id);
+        if (statistics) {
+          // Store statistics in database
+          await supabase
+            .from("quinipolos")
+            .update({ answer_statistics: statistics })
+            .eq("id", id);
+
+          quinipolo.answer_statistics = statistics;
+        }
+      } catch (error) {
+        console.warn("Failed to compute answer statistics:", error);
+        // Don't fail the request, just continue without statistics
+      }
+    }
+
     // Transform to match expected format
     const transformedQuinipolo = {
       id: quinipolo.id,
@@ -1279,6 +1395,11 @@ const getQuinipoloCorrectedById = async (req, res) => {
       creationDate: quinipolo.creation_date,
       _id: quinipolo.id,
     };
+
+    // Include statistics in response if available and deadline passed
+    if (deadlinePassed && quinipolo.answer_statistics) {
+      transformedQuinipolo.answer_statistics = quinipolo.answer_statistics;
+    }
 
     res.status(200).json(transformedQuinipolo);
   } catch (error) {

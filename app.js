@@ -18,6 +18,7 @@ const leagueStripeRoutes = require("./routes/leagueStripe.js");
 const LeagueStripeController = require("./controllers/LeagueStripeController");
 const teamsRoutes = require("./routes/teams.js");
 const scraperRoutes = require("./routes/scraper.js");
+const answerStatisticsRoutes = require("./routes/answerStatistics.js");
 
 // Enable CORS for all routes
 app.use(cors()); // Add this line
@@ -55,6 +56,7 @@ app.use("/api/leagues", leaguesRoutes);
 app.use("/api/users", usersRoutes);
 
 app.use("/api/quinipolos", quinipolosRoutes);
+app.use("/api/answer-statistics", answerStatisticsRoutes);
 
 app.use("/api/league-stripe", leagueStripeRoutes);
 

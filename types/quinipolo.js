@@ -42,6 +42,9 @@
  * @property {string} homeTeam - Home team name
  * @property {string} awayTeam - Away team name
  * @property {boolean} isGame15 - Whether this is the 15th game
+ * @property {string} [date] - Match date (ISO date string)
+ * @property {string} [leagueId] - League ID from scraper (optional)
+ * @property {string} [leagueName] - League name from scraper (optional)
  */
 
 /**

@@ -1,11 +1,12 @@
 const { supabase } = require("../../services/supabaseClient");
+const {
+  computeAnswerStatistics,
+} = require("./computeAnswerStatistics");
 
 /**
  * Compute the most failed match stats for a corrected quinipolo.
- * Uses logic equivalent to the provided SQL: groups incorrect submissions by
- * (matchNumber, submitted solution), orders by failure count desc, and picks the top.
- * Then computes failedPercentage for that match as wrong/total * 100.
- * Returns team names and winners mapping for clarity.
+ * Uses answer statistics to find the match with the highest failure percentage.
+ * Then finds the most common wrong answer for that match.
  *
  * @param {string} quinipoloId
  * @param {Array<{ matchNumber: number, chosenWinner: string, goalsHomeTeam?: string, goalsAwayTeam?: string }>} correctedAnswers
@@ -14,120 +15,98 @@ const { supabase } = require("../../services/supabaseClient");
  */
 async function computeMostFailed(quinipoloId, correctedAnswers, surveyItems) {
   try {
-    const { data: allAnswersRows, error } = await supabase
-      .from("answers")
-      .select("answers")
-      .eq("quinipolo_id", quinipoloId);
-
-    if (error) throw error;
+    // Get or compute answer statistics
+    let statistics = await computeAnswerStatistics(quinipoloId);
+    
+    if (!statistics || !statistics.matches || statistics.matches.length === 0) {
+      return null;
+    }
 
     const correctedByMatch = new Map(
       (correctedAnswers || []).map((c) => [c.matchNumber, c])
     );
 
-    // Totals per match and wrong counts per submitted solution
-    const totalByMatch = new Map(); // matchNumber -> total answers
-    const wrongByMatchAndSolution = new Map(); // key: matchNumber|chosenWinner|goalsHome|goalsAway -> count
+    const totalResponses = statistics.total_responses;
+    if (totalResponses === 0) return null;
 
-    for (const row of allAnswersRows || []) {
-      for (const ua of row.answers || []) {
-        const m = ua.matchNumber;
-        totalByMatch.set(m, (totalByMatch.get(m) || 0) + 1);
+    // Find the match with the highest failure percentage
+    let mostFailedMatch = null;
+    let highestFailurePercentage = 0;
 
-        const correct = correctedByMatch.get(m);
-        if (!correct) continue;
+    for (const matchStat of statistics.matches) {
+      const matchNumber = matchStat.matchNumber;
+      const correctAnswer = correctedByMatch.get(matchNumber);
+      if (!correctAnswer) continue;
 
-        const isCorrect =
-          ua.chosenWinner === correct.chosenWinner &&
-          (m !== 15 ||
-            (ua.goalsHomeTeam ===
-              (correct.goalsHomeTeam ?? correct.goalsHome) &&
-              ua.goalsAwayTeam ===
-                (correct.goalsAwayTeam ?? correct.goalsAway)));
-
-        if (!isCorrect) {
-          const goalsHome = ua.goalsHomeTeam ?? ua.goals_home ?? "";
-          const goalsAway = ua.goalsAwayTeam ?? ua.goals_away ?? "";
-          const key = `${m}|${ua.chosenWinner}|${goalsHome}|${goalsAway}`;
-          wrongByMatchAndSolution.set(
-            key,
-            (wrongByMatchAndSolution.get(key) || 0) + 1
-          );
-        }
-      }
-    }
-
-    if (wrongByMatchAndSolution.size === 0) return null;
-
-    // Pick the wrong group with a deterministic tiebreak:
-    // failures desc, failedPercentage desc, lowest matchNumber, chosenWinner asc, goalsHome asc, goalsAway asc
-    let best = null; // { matchNumber, failures, chosenWinner, goalsHome, goalsAway, failedPercentage }
-    for (const [key, failures] of wrongByMatchAndSolution.entries()) {
-      const [matchNumberStr, chosenWinner, goalsHome, goalsAway] =
-        key.split("|");
-      const matchNumber = Number(matchNumberStr);
-      const total = totalByMatch.get(matchNumber) || 0;
-      const failedPercentage = total > 0 ? failures / total : 0;
-
-      if (!best) {
-        best = {
-          matchNumber,
-          failures,
-          chosenWinner,
-          goalsHome,
-          goalsAway,
-          failedPercentage,
-        };
-        continue;
+      // Get the correct winner from the corrected answers
+      const correctWinner = correctAnswer.chosenWinner;
+      
+      // Find the statistics for the correct answer
+      let correctCount = 0;
+      if (correctWinner === matchStat.homeTeam) {
+        correctCount = matchStat.statistics.homeTeam.count;
+      } else if (correctWinner === matchStat.awayTeam) {
+        correctCount = matchStat.statistics.awayTeam.count;
+      } else if (correctWinner === "empat") {
+        correctCount = matchStat.statistics.empat.count;
       }
 
-      const cmp =
-        failures !== best.failures
-          ? failures - best.failures
-          : failedPercentage !== best.failedPercentage
-          ? failedPercentage - best.failedPercentage
-          : best.matchNumber - matchNumber || // lower matchNumber wins
-            chosenWinner.localeCompare(best.chosenWinner) ||
-            goalsHome.localeCompare(best.goalsHome) ||
-            goalsAway.localeCompare(best.goalsAway);
+      // Calculate failure percentage
+      const wrongCount = totalResponses - correctCount;
+      const failurePercentage = totalResponses > 0 
+        ? (wrongCount / totalResponses) * 100 
+        : 0;
 
-      if (cmp > 0) {
-        best = {
+      // Track the match with highest failure percentage
+      if (failurePercentage > highestFailurePercentage) {
+        highestFailurePercentage = failurePercentage;
+        mostFailedMatch = {
           matchNumber,
-          failures,
-          chosenWinner,
-          goalsHome,
-          goalsAway,
-          failedPercentage,
+          matchStat,
+          correctWinner,
+          wrongCount,
+          totalCount: totalResponses,
+          failurePercentage,
         };
       }
     }
 
-    if (!best) return null;
+    if (!mostFailedMatch) return null;
 
-    const total = totalByMatch.get(best.matchNumber) || 0;
-    const failedPercentagePct =
-      total > 0 ? Number(((best.failures / total) * 100).toFixed(1)) : 0;
+    // Now find the most common wrong answer for this match
+    const { matchStat, correctWinner } = mostFailedMatch;
+    let mostWrongWinner = null;
+    let mostWrongCount = 0;
+
+    // Check each option and find the one with highest count that's not the correct answer
+    if (correctWinner !== matchStat.homeTeam && matchStat.statistics.homeTeam.count > mostWrongCount) {
+      mostWrongCount = matchStat.statistics.homeTeam.count;
+      mostWrongWinner = matchStat.homeTeam;
+    }
+    if (correctWinner !== matchStat.awayTeam && matchStat.statistics.awayTeam.count > mostWrongCount) {
+      mostWrongCount = matchStat.statistics.awayTeam.count;
+      mostWrongWinner = matchStat.awayTeam;
+    }
+    if (correctWinner !== "empat" && matchStat.statistics.empat.count > mostWrongCount) {
+      mostWrongCount = matchStat.statistics.empat.count;
+      mostWrongWinner = "empat";
+    }
 
     const item = Array.isArray(surveyItems)
-      ? surveyItems[best.matchNumber - 1] || {}
+      ? surveyItems[mostFailedMatch.matchNumber - 1] || {}
       : {};
-    const homeTeam = (item.homeTeam || "").split("__")[0] || undefined;
-    const awayTeam = (item.awayTeam || "").split("__")[0] || undefined;
-
-    const correct = correctedByMatch.get(best.matchNumber);
-    const correctWinner = correct ? correct.chosenWinner : undefined;
+    const homeTeam = (item.homeTeam || matchStat.homeTeam || "").split("__")[0] || undefined;
+    const awayTeam = (item.awayTeam || matchStat.awayTeam || "").split("__")[0] || undefined;
 
     return {
-      matchNumber: best.matchNumber,
-      failedPercentage: failedPercentagePct,
-      wrongCount: best.failures,
-      totalCount: total,
+      matchNumber: mostFailedMatch.matchNumber,
+      failedPercentage: Number(highestFailurePercentage.toFixed(1)),
+      wrongCount: mostFailedMatch.wrongCount,
+      totalCount: mostFailedMatch.totalCount,
       homeTeam,
       awayTeam,
       correctWinner,
-      // mostWrongWinner maps to the most commonly submitted wrong winner option
-      mostWrongWinner: best.chosenWinner || undefined,
+      mostWrongWinner: mostWrongWinner || undefined,
     };
   } catch (e) {
     console.warn("Failed computing most failed match stats:", e);
