@@ -153,3 +153,4 @@ async function computeAnswerStatistics(quinipoloId) {
 }
 
 module.exports = { computeAnswerStatistics };
+
