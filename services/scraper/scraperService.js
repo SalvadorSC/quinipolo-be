@@ -1,7 +1,4 @@
-const {
-  leagues,
-  championsLeagueReplacementOrder,
-} = require("./config");
+const { leagues, championsLeagueReplacementOrder } = require("./config");
 const { fetchFlashscoreMatches } = require("./flashscore");
 const { fetchChampionsLeagueMatches } = require("./championsLeague");
 const { fetchRfenResults } = require("./rfen");
@@ -12,10 +9,7 @@ const {
   getHeadToHeadScore,
   getTableGap,
 } = require("./headToHead");
-const {
-  getWindowBounds,
-  isWithinWindow,
-} = require("./dateUtils");
+const { getWindowBounds, isWithinWindow } = require("./dateUtils");
 const { matchTeamNameSync, fetchTeamMap } = require("./teamMatcher");
 
 const USE_RFEN_RESULTS = process.env.SCRAPER_USE_RFEN === "true";
@@ -106,8 +100,7 @@ function assignChampionReplacements(matches) {
   );
 
   ordered.forEach((match, index) => {
-    match.replacementLeagueId =
-      championsLeagueReplacementOrder[index] ?? null;
+    match.replacementLeagueId = championsLeagueReplacementOrder[index] ?? null;
     match.leagueId = "CL";
     match.leagueName = "Champions League";
     match.isChampionsLeague = true;
@@ -177,7 +170,7 @@ function classifyDifficulty(closeness) {
   if (!Number.isFinite(closeness)) {
     return "unknown";
   }
-  if (closeness <= 1.5) {
+  if (closeness <= 1.75) {
     return "hard";
   }
   if (closeness <= 3.5) {
@@ -231,26 +224,20 @@ function selectForStrategy(matchesByLeague, quotas, strategy) {
 }
 
 function pickMatchesForLeague(matches, quota, strategy) {
-  const sortedAsc = [...matches].sort(
-    (a, b) => a.closeness - b.closeness
-  );
+  const sortedAsc = [...matches].sort((a, b) => a.closeness - b.closeness);
 
   if (strategy === "hard") {
     return sortedAsc.slice(0, Math.min(quota, sortedAsc.length));
   }
 
   if (strategy === "easy") {
-    return sortedAsc
-      .slice(-Math.min(quota, sortedAsc.length))
-      .reverse();
+    return sortedAsc.slice(-Math.min(quota, sortedAsc.length)).reverse();
   }
 
   // Moderate: mix of hard and easy
   const { hardCount, easyCount } = splitQuota(quota);
   const hardPicks = sortedAsc.slice(0, Math.min(hardCount, sortedAsc.length));
-  const remaining = sortedAsc.filter(
-    (match) => !hardPicks.includes(match)
-  );
+  const remaining = sortedAsc.filter((match) => !hardPicks.includes(match));
   const easyPicks = remaining
     .sort((a, b) => b.closeness - a.closeness)
     .slice(0, Math.min(easyCount, remaining.length));
@@ -276,10 +263,9 @@ function buildLegacySelection(matches, presets) {
     return fromModerate.slice(0, 15);
   }
   const fallback = matches.slice(0, 15);
-  return fromModerate.concat(
-    fallback.filter((match) => !fromModerate.includes(match))
-  ).slice(0, 15);
+  return fromModerate
+    .concat(fallback.filter((match) => !fromModerate.includes(match)))
+    .slice(0, 15);
 }
 
 module.exports = { fetchAndSelectMatches };
-
