@@ -77,7 +77,10 @@ async function fetchAndSelectMatches() {
 
   await fetchTeamMap();
   const normalizedMatches = matchesInWindow.map((match) => {
-    const isChampionsLeague = match.isChampionsLeague || match.leagueId === "CL" || match.leagueId === "CLF";
+    const isChampionsLeague =
+      match.isChampionsLeague ||
+      match.leagueId === "CL" ||
+      match.leagueId === "CLF";
     return {
       ...match,
       homeTeam: matchTeamNameSync(match.homeTeam, isChampionsLeague),
@@ -110,7 +113,10 @@ function assignChampionReplacements(matches) {
     }
     // Preserve leagueName if already set, otherwise set default
     if (!match.leagueName) {
-      match.leagueName = match.leagueId === "CLF" ? "Champions League (Women)" : "Champions League";
+      match.leagueName =
+        match.leagueId === "CLF"
+          ? "Champions League (Women)"
+          : "Champions League";
     }
     match.isChampionsLeague = true;
   });
