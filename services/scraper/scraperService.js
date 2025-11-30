@@ -76,11 +76,14 @@ async function fetchAndSelectMatches() {
     );
 
   await fetchTeamMap();
-  const normalizedMatches = matchesInWindow.map((match) => ({
-    ...match,
-    homeTeam: matchTeamNameSync(match.homeTeam, match.isChampionsLeague),
-    awayTeam: matchTeamNameSync(match.awayTeam, match.isChampionsLeague),
-  }));
+  const normalizedMatches = matchesInWindow.map((match) => {
+    const isChampionsLeague = match.isChampionsLeague || match.leagueId === "CL" || match.leagueId === "CLF";
+    return {
+      ...match,
+      homeTeam: matchTeamNameSync(match.homeTeam, isChampionsLeague),
+      awayTeam: matchTeamNameSync(match.awayTeam, isChampionsLeague),
+    };
+  });
 
   const quotas = computeAdjustedQuotas(normalizedMatches);
   const presets = buildPresetSelections(normalizedMatches, quotas);
@@ -101,8 +104,14 @@ function assignChampionReplacements(matches) {
 
   ordered.forEach((match, index) => {
     match.replacementLeagueId = championsLeagueReplacementOrder[index] ?? null;
-    match.leagueId = "CL";
-    match.leagueName = "Champions League";
+    // Preserve leagueId (CL for Men, CLF for Women) instead of overwriting
+    if (!match.leagueId) {
+      match.leagueId = "CL";
+    }
+    // Preserve leagueName if already set, otherwise set default
+    if (!match.leagueName) {
+      match.leagueName = match.leagueId === "CLF" ? "Champions League (Women)" : "Champions League";
+    }
     match.isChampionsLeague = true;
   });
 
@@ -117,17 +126,25 @@ function computeAdjustedQuotas(matches) {
 
   const champions = matches.filter((match) => match.isChampionsLeague);
   let championsQuota = 0;
+  let championsWomenQuota = 0;
   champions.forEach((match, index) => {
     const replacementId = championsLeagueReplacementOrder[index];
     if (replacementId && quotas[replacementId] > 0) {
       quotas[replacementId] -= 1;
       match.replacementLeagueId = replacementId;
-      championsQuota += 1;
+      if (match.leagueId === "CLF") {
+        championsWomenQuota += 1;
+      } else {
+        championsQuota += 1;
+      }
     }
   });
 
   if (championsQuota > 0) {
     quotas.CL = championsQuota;
+  }
+  if (championsWomenQuota > 0) {
+    quotas.CLF = championsWomenQuota;
   }
 
   return quotas;

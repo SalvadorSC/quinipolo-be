@@ -9,9 +9,10 @@ async function fetchChampionsLeagueMatches() {
     try {
       const html = await fetchHtml(feed.flashscoreUrl);
       const events = extractFlashscoreEvents(html);
+      const isWomen = feed.label.includes("Women");
       events.forEach((event) => {
         matches.push({
-          leagueId: "CL",
+          leagueId: isWomen ? "CLF" : "CL",
           leagueName: feed.label,
           homeTeam: event.home,
           awayTeam: event.away,
