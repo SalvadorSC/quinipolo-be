@@ -156,6 +156,7 @@ const getAllUserInformation = async (req, res) => {
     username: profile.username,
     birthday: profile.birthday,
     isUserOver18: profile.is_user_over_18,
+    hasScraperAccess: profile.has_scraper_access || false, // Access to scraper features
   };
 
   res.status(200).json(userData);
