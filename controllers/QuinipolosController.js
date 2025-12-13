@@ -819,6 +819,20 @@ const processAndCorrectAnswers = async (
         (c) => c.matchNumber === userAnswer.matchNumber
       );
       if (!correct) continue;
+
+      // If match is cancelled, count it as correct for everyone
+      if (correct.cancelled === true) {
+        if (userAnswer.matchNumber === 15) {
+          // For game 15, also check if goals match (if user provided them)
+          // If cancelled, we count it as correct regardless
+          correct15thGame = true;
+          points += 1;
+        } else {
+          points += 1;
+        }
+        continue;
+      }
+
       if (
         userAnswer.chosenWinner === correct.chosenWinner &&
         userAnswer.matchNumber !== 15
