@@ -1,0 +1,243 @@
+{
+  "_meta": {
+    "description": "Mock data for automatic post creation announcing match results. Structure mirrors quinipolo-scrapper output (fetchFlashscoreResults). Use for: testing post creation UI, API contract validation, post template generation.",
+    "source": "Real data from quinipolo-be scraper (Flashscore)"
+  },
+  "scraperResults": [
+    {
+      "leagueId": "DHM",
+      "leagueName": "División de Honor Masculina",
+      "homeTeam": "Mediterrani",
+      "awayTeam": "Mataró",
+      "startTime": "2026-02-25T19:00:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/division-de-honor/resultados/",
+      "flashscoreId": "Y5n3i144",
+      "homeScore": 8,
+      "awayScore": 13,
+      "status": "3"
+    },
+    {
+      "leagueId": "DHM",
+      "leagueName": "División de Honor Masculina",
+      "homeTeam": "Sant Andreu",
+      "awayTeam": "Barceloneta",
+      "startTime": "2026-02-21T18:30:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/division-de-honor/resultados/",
+      "flashscoreId": "Mm6iVAm2",
+      "homeScore": 8,
+      "awayScore": 17,
+      "status": "3"
+    },
+    {
+      "leagueId": "DHM",
+      "leagueName": "División de Honor Masculina",
+      "homeTeam": "Sabadell",
+      "awayTeam": "Barcelona",
+      "startTime": "2026-02-21T11:45:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/division-de-honor/resultados/",
+      "flashscoreId": "EsgwgEu9",
+      "homeScore": 13,
+      "awayScore": 11,
+      "status": "3"
+    },
+    {
+      "leagueId": "DHM",
+      "leagueName": "División de Honor Masculina",
+      "homeTeam": "Mediterrani",
+      "awayTeam": "Caballa",
+      "startTime": "2026-02-14T12:30:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/division-de-honor/resultados/",
+      "flashscoreId": "jNUCtpjn",
+      "homeScore": 15,
+      "awayScore": 13,
+      "status": "3",
+      "wentToPenalties": true,
+      "homeRegulationScore": 11,
+      "awayRegulationScore": 11
+    },
+    {
+      "leagueId": "DHF",
+      "leagueName": "División de Honor Femenina",
+      "homeTeam": "Catalunya F",
+      "awayTeam": "Terrassa F",
+      "startTime": "2026-02-25T19:45:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/division-de-honor-femenina/resultados/",
+      "flashscoreId": "pvZoUzfl",
+      "homeScore": 7,
+      "awayScore": 11,
+      "status": "3"
+    },
+    {
+      "leagueId": "DHF",
+      "leagueName": "División de Honor Femenina",
+      "homeTeam": "Mataró F",
+      "awayTeam": "Barceloneta F",
+      "startTime": "2026-02-25T14:00:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/division-de-honor-femenina/resultados/",
+      "flashscoreId": "jwHDnqAF",
+      "homeScore": 13,
+      "awayScore": 9,
+      "status": "3"
+    },
+    {
+      "leagueId": "PDM",
+      "leagueName": "Primera División Masculina",
+      "homeTeam": "Las Palmas",
+      "awayTeam": "Granollers",
+      "startTime": "2026-02-14T16:00:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/primera-division/resultados/",
+      "flashscoreId": "pjDKrMGa",
+      "homeScore": 16,
+      "awayScore": 10,
+      "status": "3"
+    },
+    {
+      "leagueId": "PDF",
+      "leagueName": "Primera División Femenina",
+      "homeTeam": "Boadilla F",
+      "awayTeam": "Málaga F",
+      "startTime": "2026-02-14T14:30:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/primera-division-femenina/resultados/",
+      "flashscoreId": "dlNV8UKi",
+      "homeScore": 17,
+      "awayScore": 7,
+      "status": "3"
+    },
+    {
+      "leagueId": "SDM",
+      "leagueName": "Segunda División Masculina",
+      "homeTeam": "Urbat",
+      "awayTeam": "Tres Cantos",
+      "startTime": "2026-02-14T19:15:00.000Z",
+      "sourceUrl": "https://www.flashscore.es/waterpolo/espana/segunda-division/resultados/",
+      "flashscoreId": "URQZWqqo",
+      "homeScore": 11,
+      "awayScore": 4,
+      "status": "3"
+    }
+  ],
+  "postReadyResults": [
+    {
+      "leagueId": "DHM",
+      "leagueName": "División de Honor Masculina",
+      "homeTeam": "Mediterrani",
+      "awayTeam": "Mataró",
+      "homeScore": 8,
+      "awayScore": 13,
+      "startTime": "2026-02-25T19:00:00.000Z",
+      "outcome": "Mataró",
+      "scoreDisplay": "8-13",
+      "wentToPenalties": false,
+      "matchDateFormatted": "25 feb 2026"
+    },
+    {
+      "leagueId": "DHM",
+      "leagueName": "División de Honor Masculina",
+      "homeTeam": "Sant Andreu",
+      "awayTeam": "Barceloneta",
+      "homeScore": 8,
+      "awayScore": 17,
+      "startTime": "2026-02-21T18:30:00.000Z",
+      "outcome": "Barceloneta",
+      "scoreDisplay": "8-17",
+      "wentToPenalties": false,
+      "matchDateFormatted": "21 feb 2026"
+    },
+    {
+      "leagueId": "DHM",
+      "leagueName": "División de Honor Masculina",
+      "homeTeam": "Sabadell",
+      "awayTeam": "Barcelona",
+      "homeScore": 13,
+      "awayScore": 11,
+      "startTime": "2026-02-21T11:45:00.000Z",
+      "outcome": "Sabadell",
+      "scoreDisplay": "13-11",
+      "wentToPenalties": false,
+      "matchDateFormatted": "21 feb 2026"
+    },
+    {
+      "leagueId": "DHM",
+      "leagueName": "División de Honor Masculina",
+      "homeTeam": "Mediterrani",
+      "awayTeam": "Caballa",
+      "homeScore": 15,
+      "awayScore": 13,
+      "startTime": "2026-02-14T12:30:00.000Z",
+      "outcome": "Mediterrani",
+      "scoreDisplay": "15-13 (11-11)",
+      "wentToPenalties": true,
+      "matchDateFormatted": "14 feb 2026"
+    },
+    {
+      "leagueId": "DHF",
+      "leagueName": "División de Honor Femenina",
+      "homeTeam": "Catalunya F",
+      "awayTeam": "Terrassa F",
+      "homeScore": 7,
+      "awayScore": 11,
+      "startTime": "2026-02-25T19:45:00.000Z",
+      "outcome": "Terrassa F",
+      "scoreDisplay": "7-11",
+      "wentToPenalties": false,
+      "matchDateFormatted": "25 feb 2026"
+    },
+    {
+      "leagueId": "DHF",
+      "leagueName": "División de Honor Femenina",
+      "homeTeam": "Mataró F",
+      "awayTeam": "Barceloneta F",
+      "homeScore": 13,
+      "awayScore": 9,
+      "startTime": "2026-02-25T14:00:00.000Z",
+      "outcome": "Mataró F",
+      "scoreDisplay": "13-9",
+      "wentToPenalties": false,
+      "matchDateFormatted": "25 feb 2026"
+    },
+    {
+      "leagueId": "PDM",
+      "leagueName": "Primera División Masculina",
+      "homeTeam": "Las Palmas",
+      "awayTeam": "Granollers",
+      "homeScore": 16,
+      "awayScore": 10,
+      "startTime": "2026-02-14T16:00:00.000Z",
+      "outcome": "Las Palmas",
+      "scoreDisplay": "16-10",
+      "wentToPenalties": false,
+      "matchDateFormatted": "14 feb 2026"
+    },
+    {
+      "leagueId": "PDF",
+      "leagueName": "Primera División Femenina",
+      "homeTeam": "Boadilla F",
+      "awayTeam": "Málaga F",
+      "homeScore": 17,
+      "awayScore": 7,
+      "startTime": "2026-02-14T14:30:00.000Z",
+      "outcome": "Boadilla F",
+      "scoreDisplay": "17-7",
+      "wentToPenalties": false,
+      "matchDateFormatted": "14 feb 2026"
+    },
+    {
+      "leagueId": "SDM",
+      "leagueName": "Segunda División Masculina",
+      "homeTeam": "Urbat",
+      "awayTeam": "Tres Cantos",
+      "homeScore": 11,
+      "awayScore": 4,
+      "startTime": "2026-02-14T19:15:00.000Z",
+      "outcome": "Urbat",
+      "scoreDisplay": "11-4",
+      "wentToPenalties": false,
+      "matchDateFormatted": "14 feb 2026"
+    }
+  ],
+  "samplePostTemplates": {
+    "singleMatch": "🏊‍♂️ {leagueName}\n\n{homeTeam} {homeScore} - {awayScore} {awayTeam}\n\n{outcome}",
+    "singleMatchWithPenalties": "🏊‍♂️ {leagueName}\n\n{homeTeam} {homeScore} - {awayScore} {awayTeam} (pen)\n\n{outcome}",
+    "leagueSummary": "📋 Resultados {leagueName}:\n\n{matches}"
+  }
+}

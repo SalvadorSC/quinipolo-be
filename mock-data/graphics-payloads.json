@@ -1,0 +1,258 @@
+{
+  "_meta": {
+    "description": "Mock data for generating the 5 quinipolo result graphics. Mirrors BE API returns: correction-see, submit-correction, leaderboard.",
+    "matchday": "J16",
+    "quinipoloId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "leagueId": "351a1949-f6c5-4940-ac70-1c7dd08e8b1a"
+  },
+
+  "image1_lastResults": {
+    "source": "GET /api/quinipolos/quinipolo/:id/correction-see + correct_answers merged with quinipolo",
+    "matchday": "J16",
+    "matchesByLeague": [
+      {
+        "leagueId": "DHF",
+        "leagueName": "División de Honor Femenina",
+        "matches": [
+          {
+            "matchNumber": 1,
+            "homeTeam": "CN Catalunya",
+            "awayTeam": "UE Horta",
+            "homeScore": 20,
+            "awayScore": 11,
+            "status": "completed",
+            "homeTeamLogoUrl": null,
+            "awayTeamLogoUrl": null
+          },
+          {
+            "matchNumber": 2,
+            "homeTeam": "CN Mataró",
+            "awayTeam": "CN Sant Feliu",
+            "homeScore": 12,
+            "awayScore": 14,
+            "status": "completed",
+            "homeTeamLogoUrl": null,
+            "awayTeamLogoUrl": null
+          }
+        ]
+      },
+      {
+        "leagueId": "DHM",
+        "leagueName": "División de Honor Masculina",
+        "matches": [
+          {
+            "matchNumber": 3,
+            "homeTeam": "CN Caballa Ceuta",
+            "awayTeam": "CN Terrassa",
+            "homeScore": 14,
+            "awayScore": 18,
+            "status": "completed",
+            "homeTeamLogoUrl": null,
+            "awayTeamLogoUrl": null
+          },
+          {
+            "matchNumber": 4,
+            "homeTeam": "CN Sabadell",
+            "awayTeam": "CN Barcelona",
+            "homeScore": 13,
+            "awayScore": 11,
+            "status": "completed",
+            "homeTeamLogoUrl": null,
+            "awayTeamLogoUrl": null
+          },
+          {
+            "matchNumber": 5,
+            "homeTeam": "CN Sant Andreu",
+            "awayTeam": "CN Catalunya",
+            "homeScore": 13,
+            "awayScore": 19,
+            "status": "completed",
+            "homeTeamLogoUrl": null,
+            "awayTeamLogoUrl": null
+          },
+          {
+            "matchNumber": 6,
+            "homeTeam": "Waterpolo Tenerife Echeyde",
+            "awayTeam": "CN Rubí",
+            "homeScore": null,
+            "awayScore": null,
+            "status": "postponed",
+            "statusLabel": "APLAZADO",
+            "homeTeamLogoUrl": null,
+            "awayTeamLogoUrl": null
+          }
+        ]
+      },
+      {
+        "leagueId": "CLF",
+        "leagueName": "Liga de Campeones Femenina",
+        "matches": [
+          {
+            "matchNumber": 7,
+            "homeTeam": "UVSE Margitsziget",
+            "awayTeam": "Olympiacos",
+            "homeScore": 16,
+            "awayScore": 15,
+            "status": "completed",
+            "homeTeamLogoUrl": null,
+            "awayTeamLogoUrl": null
+          }
+        ]
+      }
+    ]
+  },
+
+  "image2_lastResultsExtended": {
+    "source": "Same as image1, alternate quinipolo with CLF/PDF/PDM/PLENO",
+    "matchday": "J16",
+    "matchesByLeague": [
+      {
+        "leagueId": "CLF",
+        "leagueName": "Liga de Campeones Femenina",
+        "matches": [
+          { "matchNumber": 1, "homeTeam": "CNA", "awayTeam": "CNAB Mataró", "homeScore": 9, "awayScore": 7, "status": "completed" },
+          { "matchNumber": 2, "homeTeam": "Olympiacos", "awayTeam": "ZR de Zaan", "homeScore": 13, "awayScore": 9, "status": "completed" },
+          { "matchNumber": 3, "homeTeam": "Ethnikos", "awayTeam": "CN Mataró", "homeScore": 11, "awayScore": 12, "status": "completed" },
+          { "matchNumber": 4, "homeTeam": "Roma 1927", "awayTeam": "Eger Waterpolo", "homeScore": 11, "awayScore": 13, "status": "completed" }
+        ]
+      },
+      {
+        "leagueId": "PDF",
+        "leagueName": "Primera División Femenina",
+        "matches": [
+          { "matchNumber": 5, "homeTeam": "Club Waterpolo Pontevedra", "awayTeam": "CN Joventut", "homeScore": 10, "awayScore": 13, "status": "completed" },
+          { "matchNumber": 6, "homeTeam": "CN Rubí", "awayTeam": "CN Catalunya", "homeScore": 9, "awayScore": 8, "status": "completed" }
+        ]
+      },
+      {
+        "leagueId": "PDM",
+        "leagueName": "Primera División Masculina",
+        "matches": [
+          { "matchNumber": 7, "homeTeam": "CN Atlètic-Barceloneta", "awayTeam": "CAX", "homeScore": 14, "awayScore": 7, "status": "completed" }
+        ]
+      },
+      {
+        "leagueId": "PLENO_15",
+        "leagueName": "PLENO AL 15 PDM",
+        "matches": [
+          { "matchNumber": 15, "homeTeam": "CN Sant Feliu", "awayTeam": "UE Horta", "homeScore": 11, "awayScore": 16, "status": "completed", "isGame15": true }
+        ]
+      }
+    ]
+  },
+
+  "image3_quinipoloRanking": {
+    "source": "POST /api/quinipolos/quinipolo/:id/submit-correction → results (points per user for this quinipolo)",
+    "matchday": "J16",
+    "rankingType": "quinipolo",
+    "participants": [
+      { "rank": 1, "username": "TUKI4", "points": 13, "medal": "gold" },
+      { "rank": 2, "username": "DGRANADOS03", "points": 12, "medal": "silver" },
+      { "rank": 2, "username": "IGNASSI", "points": 12, "medal": "silver" },
+      { "rank": 3, "username": "JANRU", "points": 11, "medal": "bronze" },
+      { "rank": 3, "username": "CARLA.ALTI", "points": 11, "medal": "bronze" },
+      { "rank": 3, "username": "NATASAR", "points": 11, "medal": "bronze" },
+      { "rank": 3, "username": "ESTEAÑONOMEROBA", "points": 11, "medal": "bronze" },
+      { "rank": 3, "username": "GABI.ACOSTA", "points": 11, "medal": "bronze" },
+      { "rank": 3, "username": "XUISER", "points": 11, "medal": "bronze" },
+      { "rank": 3, "username": "ARAPOLO", "points": 11, "medal": "bronze" }
+    ]
+  },
+
+  "image4_generalLeagueRanking": {
+    "source": "GET /api/leagues/:leagueId/leaderboard",
+    "matchday": "J16",
+    "rankingType": "general",
+    "leagueId": "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+    "participantsLeaderboard": [
+      { "rank": 1, "username": "JANRU", "points": 163, "totalPoints": 163, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 2, "medal": "gold" },
+      { "rank": 2, "username": "CARLA.ALTI", "points": 162, "totalPoints": 162, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 1, "medal": "silver" },
+      { "rank": 3, "username": "ESTEAÑONOMEROBA", "points": 160, "totalPoints": 160, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 1, "medal": "bronze" },
+      { "rank": 3, "username": "NATASAR", "points": 160, "totalPoints": 160, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 1, "medal": "bronze" },
+      { "rank": 5, "username": "GABI.ACOSTA", "points": 158, "totalPoints": 158, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 0, "medal": null },
+      { "rank": 6, "username": "YANYU95", "points": 157, "totalPoints": 157, "nQuinipolosParticipated": 15, "fullCorrectQuinipolos": 0, "medal": null },
+      { "rank": 6, "username": "ALVARO", "points": 157, "totalPoints": 157, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 0, "medal": null },
+      { "rank": 6, "username": "YAGOBOF11", "points": 157, "totalPoints": 157, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 0, "medal": null },
+      { "rank": 6, "username": "ALAN ROJO", "points": 157, "totalPoints": 157, "nQuinipolosParticipated": 15, "fullCorrectQuinipolos": 0, "medal": null },
+      { "rank": 10, "username": "TUKI4", "points": 156, "totalPoints": 156, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 0, "medal": null }
+    ]
+  },
+
+  "image5_statistics": {
+    "source": "POST /api/quinipolos/quinipolo/:id/submit-correction → averagePointsThisQuinipolo, mostFailed",
+    "matchday": "J16",
+    "averagePoints": 10.26,
+    "mostFailedMatch": {
+      "matchNumber": 4,
+      "homeTeam": "CN Atlètic-Barceloneta",
+      "awayTeam": "CN Sabadell",
+      "correctWinner": "CN Sabadell",
+      "mostWrongWinner": "CN Atlètic-Barceloneta",
+      "failedPercentage": 97.5,
+      "wrongCount": 39,
+      "totalCount": 40,
+      "correctGuessesCount": 1
+    },
+    "homeTeamLogoUrl": null,
+    "awayTeamLogoUrl": null
+  },
+
+  "rawBeResponses": {
+    "correctionSee": {
+      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "league_id": "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+      "league_name": "Liga Waterpolo España",
+      "quinipolo": [
+        { "gameType": "waterpolo", "homeTeam": "CN Catalunya", "awayTeam": "UE Horta", "leagueId": "DHF", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Mataró", "awayTeam": "CN Sant Feliu", "leagueId": "DHF", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Caballa Ceuta", "awayTeam": "CN Terrassa", "leagueId": "DHM", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Sabadell", "awayTeam": "CN Barcelona", "leagueId": "DHM", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Sant Andreu", "awayTeam": "CN Catalunya", "leagueId": "DHM", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "Waterpolo Tenerife Echeyde", "awayTeam": "CN Rubí", "leagueId": "DHM", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "UVSE Margitsziget", "awayTeam": "Olympiacos", "leagueId": "CLF", "isGame15": false }
+      ],
+      "correct_answers": [
+        { "matchNumber": 1, "chosenWinner": "CN Catalunya", "goalsHomeTeam": "20", "goalsAwayTeam": "11" },
+        { "matchNumber": 2, "chosenWinner": "CN Sant Feliu", "goalsHomeTeam": "12", "goalsAwayTeam": "14" },
+        { "matchNumber": 3, "chosenWinner": "CN Terrassa", "goalsHomeTeam": "14", "goalsAwayTeam": "18" },
+        { "matchNumber": 4, "chosenWinner": "CN Sabadell", "goalsHomeTeam": "13", "goalsAwayTeam": "11" },
+        { "matchNumber": 5, "chosenWinner": "CN Catalunya", "goalsHomeTeam": "13", "goalsAwayTeam": "19" },
+        { "matchNumber": 6, "chosenWinner": "empat", "goalsHomeTeam": null, "goalsAwayTeam": null, "cancelled": true },
+        { "matchNumber": 7, "chosenWinner": "UVSE Margitsziget", "goalsHomeTeam": "16", "goalsAwayTeam": "15" }
+      ],
+      "has_been_corrected": true,
+      "end_date": "2026-02-26T23:59:59.000Z"
+    },
+    "submitCorrection": {
+      "message": "Quinipolo corrected successfully",
+      "results": [
+        { "username": "TUKI4", "pointsEarned": 13, "totalPoints": 163, "correct15thGame": false },
+        { "username": "DGRANADOS03", "pointsEarned": 12, "totalPoints": 162, "correct15thGame": false },
+        { "username": "IGNASSI", "pointsEarned": 12, "totalPoints": 161, "correct15thGame": false }
+      ],
+      "leagueId": "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+      "participantsLeaderboard": [
+        { "username": "JANRU", "points": 163, "totalPoints": 163, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 2 },
+        { "username": "CARLA.ALTI", "points": 162, "totalPoints": 162, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 1 }
+      ],
+      "averagePointsThisQuinipolo": 10.26,
+      "mostFailed": {
+        "matchNumber": 4,
+        "failedPercentage": 97.5,
+        "wrongCount": 39,
+        "totalCount": 40,
+        "homeTeam": "CN Atlètic-Barceloneta",
+        "awayTeam": "CN Sabadell",
+        "correctWinner": "CN Sabadell",
+        "mostWrongWinner": "CN Atlètic-Barceloneta"
+      }
+    },
+    "leaderboard": {
+      "leagueId": "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+      "participantsLeaderboard": [
+        { "username": "JANRU", "points": 163, "totalPoints": 163, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 2 },
+        { "username": "CARLA.ALTI", "points": 162, "totalPoints": 162, "nQuinipolosParticipated": 16, "fullCorrectQuinipolos": 1 }
+      ]
+    }
+  }
+}
