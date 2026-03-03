@@ -10,6 +10,9 @@ const { drawBrandingVertical } = require("../utils/drawBranding");
 const MEDAL_LABELS = { 1: "1", 2: "2", 3: "3" };
 const MEDAL_COLORS = { 1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32" };
 
+/** Max number of rows to show per ranking image. */
+const RANKING_CAP = 10;
+
 function getRankDisplay(rank) {
   return MEDAL_LABELS[rank] ?? String(rank);
 }
@@ -51,6 +54,12 @@ async function renderRanking(payload, rankingType = "quinipolo") {
   let list = participants.length ? participants : participantsLeaderboard;
   const scoreOf = (entry) => Number(entry.points ?? entry.totalPoints ?? 0);
   const ranks = computeRanks(list, scoreOf);
+  // Sort by score desc (stable), cap at RANKING_CAP for display
+  const sorted = [...list].sort((a, b) => {
+    const diff = scoreOf(b) - scoreOf(a);
+    return diff !== 0 ? diff : 0;
+  });
+  const listToShow = sorted.slice(0, RANKING_CAP);
 
   const { canvas, ctx } = createCanvasContext(
     theme.CANVAS_WIDTH,
@@ -121,7 +130,7 @@ async function renderRanking(payload, rankingType = "quinipolo") {
 
   drawBrandingVertical(ctx, theme.CANVAS_WIDTH, theme.RANKING_HEIGHT);
 
-  list.forEach((entry, i) => {
+  listToShow.forEach((entry, i) => {
     const y = startY + i * (rowHeight + rowGap);
     const rank = entry.rank ?? ranks.get(entry) ?? i + 1;
     const rankDisplay = getRankDisplay(rank);
@@ -153,7 +162,7 @@ async function renderRanking(payload, rankingType = "quinipolo") {
       y + rowHeight / 2 + theme.LEADERBOARD_RESULT_FONT_SIZE / 3,
     );
 
-    if (i < list.length - 1) {
+    if (i < listToShow.length - 1) {
       ctx.strokeStyle = "rgba(255,255,255,0.2)";
       ctx.lineWidth = 5;
       ctx.beginPath();
