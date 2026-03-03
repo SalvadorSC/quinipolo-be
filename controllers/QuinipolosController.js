@@ -231,7 +231,7 @@ const createQuinipoloForAllLeagues = async (req, res) => {
         if (createError) {
           console.error(
             `Error creating quinipolo for league ${league.league_name}:`,
-            createError
+            createError,
           );
           errors.push({
             league: league.league_name,
@@ -246,7 +246,7 @@ const createQuinipoloForAllLeagues = async (req, res) => {
       } catch (error) {
         console.error(
           `Error creating quinipolo for league ${league.league_name}:`,
-          error
+          error,
         );
         errors.push({
           league: league.league_name,
@@ -347,7 +347,7 @@ const createQuinipoloForManagedLeagues = async (req, res) => {
         if (createError) {
           console.error(
             `Error creating quinipolo for managed league ${league.league_name}:`,
-            createError
+            createError,
           );
           errors.push({
             league: league.league_name,
@@ -362,7 +362,7 @@ const createQuinipoloForManagedLeagues = async (req, res) => {
       } catch (error) {
         console.error(
           `Error creating quinipolo for managed league ${league.league_name}:`,
-          error
+          error,
         );
         errors.push({
           league: league.league_name,
@@ -433,7 +433,7 @@ const getQuinipoloByLeague = async (req, res) => {
         `
         *,
         leagues!inner(league_name)
-      `
+      `,
       )
       .eq("league_id", leagueId);
 
@@ -462,7 +462,7 @@ const getQuinipoloById = async (req, res) => {
         `
         *,
         leagues!inner(league_name)
-      `
+      `,
       )
       .eq("id", req.params.id)
       .single();
@@ -526,7 +526,7 @@ const getQuinipolosFromUserLeagues = async (req, res) => {
         `
         *,
         leagues!inner(league_name)
-      `
+      `,
       )
       .in("league_id", leagueIds);
 
@@ -582,7 +582,7 @@ const getUserAnswers = async (req, res) => {
         `
         *,
         leagues!inner(league_name)
-      `
+      `,
       )
       .in("league_id", leagueIds);
 
@@ -646,7 +646,7 @@ const getQuinipoloAnswersAndCorrections = async (req, res) => {
         `
         *,
         leagues!inner(league_name)
-      `
+      `,
       )
       .eq("id", id)
       .single();
@@ -753,7 +753,7 @@ const getQuinipolosToAnswer = async (req, res) => {
         `
         *,
         leagues!inner(league_name)
-      `
+      `,
       )
       .in("league_id", leagueIds);
     if (quinipolosError) {
@@ -785,7 +785,7 @@ const processAndCorrectAnswers = async (
   quinipoloId,
   correctedAnswers,
   moderatorId,
-  isEdit = false
+  isEdit = false,
 ) => {
   const { data: answers, error } = await supabase
     .from("answers")
@@ -816,7 +816,7 @@ const processAndCorrectAnswers = async (
     let correct15thGame = false;
     for (const userAnswer of answer.answers) {
       const correct = correctedAnswers.find(
-        (c) => c.matchNumber === userAnswer.matchNumber
+        (c) => c.matchNumber === userAnswer.matchNumber,
       );
       if (!correct) continue;
 
@@ -860,8 +860,8 @@ const processAndCorrectAnswers = async (
           ? 1
           : 0)
       : fullCorrectQuinipolo
-      ? 1
-      : 0;
+        ? 1
+        : 0;
     const participatedDelta = isEdit ? 0 : 1;
     return {
       answer,
@@ -904,7 +904,7 @@ const processAndCorrectAnswers = async (
         league_id: leagueId,
         user_id: r.user_id,
         points_delta: r.pointsDifference,
-        total_points_after: updated ? updated.points ?? 0 : 0,
+        total_points_after: updated ? (updated.points ?? 0) : 0,
         full_correct_delta: r.fullCorrectDelta,
         participated_delta: r.participatedDelta,
         correction_version: newCorrectionVersion,
@@ -920,7 +920,7 @@ const processAndCorrectAnswers = async (
       if (historyInsertError) {
         console.warn(
           "Failed to insert leaderboard history:",
-          historyInsertError
+          historyInsertError,
         );
       }
     }
@@ -941,7 +941,7 @@ const processAndCorrectAnswers = async (
           correction_version: newCorrectionVersion,
           last_corrected_at: new Date().toISOString(),
         })
-        .eq("id", r.answer.id)
+        .eq("id", r.answer.id),
     );
     await Promise.allSettled(updates);
   }
@@ -957,7 +957,7 @@ const processAndCorrectAnswers = async (
   if (quinipoloUpdateError) {
     console.warn(
       "Failed to update quinipolo correction metadata:",
-      quinipoloUpdateError
+      quinipoloUpdateError,
     );
   }
 
@@ -1000,7 +1000,7 @@ const correctQuinipolo = async (req, res) => {
       id,
       answers,
       req.user.id,
-      false
+      false,
     );
 
     // Create correction history entry for initial correction
@@ -1065,7 +1065,7 @@ const correctQuinipolo = async (req, res) => {
       } catch (error) {
         console.warn(
           "Failed to compute/store answer statistics during correction:",
-          error
+          error,
         );
         // Don't fail the correction if statistics computation fails
       }
@@ -1084,7 +1084,7 @@ const correctQuinipolo = async (req, res) => {
       const { data: leaderboardRows, error: leaderboardError } = await supabase
         .from("leaderboard")
         .select(
-          "user_id, points, n_quinipolos_participated, full_correct_quinipolos"
+          "user_id, points, n_quinipolos_participated, full_correct_quinipolos",
         )
         .eq("league_id", quinipolo.league_id)
         .order("points", { ascending: false });
@@ -1096,7 +1096,7 @@ const correctQuinipolo = async (req, res) => {
           .select("id, username")
           .in("id", userIds);
         const userMap = Object.fromEntries(
-          (profiles || []).map((p) => [p.id, p.username])
+          (profiles || []).map((p) => [p.id, p.username]),
         );
         participantsLeaderboard = leaderboardRows.map((row) => ({
           username: userMap[row.user_id] || "unknown",
@@ -1110,6 +1110,21 @@ const correctQuinipolo = async (req, res) => {
       console.warn("Failed to fetch participants leaderboard:", e);
     }
 
+    let matchday = "";
+    try {
+      const { count, error: countError } = await supabase
+        .from("quinipolos")
+        .select("*", { count: "exact", head: true })
+        .eq("league_id", quinipolo.league_id)
+        .eq("has_been_corrected", true)
+        .or("is_deleted.eq.false,is_deleted.is.null");
+      if (!countError && count != null) {
+        matchday = `J${count}`;
+      }
+    } catch (e) {
+      console.warn("Failed to count corrected quinipolos for matchday:", e);
+    }
+
     res.status(200).json({
       message: "Quinipolo corrected successfully",
       results,
@@ -1118,6 +1133,7 @@ const correctQuinipolo = async (req, res) => {
       participantsLeaderboard,
       averagePointsThisQuinipolo: averagePointsThisQuinipolo,
       mostFailed,
+      matchday,
     });
   } catch (error) {
     res.status(500).json({
@@ -1145,7 +1161,7 @@ const getUserPointsGained = async (quinipoloId, correctedAnswers) => {
     // Calculate points for each answer
     answer.answers.forEach((userAnswer) => {
       const correct = correctedAnswers.find(
-        (c) => c.matchNumber === userAnswer.matchNumber
+        (c) => c.matchNumber === userAnswer.matchNumber,
       );
       if (correct) {
         if (userAnswer.chosenWinner === correct.chosenWinner) {
@@ -1241,7 +1257,7 @@ const editQuinipoloCorrection = async (req, res) => {
       id,
       answers,
       req.user.id,
-      true
+      true,
     );
 
     // Update the quinipolo with new corrections
@@ -1286,7 +1302,7 @@ const editQuinipoloCorrection = async (req, res) => {
       } catch (error) {
         console.warn(
           "Failed to compute/store answer statistics during correction edit:",
-          error
+          error,
         );
         // Don't fail the correction if statistics computation fails
       }
@@ -1305,7 +1321,7 @@ const editQuinipoloCorrection = async (req, res) => {
       const { data: leaderboardRows, error: leaderboardError } = await supabase
         .from("leaderboard")
         .select(
-          "user_id, points, n_quinipolos_participated, full_correct_quinipolos"
+          "user_id, points, n_quinipolos_participated, full_correct_quinipolos",
         )
         .eq("league_id", quinipolo.league_id)
         .order("points", { ascending: false });
@@ -1317,7 +1333,7 @@ const editQuinipoloCorrection = async (req, res) => {
           .select("id, username")
           .in("id", userIds);
         const userMap = Object.fromEntries(
-          (profiles || []).map((p) => [p.id, p.username])
+          (profiles || []).map((p) => [p.id, p.username]),
         );
         participantsLeaderboard = leaderboardRows.map((row) => ({
           username: userMap[row.user_id] || "unknown",
@@ -1331,6 +1347,24 @@ const editQuinipoloCorrection = async (req, res) => {
       console.warn("Failed to fetch participants leaderboard (edit):", e);
     }
 
+    let matchday = "";
+    try {
+      const { count, error: countError } = await supabase
+        .from("quinipolos")
+        .select("*", { count: "exact", head: true })
+        .eq("league_id", quinipolo.league_id)
+        .eq("has_been_corrected", true)
+        .or("is_deleted.eq.false,is_deleted.is.null");
+      if (!countError && count != null) {
+        matchday = `J${count}`;
+      }
+    } catch (e) {
+      console.warn(
+        "Failed to count corrected quinipolos for matchday (edit):",
+        e,
+      );
+    }
+
     res.status(200).json({
       message: "Quinipolo correction edited successfully",
       results: results,
@@ -1339,6 +1373,7 @@ const editQuinipoloCorrection = async (req, res) => {
       participantsLeaderboard,
       averagePointsThisQuinipolo: averagePointsThisQuinipolo,
       mostFailed,
+      matchday,
     });
   } catch (error) {
     console.error("Error editing quinipolo correction:", error);
@@ -1360,7 +1395,7 @@ const getQuinipoloCorrectedById = async (req, res) => {
         `
         *,
         leagues!inner(league_name)
-      `
+      `,
       )
       .eq("id", id)
       .single();

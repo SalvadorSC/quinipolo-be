@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../.."
+		},
+		{
+			"path": "../../quinipolo-fe"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {}
+}
