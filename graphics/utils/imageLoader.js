@@ -1,6 +1,7 @@
 const sharp = require("sharp");
 const path = require("path");
-const { ASSETS_DIR } = require("../constants/theme");
+const fs = require("fs");
+const { ASSETS_DIR, TEAMS_LOGOS_DIR } = require("../constants/theme");
 
 async function rasterizeSvg(svgPath, width, height) {
   try {
@@ -25,16 +26,26 @@ async function loadLogoWatermarkBuffer(size = 400) {
   return rasterizeSvg(logoPath, size, size);
 }
 
-async function loadTeamLogo(url) {
-  if (!url) return null;
+const DEFAULT_LOGO_SIZE = 72;
+
+async function loadTeamLogo(urlOrImageName, size = DEFAULT_LOGO_SIZE) {
+  if (!urlOrImageName) return null;
   try {
-    const axios = require("axios");
-    const response = await axios.get(url, {
-      responseType: "arraybuffer",
-      timeout: 5000,
-    });
-    const buffer = Buffer.from(response.data);
-    return await sharp(buffer).resize(72, 72).png().toBuffer();
+    const isUrl = /^https?:\/\//i.test(urlOrImageName);
+    let buffer;
+    if (isUrl) {
+      const axios = require("axios");
+      const response = await axios.get(urlOrImageName, {
+        responseType: "arraybuffer",
+        timeout: 5000,
+      });
+      buffer = Buffer.from(response.data);
+    } else {
+      const filePath = path.join(TEAMS_LOGOS_DIR, urlOrImageName);
+      if (!fs.existsSync(filePath)) return null;
+      buffer = fs.readFileSync(filePath);
+    }
+    return await sharp(buffer).resize(size, size).png().toBuffer();
   } catch {
     return null;
   }

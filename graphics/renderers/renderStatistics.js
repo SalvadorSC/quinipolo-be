@@ -2,9 +2,13 @@ const { loadImage } = require("canvas");
 const {
   loadBackgroundBuffer,
   loadLogoWatermarkBuffer,
+  loadTeamLogo,
 } = require("../utils/imageLoader");
 const { createCanvasContext } = require("../utils/canvasSetup");
 const theme = require("../constants/theme");
+const { drawTeamComponent } = require("../components/teamComponent");
+const { drawBrandingBottom } = require("../utils/drawBranding");
+const teamNameToImage = require("../data/teamNameToImage.json");
 
 const CARD_GAP = 24;
 const CONTENT_GAP = 40;
@@ -27,13 +31,6 @@ function drawRoundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
-  ctx.fill();
-}
-
-function drawPlaceholderCircle(ctx, x, y, size) {
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -125,7 +122,27 @@ async function renderStatistics(payload) {
     const rightLogoX = centerX + 80;
     const logoY = content1Top + theme.STATS_TITLE_FONT_SIZE + CONTENT_GAP;
 
-    drawPlaceholderCircle(ctx, leftLogoX, logoY, logoSize);
+    const homeLogoSource =
+      mostFailedMatch.homeTeamLogoUrl ??
+      mostFailedMatch.homeTeamImageName ??
+      teamNameToImage[mostFailedMatch.homeTeam];
+    const awayLogoSource =
+      mostFailedMatch.awayTeamLogoUrl ??
+      mostFailedMatch.awayTeamImageName ??
+      teamNameToImage[mostFailedMatch.awayTeam];
+
+    const homeLogoBuffer = homeLogoSource
+      ? await loadTeamLogo(homeLogoSource, logoSize)
+      : null;
+    const awayLogoBuffer = awayLogoSource
+      ? await loadTeamLogo(awayLogoSource, logoSize)
+      : null;
+
+    await drawTeamComponent(ctx, leftLogoX, logoY, logoSize, {
+      logoBuffer: homeLogoBuffer,
+      teamName: mostFailedMatch.homeTeam,
+      bgColor: mostFailedMatch.homeTeamBgColor ?? null,
+    });
 
     ctx.font = `bold ${theme.STATS_VS_FONT_SIZE}px ${theme.FONT_FAMILY}`;
     ctx.fillStyle = theme.TEXT_WHITE;
@@ -135,7 +152,11 @@ async function renderStatistics(payload) {
       logoY + logoSize / 2 + theme.STATS_VS_FONT_SIZE / 3,
     );
 
-    drawPlaceholderCircle(ctx, rightLogoX, logoY, logoSize);
+    await drawTeamComponent(ctx, rightLogoX, logoY, logoSize, {
+      logoBuffer: awayLogoBuffer,
+      teamName: mostFailedMatch.awayTeam,
+      bgColor: mostFailedMatch.awayTeamBgColor ?? null,
+    });
 
     y += cardHeight + CARD_GAP;
   }
@@ -192,6 +213,8 @@ async function renderStatistics(payload) {
   const value3 = String(correctCount);
   const value3Width = ctx.measureText(value3).width;
   ctx.fillText(value3, (theme.CANVAS_WIDTH - value3Width) / 2, value3Y);
+
+  drawBrandingBottom(ctx, theme.CANVAS_WIDTH, height);
 
   return canvas.toDataURL("image/png");
 }

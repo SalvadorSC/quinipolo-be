@@ -1,9 +1,11 @@
 const path = require("path");
 
 const ASSETS_DIR = path.join(__dirname, "..", "assets");
+const TEAMS_LOGOS_DIR = path.join(__dirname, "..", "..", "teams_logos");
 
 module.exports = {
   ASSETS_DIR,
+  TEAMS_LOGOS_DIR,
   CANVAS_WIDTH: 1080,
   CANVAS_HEIGHT: 1350,
   RANKING_HEIGHT: 1350,

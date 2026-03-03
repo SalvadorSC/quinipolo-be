@@ -6,6 +6,10 @@ const {
 } = require("../utils/imageLoader");
 const { createCanvasContext } = require("../utils/canvasSetup");
 const theme = require("../constants/theme");
+const { drawTeamComponent } = require("../components/teamComponent");
+const { drawBrandingVertical } = require("../utils/drawBranding");
+
+const teamNameToImage = require("../data/teamNameToImage.json");
 
 const SCORE_RECT_WIDTH = 260;
 const LEAGUE_LINE_X = theme.PADDING + theme.LEAGUE_LABEL_WIDTH + 100;
@@ -29,13 +33,6 @@ function drawRoundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
-  ctx.fill();
-}
-
-function drawPlaceholderCircle(ctx, x, y, size) {
-  ctx.fillStyle = "rgba(255,255,255,0.3)";
-  ctx.beginPath();
-  ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -120,50 +117,35 @@ async function renderMatchResults(payload, options = {}) {
         CARD_RADIUS,
       );
 
-      let homeLogoImg = null;
-      let awayLogoImg = null;
-      if (match.homeTeamLogoUrl) {
-        const buf = await loadTeamLogo(match.homeTeamLogoUrl);
-        if (buf) homeLogoImg = await loadImage(buf);
-      }
-      if (match.awayTeamLogoUrl) {
-        const buf = await loadTeamLogo(match.awayTeamLogoUrl);
-        if (buf) awayLogoImg = await loadImage(buf);
-      }
+      const homeLogoSource =
+        match.homeTeamLogoUrl ??
+        match.homeTeamImageName ??
+        teamNameToImage[match.homeTeam];
+      const awayLogoSource =
+        match.awayTeamLogoUrl ??
+        match.awayTeamImageName ??
+        teamNameToImage[match.awayTeam];
 
-      if (homeLogoImg) {
-        ctx.drawImage(
-          homeLogoImg,
-          leftLogoX,
-          y + (theme.ROW_HEIGHT - theme.LOGO_SIZE) / 2,
-          theme.LOGO_SIZE,
-          theme.LOGO_SIZE,
-        );
-      } else {
-        drawPlaceholderCircle(
-          ctx,
-          leftLogoX,
-          y + (theme.ROW_HEIGHT - theme.LOGO_SIZE) / 2,
-          theme.LOGO_SIZE,
-        );
-      }
+      const homeLogoBuffer = homeLogoSource
+        ? await loadTeamLogo(homeLogoSource, theme.LOGO_SIZE)
+        : null;
+      const awayLogoBuffer = awayLogoSource
+        ? await loadTeamLogo(awayLogoSource, theme.LOGO_SIZE)
+        : null;
 
-      if (awayLogoImg) {
-        ctx.drawImage(
-          awayLogoImg,
-          rightLogoX,
-          y + (theme.ROW_HEIGHT - theme.LOGO_SIZE) / 2,
-          theme.LOGO_SIZE,
-          theme.LOGO_SIZE,
-        );
-      } else {
-        drawPlaceholderCircle(
-          ctx,
-          rightLogoX,
-          y + (theme.ROW_HEIGHT - theme.LOGO_SIZE) / 2,
-          theme.LOGO_SIZE,
-        );
-      }
+      const logoY = y + (theme.ROW_HEIGHT - theme.LOGO_SIZE) / 2;
+
+      await drawTeamComponent(ctx, leftLogoX, logoY, theme.LOGO_SIZE, {
+        logoBuffer: homeLogoBuffer,
+        teamName: match.homeTeam,
+        bgColor: match.homeTeamBgColor ?? null,
+      });
+
+      await drawTeamComponent(ctx, rightLogoX, logoY, theme.LOGO_SIZE, {
+        logoBuffer: awayLogoBuffer,
+        teamName: match.awayTeam,
+        bgColor: match.awayTeamBgColor ?? null,
+      });
 
       ctx.fillStyle = theme.SCORE_RECT_COLOR;
       ctx.fillRect(scoreRectX, y, SCORE_RECT_WIDTH, theme.ROW_HEIGHT);
@@ -181,13 +163,20 @@ async function renderMatchResults(payload, options = {}) {
       } else {
         ctx.font = `bold ${theme.RESULTS_FONT_SIZE}px ${theme.FONT_FAMILY}`;
         ctx.fillStyle = theme.TEXT_WHITE;
-        const scoreText = `${match.homeScore ?? "-"} - ${match.awayScore ?? "-"}`;
-        const tw = ctx.measureText(scoreText).width;
-        ctx.fillText(
-          scoreText,
-          scoreRectX + (SCORE_RECT_WIDTH - tw) / 2,
-          y + theme.ROW_HEIGHT / 2 + theme.RESULTS_FONT_SIZE / 3,
-        );
+        const homeStr = String(match.homeScore ?? "-");
+        const awayStr = String(match.awayScore ?? "-");
+        const scoreCenterX = scoreRectX + SCORE_RECT_WIDTH / 2;
+        const scoreY = y + theme.ROW_HEIGHT / 2;
+        const hyphenGap = 10;
+        ctx.textBaseline = "middle";
+        ctx.textAlign = "right";
+        ctx.fillText(homeStr, scoreCenterX - hyphenGap, scoreY);
+        ctx.textAlign = "center";
+        ctx.fillText(" - ", scoreCenterX, scoreY);
+        ctx.textAlign = "left";
+        ctx.fillText(awayStr, scoreCenterX + hyphenGap, scoreY);
+        ctx.textAlign = "left";
+        ctx.textBaseline = "alphabetic";
       }
 
       y += theme.ROW_HEIGHT + theme.ROW_GAP;
@@ -228,6 +217,8 @@ async function renderMatchResults(payload, options = {}) {
 
     y += theme.LEAGUE_GAP;
   }
+
+  drawBrandingVertical(ctx, theme.CANVAS_WIDTH, height);
 
   return canvas.toDataURL("image/png");
 }

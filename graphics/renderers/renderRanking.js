@@ -5,6 +5,7 @@ const {
 } = require("../utils/imageLoader");
 const { createCanvasContext } = require("../utils/canvasSetup");
 const theme = require("../constants/theme");
+const { drawBrandingVertical } = require("../utils/drawBranding");
 
 const MEDAL_LABELS = { 1: "1", 2: "2", 3: "3" };
 const MEDAL_COLORS = { 1: "#FFD700", 2: "#C0C0C0", 3: "#CD7F32" };
@@ -117,6 +118,8 @@ async function renderRanking(payload, rankingType = "quinipolo") {
 
   ctx.font = `bold ${theme.LEADERBOARD_RESULT_FONT_SIZE}px ${theme.FONT_FAMILY}`;
   ctx.fillStyle = theme.TEXT_WHITE;
+
+  drawBrandingVertical(ctx, theme.CANVAS_WIDTH, theme.RANKING_HEIGHT);
 
   list.forEach((entry, i) => {
     const y = startY + i * (rowHeight + rowGap);

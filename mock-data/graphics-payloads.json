@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "description": "Mock data for generating the 5 quinipolo result graphics. Mirrors BE API returns: correction-see, submit-correction, leaderboard.",
+    "description": "Mock data for generating the 5 quinipolo result graphics. Mirrors BE API returns: correction-see, submit-correction, leaderboard. 15 matches total (scraper quotas: DHM 4, DHF 4, PDM 3, PDF 3, PLENO 1).",
     "matchday": "J16",
     "quinipoloId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
     "leagueId": "351a1949-f6c5-4940-ac70-1c7dd08e8b1a"
@@ -103,14 +103,14 @@
   },
 
   "image2_lastResultsExtended": {
-    "source": "8 matches: 1 DHF, 3 PDM, 3 PDF, 1 PLENO AL 15. League blocks with vertical separator lines.",
+    "source": "8 matches (8-15): 1 DHF, 3 PDM, 3 PDF, 1 PLENO AL 15. Matches rawBeResponses.correctionSee. Total 15 with image1.",
     "matchday": "J16",
     "matchesByLeague": [
       {
         "leagueId": "DHF",
         "leagueName": "División de Honor Femenina",
         "matches": [
-          { "matchNumber": 8, "homeTeam": "CN Mataró", "awayTeam": "CN Sant Feliu", "homeScore": 12, "awayScore": 14, "status": "completed", "homeTeamLogoUrl": null, "awayTeamLogoUrl": null }
+          { "matchNumber": 8, "homeTeam": "CN Terrassa", "awayTeam": "CN Mediterrani", "homeScore": 11, "awayScore": 10, "status": "completed", "homeTeamLogoUrl": null, "awayTeamLogoUrl": null }
         ]
       },
       {
@@ -118,8 +118,8 @@
         "leagueName": "Primera División Masculina",
         "matches": [
           { "matchNumber": 9, "homeTeam": "CN Atlètic-Barceloneta", "awayTeam": "CAX", "homeScore": 14, "awayScore": 7, "status": "completed", "homeTeamLogoUrl": null, "awayTeamLogoUrl": null },
-          { "matchNumber": 10, "homeTeam": "CN Sabadell", "awayTeam": "CN Barcelona", "homeScore": 13, "awayScore": 11, "status": "completed", "homeTeamLogoUrl": null, "awayTeamLogoUrl": null },
-          { "matchNumber": 11, "homeTeam": "Waterpolo Tenerife Echeyde", "awayTeam": "CN Rubí", "homeScore": null, "awayScore": null, "status": "postponed", "statusLabel": "APLAZADO", "homeTeamLogoUrl": null, "awayTeamLogoUrl": null }
+          { "matchNumber": 10, "homeTeam": "CN Sabadell", "awayTeam": "CN Sant Andreu", "homeScore": 15, "awayScore": 12, "status": "completed", "homeTeamLogoUrl": null, "awayTeamLogoUrl": null },
+          { "matchNumber": 11, "homeTeam": "CN Rubí", "awayTeam": "CN Catalunya", "homeScore": 9, "awayScore": 8, "status": "completed", "homeTeamLogoUrl": null, "awayTeamLogoUrl": null }
         ]
       },
       {
@@ -209,7 +209,15 @@
         { "gameType": "waterpolo", "homeTeam": "CN Sabadell", "awayTeam": "CN Barcelona", "leagueId": "DHM", "isGame15": false },
         { "gameType": "waterpolo", "homeTeam": "CN Sant Andreu", "awayTeam": "CN Catalunya", "leagueId": "DHM", "isGame15": false },
         { "gameType": "waterpolo", "homeTeam": "Waterpolo Tenerife Echeyde", "awayTeam": "CN Rubí", "leagueId": "DHM", "isGame15": false },
-        { "gameType": "waterpolo", "homeTeam": "UVSE Margitsziget", "awayTeam": "Olympiacos", "leagueId": "CLF", "isGame15": false }
+        { "gameType": "waterpolo", "homeTeam": "UVSE Margitsziget", "awayTeam": "Olympiacos", "leagueId": "CLF", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Terrassa", "awayTeam": "CN Mediterrani", "leagueId": "DHF", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Atlètic-Barceloneta", "awayTeam": "CAX", "leagueId": "PDM", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Sabadell", "awayTeam": "CN Sant Andreu", "leagueId": "PDM", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Rubí", "awayTeam": "CN Catalunya", "leagueId": "PDM", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "Club Waterpolo Pontevedra", "awayTeam": "CN Joventut", "leagueId": "PDF", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Rubí", "awayTeam": "CN Catalunya", "leagueId": "PDF", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "Boadilla", "awayTeam": "Málaga", "leagueId": "PDF", "isGame15": false },
+        { "gameType": "waterpolo", "homeTeam": "CN Sant Feliu", "awayTeam": "UE Horta", "leagueId": "PLENO_15", "isGame15": true }
       ],
       "correct_answers": [
         { "matchNumber": 1, "chosenWinner": "CN Catalunya", "goalsHomeTeam": "20", "goalsAwayTeam": "11" },
@@ -218,7 +226,15 @@
         { "matchNumber": 4, "chosenWinner": "CN Sabadell", "goalsHomeTeam": "13", "goalsAwayTeam": "11" },
         { "matchNumber": 5, "chosenWinner": "CN Catalunya", "goalsHomeTeam": "13", "goalsAwayTeam": "19" },
         { "matchNumber": 6, "chosenWinner": "empat", "goalsHomeTeam": null, "goalsAwayTeam": null, "cancelled": true },
-        { "matchNumber": 7, "chosenWinner": "UVSE Margitsziget", "goalsHomeTeam": "16", "goalsAwayTeam": "15" }
+        { "matchNumber": 7, "chosenWinner": "UVSE Margitsziget", "goalsHomeTeam": "16", "goalsAwayTeam": "15" },
+        { "matchNumber": 8, "chosenWinner": "CN Mediterrani", "goalsHomeTeam": "11", "goalsAwayTeam": "10" },
+        { "matchNumber": 9, "chosenWinner": "CN Atlètic-Barceloneta", "goalsHomeTeam": "14", "goalsAwayTeam": "7" },
+        { "matchNumber": 10, "chosenWinner": "CN Sabadell", "goalsHomeTeam": "15", "goalsAwayTeam": "12" },
+        { "matchNumber": 11, "chosenWinner": "CN Catalunya", "goalsHomeTeam": "9", "goalsAwayTeam": "8" },
+        { "matchNumber": 12, "chosenWinner": "CN Joventut", "goalsHomeTeam": "10", "goalsAwayTeam": "13" },
+        { "matchNumber": 13, "chosenWinner": "CN Catalunya", "goalsHomeTeam": "9", "goalsAwayTeam": "8" },
+        { "matchNumber": 14, "chosenWinner": "Boadilla", "goalsHomeTeam": "17", "goalsAwayTeam": "7" },
+        { "matchNumber": 15, "chosenWinner": "UE Horta", "goalsHomeTeam": "11", "goalsAwayTeam": "16" }
       ],
       "has_been_corrected": true,
       "end_date": "2026-02-26T23:59:59.000Z"
