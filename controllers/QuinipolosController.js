@@ -15,6 +15,10 @@ const {
   computeAnswerStatistics,
 } = require("../services/stats/computeAnswerStatistics");
 
+/** Global league: subtract 2 from matchday J for display (legacy adjustment). */
+const GLOBAL_LEAGUE_ID = "351a1949-f6c5-4940-ac70-1c7dd08e8b1a";
+const GLOBAL_LEAGUE_J_OFFSET = 2;
+
 /**
  * Adds new teams to the Supabase 'teams' table.
  * @param {Object} teamsObj - { waterpolo: [...], football: [...], basketball: [...] }
@@ -1110,19 +1114,36 @@ const correctQuinipolo = async (req, res) => {
       console.warn("Failed to fetch participants leaderboard:", e);
     }
 
+    // Matchday = ordinal position of this quinipolo among corrected non-deleted (J1, J2, …). Do not count deleted.
     let matchday = "";
     try {
-      const { count, error: countError } = await supabase
+      const { data: correctedIds, error: listError } = await supabase
         .from("quinipolos")
-        .select("*", { count: "exact", head: true })
+        .select("id")
         .eq("league_id", quinipolo.league_id)
         .eq("has_been_corrected", true)
-        .or("is_deleted.eq.false,is_deleted.is.null");
-      if (!countError && count != null) {
-        matchday = `J${count}`;
+        .or("is_deleted.eq.false,is_deleted.is.null")
+        .order("end_date", { ascending: true })
+        .order("id", { ascending: true });
+      if (!listError && correctedIds && correctedIds.length > 0) {
+        const position =
+          correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
+        if (position > 0) {
+          const j =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
+              : position;
+          matchday = `J${j}`;
+        } else {
+          const fallback =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
+              : correctedIds.length;
+          matchday = `J${fallback}`;
+        }
       }
     } catch (e) {
-      console.warn("Failed to count corrected quinipolos for matchday:", e);
+      console.warn("Failed to compute matchday (ordinal of corrected, non-deleted):", e);
     }
 
     res.status(200).json({
@@ -1347,20 +1368,37 @@ const editQuinipoloCorrection = async (req, res) => {
       console.warn("Failed to fetch participants leaderboard (edit):", e);
     }
 
+    // Matchday = ordinal position of this quinipolo among corrected non-deleted (J1, J2, …). Do not count deleted.
     let matchday = "";
     try {
-      const { count, error: countError } = await supabase
+      const { data: correctedIds, error: listError } = await supabase
         .from("quinipolos")
-        .select("*", { count: "exact", head: true })
+        .select("id")
         .eq("league_id", quinipolo.league_id)
         .eq("has_been_corrected", true)
-        .or("is_deleted.eq.false,is_deleted.is.null");
-      if (!countError && count != null) {
-        matchday = `J${count}`;
+        .or("is_deleted.eq.false,is_deleted.is.null")
+        .order("end_date", { ascending: true })
+        .order("id", { ascending: true });
+      if (!listError && correctedIds && correctedIds.length > 0) {
+        const position =
+          correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
+        if (position > 0) {
+          const j =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
+              : position;
+          matchday = `J${j}`;
+        } else {
+          const fallback =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
+              : correctedIds.length;
+          matchday = `J${fallback}`;
+        }
       }
     } catch (e) {
       console.warn(
-        "Failed to count corrected quinipolos for matchday (edit):",
+        "Failed to compute matchday (ordinal of corrected, non-deleted) on edit:",
         e,
       );
     }

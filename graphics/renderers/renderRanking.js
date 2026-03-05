@@ -132,7 +132,8 @@ async function renderRanking(payload, rankingType = "quinipolo") {
 
   listToShow.forEach((entry, i) => {
     const y = startY + i * (rowHeight + rowGap);
-    const rank = entry.rank ?? ranks.get(entry) ?? i + 1;
+    // Prefer BE-computed rank so tied scores show the same position number
+    const rank = ranks.get(entry) ?? entry.rank ?? i + 1;
     const rankDisplay = getRankDisplay(rank);
     const username = entry.username || "—";
     const points = String(entry.points ?? entry.totalPoints ?? 0);
