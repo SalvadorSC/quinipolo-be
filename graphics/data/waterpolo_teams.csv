@@ -1,0 +1,194 @@
+id,name,sport,created_at,gender,alias
+e3f16901-0404-43f9-b1a3-b7086b3b837d,A.E. Santa Eulàlia F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Santa Eulalia F"",""AESE F"",""Agrupació Esportiva Santa Eulàlia F""]"
+cc6b6144-24d0-4dae-a10e-ae71c0243f51,A.N. Brescia,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+488ef999-8650-4a12-93a6-37efb317655f,A.R. Concepción Ciudad Lineal F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Concepción F""]"
+e277081e-3bbb-4261-b04a-0ad4718910aa,A.R. Concepción Ciudad Lineal M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Concepción M""]"
+224a0af3-414b-4f8f-b9ce-8bcf8d6b315a,A.S Roma F,waterpolo,2025-11-26T18:16:51.704473+00:00,f,"[""Roma F""]"
+c1c71753-fbd6-460e-a026-8afd7cecd6f6,Alcaraz,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+ca5f1699-e98c-4524-9044-95fa34ebb52e,Alemania,waterpolo,2026-01-30T20:18:53.435236+00:00,,[]
+c88177b3-6bde-4f80-913b-617a5990fab3,Alimos F,waterpolo,2026-02-21T05:39:25.247299+00:00,,[]
+8247d58c-96cb-45ef-8d54-13ee7d85b1f5,Apollon Smyrnis M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+611c1c6e-cae2-45a0-8ede-5fe05cea1dcd,Askartza B,waterpolo,2025-11-28T21:12:26.228462+00:00,m,[]
+df31d786-5a4d-4445-870a-980e5fdd013e,Askartza F,waterpolo,2026-02-27T11:39:27.678526+00:00,,[]
+0bd4dc93-34ad-4bd1-a30c-07548ea02ee0,C. Las Encinas De Boadilla M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Boadilla M""]"
+6761064c-7764-4bc8-8ae8-df63dde64e01,C. Waterpolo Dos Hermanas F,waterpolo,2025-10-24T20:41:10.261559+00:00,f,"[""Dos hermanas F""]"
+160d6d04-c254-4396-b015-e8c896a1a53a,C. Waterpolo Dos Hermanas M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Dos hermanas M""]"
+0811a570-8ae8-4160-a902-0eecdcf27cf8,C. Waterpolo Elx F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Elx F""]"
+54a3a8ae-d21a-4d40-a702-d72150a05c64,C. Waterpolo Elx M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Elx M""]"
+4384bad0-3d62-4fb2-ae4d-2d4ae08ad6b8,C. Waterpolo Navarra M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Navarra M""]"
+e79590aa-19ec-4a4b-a7d2-06a220848325,C. Waterpolo Pontevedra F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+ee5853e8-c8a4-4c92-8b62-97e9c0e8d167,C. Waterpolo Sevilla F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Sevilla F""]"
+562cc600-f9fd-4303-9a03-34edab39da32,C. Waterpolo Sevilla M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Sevilla M""]"
+a09001e5-6dfe-4cb9-b338-14fa14e9bfac,C.C Ciudad de Alcorcon F,waterpolo,2026-02-27T11:39:27.678526+00:00,,[]
+a972a0b9-0b04-4bbb-a454-996a145e52b7,C.C Ciudad de Alcorcon M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Alcorcon M""]"
+6348e0b0-db31-4db9-b12a-be2174faf392,C.C. Napoli,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+c995f2c2-70ac-4c6a-9d08-8a8c5573f863,C.D Ciudad de Rivas F,waterpolo,2025-10-08T15:16:29.138681+00:00,f,[]
+2dd7c852-db40-43ca-b84a-c70ffafc2dd8,C.D. Waterpolo Malaga F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Málaga F""]"
+6dc7b9ca-e9e5-4235-a909-c1e9813746b2,C.D. Waterpolo Malaga M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Málaga M""]"
+737d2405-54bc-4f64-8cf8-51d80d5fa142,C.D. Waterpolo Turia F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Turia F""]"
+3cffab82-2803-49e4-9fa1-f1c46af54d62,C.D. Waterpolo Turia M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Turia M""]"
+0a1f894b-c928-4e4c-bbd4-87af0a3acc75,C.E. Mediterrani F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Mediterrani F""]"
+8b904166-5ab3-400a-8875-bcfd86c7af35,C.E. Mediterrani M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Mediterrani M""]"
+25996701-66e5-401c-9c4f-9d5902be1964,C.N Manresa M,waterpolo,2025-10-08T15:16:29.138681+00:00,m,"[""Manresa M""]"
+58e39acd-e6f9-469b-818f-c2223e66326d,C.N Montjuïc F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Montjuic F""]"
+d97b5b5a-c26c-4dfc-b085-5fad25b3afca,C.N Montjuïc M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Montjuic M""]"
+295468a2-0388-4388-a271-8d245a14c826,C.N Sant Andreu F,waterpolo,2025-10-29T21:36:16.581429+00:00,f,"[""Sant Andreu F""]"
+2d3b28e7-6da5-4b1e-947f-17f9ab0a7a9f,C.N Sant Andreu M,waterpolo,2025-09-15T14:03:44.921945+00:00,m,"[""Sant Andreu M""]"
+a0c0a71c-5e15-48ed-953f-60d6b130c118,C.N Sant Andreu M ,waterpolo,2025-12-12T18:48:46.139101+00:00,,[]
+527ae0ff-d147-480d-81a2-a40a26e3056e,C.N. Atlètic-Barceloneta F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""CNAB F"",""Barceloneta F""]"
+e040c65e-9eb1-440d-bf0f-7aa2eaf7cdc7,C.N. Atlètic-Barceloneta M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""CNAB M"",""Barceloneta M""]"
+fb7c8bc1-ca35-4bbd-8d97-1848cd906410,C.N. Badia M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+d56bb776-1c30-442b-a474-3d4fb3345b16,C.N. Barcelona F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""CNB F""]"
+a2fe7b86-ebc7-4c62-9c76-139ea903f82f,C.N. Barcelona M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""CNB M""]"
+ea8acf3a-572f-4a72-b27f-e171eae95bc9,C.N. Boadilla F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Boadilla F""]"
+fb55d5ce-0c8b-4b35-84b6-902ef4620014,C.N. Boadilla M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Boadilla M""]"
+d9332f07-7f47-465f-9209-aca1ad54908b,C.N. Caballa M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Caballa M""]"
+8949f5b3-cd66-4c55-ac53-d880b70b1d5f,C.N. Catalunya F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Catalunya F""]"
+6234938a-9a98-47e1-ad0d-5c7732c3fb9a,C.N. Catalunya M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Catalunya M""]"
+16608d0d-c50a-41ad-9bc4-192046bbe16f,C.N. Ciutat de Palma F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+8282b099-4c81-4fa3-8e83-c4b9e861cfcd,C.N. Ciutat de Palma M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+ca6c4bd4-f9d0-4c50-950f-9260d56dafc1,C.N. Cuatro Caminos F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Cuatro Caminos F""]"
+600c0d50-b761-40a1-9895-dcb1f34bea2b,C.N. Echeyde B M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Echeyde B"",""Echeyde B M""]"
+36a6e1af-802d-4b88-b274-fbfa374a65b6,C.N. Echeyde F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Echeyde F""]"
+af751f96-fb94-4465-8ce5-b5bd22abde98,C.N. Echeyde M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Echeyde M""]"
+707e8d80-8dd7-409e-b314-cd648a44ce25,C.N. Godella F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+1c4999bb-dcb4-4472-882f-bc380b72157c,C.N. Godella M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+7b1b7c20-3ce7-4ecb-952f-dc51203d9ead,C.N. Granollers F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Granollers F""]"
+0849b04d-9777-4cf3-a17d-123470e1fa06,C.N. Granollers M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Granollers M""]"
+c6d44f75-5d07-48f0-94f7-d543bb76d0d1,C.N. Helios M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Helios M""]"
+08b23125-e809-4e32-90a2-d8ff0f102294,C.N. Las Palmas M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+0def2357-90dd-4e50-ac55-db40d91782b7,C.N. Marseille M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+52a65cf2-4edd-422e-b4c0-00885a255d68,C.N. Mataró F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+14da4e2e-72ad-46b0-a163-a398b27a12ff,C.N. Mataró M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+8b962bce-254a-4a2c-8130-5aa482a37093,C.N. Metropole M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+6dc0a2f8-2d2b-462d-b29e-746614eea4a3,C.N. Molins de Rei F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+60364012-9ec4-4d98-b44c-1f2d7ca7bbb3,C.N. Molins de Rei M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+a8318e7e-9f34-4e23-807d-da1a6aeba3fa,C.N. Poble Nou F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+9412a44c-0f5d-4f54-afe3-be5c560461e0,C.N. Poble Nou M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+859cb29c-c252-4a93-8bc9-e3f549dbb31d,C.N. Premià M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+9496c151-4e03-4e2a-adcb-69307463a81d,C.N. Rubí F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+10d8dd3a-d822-493c-8809-9943c3730093,C.N. Rubí M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+b08659c5-66fe-4201-9645-039f7e04ef01,C.N. Sabadell F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+6a744912-0fcf-493e-ba42-16cc7204affc,C.N. Sabadell M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+b301a632-1049-48a5-a984-3447e144a9e0,C.N. Sant Andreu F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+afcca455-61e5-4315-98f1-c4fcdaa62314,C.N. Sant Andreu M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+72a6e461-d3c3-46e3-afbd-0e23c0a4f4f2,C.N. Sant Feliu F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+94ec133e-d995-43f9-bc93-11102d0ba60d,C.N. Sant Feliu M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+8a272709-03de-4f38-9238-3eddc896034f,C.N. Terrassa F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+afb9f485-ab39-48da-9729-95ab61dbbbb6,C.N. Terrassa F ,waterpolo,2025-12-04T22:48:35.998558+00:00,,[]
+11b89adb-d43e-4a2d-a380-3dfb53fe8daf,C.N. Terrassa M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+93733c3d-bcb2-4c99-82fd-7533200c6725,C.N. Tres Cantos M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+a0f17412-4c42-4990-aed3-cbc6b5547331,C.N. Vallirana F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+9f75392a-6174-431b-8816-9f8e940a0122,C.N. Vallirana M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+7810f4da-bff0-4c47-8680-89fb764703bc,cata,waterpolo,2025-12-18T14:38:32.718649+00:00,,[]
+2656351b-1024-4821-b8ac-61f795aea5fb,Ciutat de Palma M,waterpolo,2026-01-21T23:58:18.814951+00:00,,[]
+629b949e-5382-4d26-94e8-e36f678974bb,Claret Askartza M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+55fd57cf-729e-4e13-9377-21b60d087e05,Croacia F,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+67e2def7-f438-443a-8117-4c397bb75b25,CS Plebiscito Padova F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+eab1a057-ed8f-4d71-bc8c-fc6ce255038f,CSA Steaua Bucarest M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+4ffacc7d-d85d-4db3-bd86-35208ad5cd95,D.N Portugalete M,waterpolo,2025-10-10T17:06:53.874434+00:00,m,[]
+0400b200-6e8c-4bf4-b5ff-fc2f7021fe1a,De Akker Bolonia,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+76b89a22-40f6-4f11-9141-e4a8ff16dcc6,DINAMARCA (balonmano),waterpolo,2026-01-22T22:03:13.236658+00:00,,[]
+2a88a7cd-e28b-4927-90fb-a5ab93cc0299,Dinamarca/Islandia,waterpolo,2026-01-30T20:18:53.435236+00:00,,[]
+5147f609-22ab-4107-be2c-a0cda56ac2e4,Djokovic,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+b58c61a2-87fc-4f30-b6aa-5f3ebb006a25,Donosti ,waterpolo,2025-12-12T14:04:29.844514+00:00,,[]
+70083887-cb37-4e5f-a166-34dcb130b9dd,dos ,waterpolo,2025-12-19T11:17:15.272663+00:00,,[]
+bed6aba7-206d-4678-a326-6426dd1bed31,Dunaujvaros F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+0853f02d-229b-442d-bd62-54135289e7e9,E. Waterpolo Zaragoza F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+79d4e8e5-a94b-4f97-a9a5-da12e652b715,Eger F,waterpolo,2025-09-24T16:49:28.78578+00:00,f,[]
+c6945a8e-1cc8-4945-a419-5d1781e97f8f,Ekipe Orizzonte F,waterpolo,2025-10-23T16:01:12.596671+00:00,f,[]
+83a3d584-0b9c-4267-9b53-a0ceffdac8e5,ESLOVAQUIA,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+2eb3a965-6687-4f1e-adf3-87a853ac5c0d,ESPAÑA,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+53eb39e7-0b1e-4f72-a1e1-ee4b900ccc8f,ESPAÑA (balonmano),waterpolo,2026-01-22T22:03:13.236658+00:00,,[]
+caab42ad-275e-42c7-898f-1c1cc39a2d75,España F,waterpolo,2026-01-23T16:16:22.306121+00:00,,[]
+3fc61c27-877f-46fb-a34a-a43cda8d8c23,Estrella Roja,waterpolo,2026-02-20T16:43:38.129873+00:00,,[]
+6c09cfef-daf2-4be9-9ffe-0dba7c8f1df3,Ferencvarosi,waterpolo,2025-11-28T14:20:29.633851+00:00,,[]
+c8533762-6c64-4c3c-9fdb-c1991649a097,Ferencvárosi T.C. F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+f05f3eae-97a4-4f18-a46c-b5d637f710f8,Ferencvárosi T.C. M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+1280b0d2-8e18-4192-a40c-0ad1ae0388a7,Francia,waterpolo,2026-01-09T16:08:24.05919+00:00,,[]
+646bb8f5-9d0f-4613-8ab1-d5fe2c9e3ec5,FRANCIA,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+407a8973-7f1b-4b41-93cc-6f85b785fa5b,Francia F,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+bacb18e6-d0f8-4555-b7c3-d13eb27d1378,GEORGIA,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+27757140-59d9-4be2-afa5-86088f20ef75,Gran Bretaña F,waterpolo,2026-01-30T21:37:52.856493+00:00,,[]
+459711bc-55e8-404a-ad15-d62ae1175e4a,GRECIA,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+d47cf0f0-173c-4cb7-9385-091fc5852e7c,Grecia F,waterpolo,2026-01-29T23:45:16.015399+00:00,,[]
+f6d9530c-e4c7-4d66-aa44-3f3ad6984bd5,Hannover,waterpolo,2025-11-28T14:20:29.633851+00:00,,[]
+3e4602e1-8ba5-469e-9544-8bec19555a11,Holanda F,waterpolo,2026-01-29T23:45:16.015399+00:00,,[]
+492d7aa2-1df0-4ffe-9482-42c986e6df84,Honved SE,waterpolo,2026-02-20T16:43:38.129873+00:00,,[]
+7b9d5005-3b43-4922-bb64-a4c549a5da1f,Hungria,waterpolo,2026-01-09T16:08:24.05919+00:00,,[]
+b3e7d3de-fbe1-4bf8-8a1b-ad8722f39b46,HUNGRIA,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+5367e659-aa07-40c6-913d-3099a9792a95,Hungria F,waterpolo,2026-01-23T16:16:22.306121+00:00,,[]
+0f73e236-a4ee-45dc-a208-1aedbf7ae3e1,ISRAEL,waterpolo,2026-01-16T16:33:37.461032+00:00,,[]
+563753d8-9c01-4212-ad9f-0c63de8834b9,ITALIA,waterpolo,2026-01-15T22:50:36.061708+00:00,,[]
+c865b439-0dc7-4155-bf2b-9a66f305cb64,Italia F,waterpolo,2026-01-29T23:45:16.015399+00:00,,[]
+6c6dba88-d826-4b2e-b185-0ef566f91769,Jadran NH,waterpolo,2026-02-06T09:31:21.635684+00:00,,[]
+a9efcbfe-27cf-437f-9ad5-08fe6fa134a5,Jadran ST,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+12d621bc-77b1-4ee6-bca0-c5570cb7b831,KVK Radnički Kragujevac M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+1bda6592-23d4-4734-8673-61fb7799b36f,Larraina,waterpolo,2025-11-28T21:12:26.228462+00:00,,[]
+a63475e3-d06f-4a43-973e-6df1ec1d08af,Leioa,waterpolo,2026-02-27T11:27:39.69936+00:00,,[]
+cbe0e5f8-5885-459f-a6b8-e9a534d5a861,Leioa ,waterpolo,2025-12-12T14:04:29.844514+00:00,,[]
+0b07b980-d43b-45ce-96fc-3fbbbe2fc2a5,Leioa  F,waterpolo,2026-01-09T21:39:24.084251+00:00,,[]
+2df32e52-671f-45a6-a0b3-adafb3095ca5,Leioa Waterpolo F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Leioa F""]"
+406f3488-7d0a-44c7-b67b-d04a16717be3,Marsella,waterpolo,2025-11-30T11:20:48.302041+00:00,,[]
+5592bfe0-36f5-4e65-aac3-303f3e384864,mata,waterpolo,2025-12-12T14:04:29.844514+00:00,,[]
+c90f9e3c-eed3-495c-a774-d83deae0659b,Mladost,waterpolo,2025-11-30T11:44:35.490667+00:00,,[]
+76c4365a-86cc-4485-8f42-011f09a6b78f,MONTENEGRO,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+b7f5844a-24b0-4c91-a95d-920c13334a86,Nancy F,waterpolo,2025-11-26T18:16:51.704473+00:00,f,[]
+b070882b-05bb-4241-9e83-57338d5ae9f3,Nautica Portugalete,waterpolo,2025-10-08T15:19:44.588153+00:00,m,[]
+f6d98018-05dc-43e4-ba12-5575087ae7ea,Nautica Portugalete B,waterpolo,2026-02-27T11:27:39.69936+00:00,,[]
+f1a4975c-5e93-4c86-9f26-6267b976f9cc,Navarra B,waterpolo,2025-12-19T11:22:47.582133+00:00,,[]
+a8f1c050-5b07-438d-9c8f-9d3404ea325a,Olimpic Roma,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+2da2d57e-e4a9-463f-a8f6-b97073e1acfa,Olympiacos F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,[]
+acbaa430-c083-4dd2-a52b-461fcd80f85c,Olympiacos M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+75c57d10-05c0-4e30-ace9-42393925383f,Oradea,waterpolo,2025-11-30T11:20:48.302041+00:00,,[]
+58dd9e37-3d60-4542-8342-fc4e0db53636,Orizzonte Catania F,waterpolo,2025-10-23T07:17:22.132493+00:00,f,[]
+8d617256-4a14-4700-9929-29960b237367,Ortigia,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+e768a19a-53b3-4d87-b0ce-c313eb1c2331,Paises Bajos,waterpolo,2026-01-09T16:08:24.05919+00:00,,[]
+f6f3e98b-bb76-4124-a24e-f1d8a8e71a5a,PAISES BAJOS,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+a58bc9b2-c19c-4ba3-9c52-3e1b9432bbaa,Paises Bajos F,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+4f060066-4d7d-4ec7-93ea-2326cf59ac76,Panathinaikos Waterpolo C. M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+3eb1b9f8-10f6-45b3-8391-0afbc35adb1c,Panionios Waterpolo C. F,waterpolo,2025-10-17T10:51:17.880299+00:00,f,[]
+36f0cb41-2e68-453b-8cd6-bfc26a75f9b1,Panionios Waterpolo C. M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+85162f36-01c9-4dba-933d-8a36f1056de5,Partizan,waterpolo,2026-02-06T21:38:52.25184+00:00,,[]
+653b75c2-e8c5-40f5-9656-71776e9ef918,Portugal F,waterpolo,2026-01-23T16:16:22.306121+00:00,,[]
+20d298c6-91cd-4a6e-b7d5-8bc0d1001827,Posilipo,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+b120b82b-8de6-4493-aec3-b0dd2d03a1f7,Pozuelo,waterpolo,2026-02-27T11:27:39.69936+00:00,,[]
+913fc350-3211-4b71-9b92-08159c2bff22,Primorac,waterpolo,2025-11-30T11:20:48.302041+00:00,,[]
+616b9fcc-b7c2-4c5a-892d-ff018c914d5e,Primorac Kotor,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+f338c9e2-3894-426e-9295-02d89f61296c,Pro Recco Waterpolo,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+33d42580-b938-4d20-85e6-157194607e47,Radnicki,waterpolo,2025-11-30T11:44:35.490667+00:00,,[]
+509a1626-f920-4f8e-8026-da28b647a0dd,Rapallo F,waterpolo,2025-11-05T16:34:58.9609+00:00,f,[]
+90c08a3f-2f87-474d-bc21-24573a25bf68,Rari Nantes Savona M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+1bfef3b2-7039-49b2-957f-bbe6d98585c8,Real Canoe N.C. 2 M,waterpolo,2025-10-17T10:51:17.880299+00:00,m,"[""Real Canoe 2""]"
+23547148-5526-4570-bf9e-08eb34fe9e81,Real Canoe N.C. F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Real Canoe F""]"
+c289d48e-f1ff-4b1a-b2a5-a86016ec3beb,Real Canoe N.C. M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Real Canoe M""]"
+4dffad9d-2ba3-4c22-8eee-11846938e597,Roma F,waterpolo,2025-11-28T14:20:29.633851+00:00,f,[]
+59f3372f-9481-48b4-b227-87ba82c16631,Roma Vis Nova,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+aa78c2a7-461b-4e9d-aaf7-77d27b2e5f6c,RUMANIA,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+56eea90e-79a2-4270-9e2f-929fe6341442,Rumania F,waterpolo,2026-01-23T16:16:22.306121+00:00,,[]
+14576518-5e01-4ce6-b99d-d5c6bdf3d56d,Sabac,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+197db173-2f82-40a5-8691-c79761bdbacb,SAN Giljan ASC,waterpolo,2025-11-13T16:37:29.126894+00:00,m,[]
+a44f8db8-7638-412d-b7b0-014bf4753f7d,SC Quinto M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+dc8943a2-8de2-473c-a4de-a2aa7af212e3,Serbia,waterpolo,2026-01-09T16:08:24.05919+00:00,,[]
+db17b326-9e09-4523-9c2b-7b8a73daf61c,SERBIA,waterpolo,2026-01-09T18:53:07.315267+00:00,,[]
+c56bbb3a-2983-4b50-b694-339557b0c7c5,SERBIA ,waterpolo,2026-01-16T16:33:37.461032+00:00,,[]
+49cded94-ca92-49cd-b44e-1233bdc493c4,Telimar Pallanuoto M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+c421dfdb-bddb-47c3-89ef-f995774bd9e6,Terrassa ,waterpolo,2025-12-12T14:04:29.844514+00:00,,[]
+7d91a792-0e6e-40b5-9bf9-60fe6b48ddfe,Trieste,waterpolo,2026-01-30T16:52:31.292563+00:00,,[]
+5d6fc33c-aa52-46f9-87e7-ecfe72220315,Trieste F,waterpolo,2025-09-24T16:49:28.78578+00:00,f,[]
+612ceb28-73b5-4fcd-937c-f3207599dc0e,U.E Horta F,waterpolo,2025-10-15T22:01:16.24295+00:00,f,"[""Horta F""]"
+f00557fc-0416-428c-b9a5-9d824a234627,U.E Horta M,waterpolo,2025-09-15T16:49:20.107161+00:00,m,"[""Horta M""]"
+9e10ff9e-90b2-471e-a14e-13c4b5660b5b,Unión Waterpolo Tenerife M,waterpolo,2025-10-07T16:07:30.297642+00:00,m,"[""Tenerife M"",""U.W. Tenerife M""]"
+d854eb89-7d09-4fc1-9a8a-e422c935a5e2,UPNA,waterpolo,2026-01-30T20:18:53.435236+00:00,,[]
+f1f8b11e-4d3d-4193-a656-deaf679c147d,UPNA F,waterpolo,2025-11-06T21:37:47.777924+00:00,f,[]
+4b91294e-78f8-4a4d-9877-5eaf0825a938,URBAT IKE,waterpolo,2025-10-08T08:53:58.352942+00:00,m,"[""Urbat M""]"
+5504c3b3-b716-427e-ab50-5a764662256a,UVSE F,waterpolo,2025-12-11T09:25:48.499062+00:00,,[]
+6d30772d-7993-4b60-8e7f-b34d201a15df,Vasas,waterpolo,2025-11-30T11:20:48.302041+00:00,,[]
+7d28f036-30b0-46f2-a31b-cff374eeb992,Vk Novi Beograd,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+73878dcc-2781-4d5e-8f4c-44917cfdc135,Vouliagmeni F,waterpolo,2025-10-23T16:01:12.596671+00:00,f,[]
+71e3d26a-65a4-4509-adaf-870c4ae77207,W.P.C. Dinamo Tblisi M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,[]
+c730f68d-258a-4958-ba8b-ef68781e6dc0,Waterpolo Brains F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Colegio Brains F""]"
+1328b343-c49c-4071-8cad-062a898571db,Waterpolo Brains M,waterpolo,2025-07-17T09:34:09.395306+00:00,m,"[""Colegio Brains M""]"
+7a92d3e1-3c46-4e4f-92c3-0e95581d75c0,Waterpolo Ciudad de Rivas F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Rivas F""]"
+a2672287-a360-472a-a976-1b5f92d241fd,Waterpolo Iruña 9802 F,waterpolo,2025-07-17T09:34:09.395306+00:00,f,"[""Iruña F""]"
+62592716-b402-4362-a92c-fed2aaee85f2,ZV de ZAAN F,waterpolo,2025-11-05T16:22:42.567272+00:00,f,[]
