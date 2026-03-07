@@ -211,11 +211,10 @@ function buildMatchId(match, index) {
 
 function buildPresetSelections(matches, quotas) {
   const matchesByLeague = groupMatchesByLeague(matches);
-  return {
-    easy: selectForStrategy(matchesByLeague, quotas, "easy"),
-    moderate: selectForStrategy(matchesByLeague, quotas, "moderate"),
-    hard: selectForStrategy(matchesByLeague, quotas, "hard"),
-  };
+  const easy = selectForStrategy(matchesByLeague, quotas, "easy", matches);
+  const moderate = selectForStrategy(matchesByLeague, quotas, "moderate", matches);
+  const hard = selectForStrategy(matchesByLeague, quotas, "hard", matches);
+  return { easy, moderate, hard };
 }
 
 function groupMatchesByLeague(matches) {
@@ -230,7 +229,7 @@ function groupMatchesByLeague(matches) {
   return map;
 }
 
-function selectForStrategy(matchesByLeague, quotas, strategy) {
+function selectForStrategy(matchesByLeague, quotas, strategy, allMatches) {
   const selection = [];
   Object.entries(quotas).forEach(([leagueId, quota]) => {
     if (quota <= 0) return;
@@ -243,6 +242,17 @@ function selectForStrategy(matchesByLeague, quotas, strategy) {
       }
     });
   });
+  if (selection.length < 15 && allMatches) {
+    const remaining = allMatches.filter((m) => !selection.includes(m.matchId));
+    const backfill =
+      strategy === "easy"
+        ? [...remaining].sort((a, b) => b.closeness - a.closeness)
+        : [...remaining].sort((a, b) => a.closeness - b.closeness);
+    const needed = 15 - selection.length;
+    for (let i = 0; i < needed && i < backfill.length; i++) {
+      selection.push(backfill[i].matchId);
+    }
+  }
   return selection.slice(0, 15);
 }
 

@@ -20,8 +20,25 @@ const IMAGE2_MATCH_COUNT = 8;
 
 function buildMatchFromItem(item, answer, matchNumber) {
   const cancelled = answer?.cancelled;
-  const homeScore = cancelled ? null : (answer?.goalsHomeTeam ? parseInt(answer.goalsHomeTeam, 10) : null);
-  const awayScore = cancelled ? null : (answer?.goalsAwayTeam ? parseInt(answer.goalsAwayTeam, 10) : null);
+  const isGame15 = item?.isGame15 || matchNumber === 15;
+  const hasExact = isGame15 && answer?.goalsHomeTeamExact != null && answer?.goalsAwayTeamExact != null
+    && answer.goalsHomeTeamExact !== "" && answer.goalsAwayTeamExact !== "";
+  const homeScore = cancelled ? null : (hasExact
+    ? parseInt(String(answer.goalsHomeTeamExact), 10)
+    : (answer?.goalsHomeTeam ? parseInt(answer.goalsHomeTeam, 10) : null));
+  const awayScore = cancelled ? null : (hasExact
+    ? parseInt(String(answer.goalsAwayTeamExact), 10)
+    : (answer?.goalsAwayTeam ? parseInt(answer.goalsAwayTeam, 10) : null));
+  const regularHome = answer?.regularGoalsHomeTeam != null ? parseInt(String(answer.regularGoalsHomeTeam), 10) : null;
+  const regularAway = answer?.regularGoalsAwayTeam != null ? parseInt(String(answer.regularGoalsAwayTeam), 10) : null;
+  const hasTie =
+    !cancelled &&
+    !isNaN(regularHome) &&
+    !isNaN(regularAway) &&
+    regularHome === regularAway &&
+    !isNaN(homeScore) &&
+    !isNaN(awayScore) &&
+    (homeScore !== regularHome || awayScore !== regularAway);
 
   return {
     matchNumber,
@@ -29,6 +46,8 @@ function buildMatchFromItem(item, answer, matchNumber) {
     awayTeam: item.awayTeam,
     homeScore: isNaN(homeScore) ? null : homeScore,
     awayScore: isNaN(awayScore) ? null : awayScore,
+    regularGoalsHomeTeam: hasTie ? regularHome : null,
+    regularGoalsAwayTeam: hasTie ? regularAway : null,
     status: cancelled ? "postponed" : "completed",
     statusLabel: cancelled ? "APLAZADO" : undefined,
     isGame15: item.isGame15 || false,

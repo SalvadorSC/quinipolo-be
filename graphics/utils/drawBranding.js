@@ -1,5 +1,3 @@
-const theme = require("../constants/theme");
-
 const BRANDING_TEXT = "QUINIPOLO.com";
 const BRANDING_FONT_SIZE = 32;
 const BRANDING_OPACITY = 0.3;
@@ -9,8 +7,9 @@ const BRANDING_OPACITY = 0.3;
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} canvasWidth
  * @param {number} canvasHeight
+ * @param {Object} theme - Theme object (FONT_FAMILY, TEXT_WHITE, PADDING)
  */
-function drawBrandingVertical(ctx, canvasWidth, canvasHeight) {
+function drawBrandingVertical(ctx, canvasWidth, canvasHeight, theme) {
   ctx.save();
   ctx.globalAlpha = BRANDING_OPACITY;
   ctx.font = `bold ${BRANDING_FONT_SIZE}px ${theme.FONT_FAMILY}`;
@@ -30,8 +29,9 @@ function drawBrandingVertical(ctx, canvasWidth, canvasHeight) {
  * @param {CanvasRenderingContext2D} ctx
  * @param {number} canvasWidth
  * @param {number} canvasHeight
+ * @param {Object} theme - Theme object (FONT_FAMILY, TEXT_WHITE, PADDING)
  */
-function drawBrandingBottom(ctx, canvasWidth, canvasHeight) {
+function drawBrandingBottom(ctx, canvasWidth, canvasHeight, theme) {
   ctx.save();
   ctx.globalAlpha = BRANDING_OPACITY;
   ctx.font = `bold ${BRANDING_FONT_SIZE}px ${theme.FONT_FAMILY}`;

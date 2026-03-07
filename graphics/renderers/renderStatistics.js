@@ -5,10 +5,11 @@ const {
   loadTeamLogo,
 } = require("../utils/imageLoader");
 const { createCanvasContext } = require("../utils/canvasSetup");
-const theme = require("../constants/theme");
+const { statisticsTheme } = require("../constants/theme");
 const { drawTeamComponent } = require("../components/teamComponent");
 const { drawBrandingBottom } = require("../utils/drawBranding");
 const teamNameToImage = require("../data/teamNameToImage.json");
+const { extractBgColorFromFilename } = require("../utils/teamLogoResolver");
 
 const CARD_GAP = 24;
 const CONTENT_GAP = 40;
@@ -41,26 +42,26 @@ async function renderStatistics(payload) {
     mostFailedMatch = null,
   } = payload;
 
-  const height = theme.STATISTICS_HEIGHT;
-  const { canvas, ctx } = createCanvasContext(theme.CANVAS_WIDTH, height);
+  const height = statisticsTheme.STATISTICS_HEIGHT;
+  const { canvas, ctx } = createCanvasContext(statisticsTheme.CANVAS_WIDTH, height);
 
   const [bgBuffer, logoBuffer] = await Promise.all([
-    loadBackgroundBuffer(theme.CANVAS_WIDTH, height),
-    loadLogoWatermarkBuffer(theme.WATERMARK_SIZE),
+    loadBackgroundBuffer(statisticsTheme.CANVAS_WIDTH, height),
+    loadLogoWatermarkBuffer(statisticsTheme.WATERMARK_SIZE),
   ]);
 
   if (bgBuffer) {
     const bgImage = await loadImage(bgBuffer);
-    ctx.drawImage(bgImage, 0, 0, theme.CANVAS_WIDTH, height);
+    ctx.drawImage(bgImage, 0, 0, statisticsTheme.CANVAS_WIDTH, height);
   }
 
   if (logoBuffer) {
     const watermarkImg = await loadImage(logoBuffer);
-    ctx.globalAlpha = theme.WATERMARK_OPACITY;
-    const w = theme.WATERMARK_SIZE;
+    ctx.globalAlpha = statisticsTheme.WATERMARK_OPACITY;
+    const w = statisticsTheme.WATERMARK_SIZE;
     ctx.drawImage(
       watermarkImg,
-      (theme.CANVAS_WIDTH - w) / 2,
+      (statisticsTheme.CANVAS_WIDTH - w) / 2,
       (height - w) / 2,
       w,
       w,
@@ -68,23 +69,23 @@ async function renderStatistics(payload) {
     ctx.globalAlpha = 1;
   }
 
-  ctx.font = `bold ${theme.TITLE_FONT_SIZE}px ${theme.FONT_FAMILY}`;
+  ctx.font = `bold ${statisticsTheme.TITLE_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
   const titleText = `ESTADÍSTICAS ${matchday}`;
   const titleWidth = ctx.measureText(titleText).width;
-  ctx.fillStyle = theme.TITLE_COLOR;
+  ctx.fillStyle = statisticsTheme.TITLE_COLOR;
   ctx.fillText(
     titleText,
-    (theme.CANVAS_WIDTH - titleWidth) / 2,
-    98 + theme.TITLE_FONT_SIZE,
+    (statisticsTheme.CANVAS_WIDTH - titleWidth) / 2,
+    98 + statisticsTheme.TITLE_FONT_SIZE,
   );
 
   if (logoBuffer) {
     const logoImg = await loadImage(logoBuffer);
-    const cornerLogoSize = Math.round(theme.LEADERBOARD_LOGO_SIZE * 1.2);
+    const cornerLogoSize = Math.round(statisticsTheme.LEADERBOARD_LOGO_SIZE * 1.2);
     ctx.globalAlpha = 1;
     ctx.drawImage(
       logoImg,
-      theme.CANVAS_WIDTH - theme.PADDING - cornerLogoSize,
+      statisticsTheme.CANVAS_WIDTH - statisticsTheme.PADDING - cornerLogoSize,
       98,
       cornerLogoSize,
       cornerLogoSize,
@@ -92,10 +93,10 @@ async function renderStatistics(payload) {
   }
 
   const { cardHeight } = getStatsCardDimensions(height);
-  const horizontalInset = theme.STATS_CARD_HORIZONTAL_INSET ?? 0;
-  const cardWidth = theme.CANVAS_WIDTH - theme.PADDING * 2 - horizontalInset;
-  const cardX = theme.PADDING + horizontalInset / 2;
-  const radius = theme.STATS_CARD_RADIUS ?? 16;
+  const horizontalInset = statisticsTheme.STATS_CARD_HORIZONTAL_INSET ?? 0;
+  const cardWidth = statisticsTheme.CANVAS_WIDTH - statisticsTheme.PADDING * 2 - horizontalInset;
+  const cardX = statisticsTheme.PADDING + horizontalInset / 2;
+  const radius = statisticsTheme.STATS_CARD_RADIUS ?? 16;
 
   const blocksTotalHeight = height * 0.7;
   const startY = (height - blocksTotalHeight) / 2;
@@ -104,23 +105,23 @@ async function renderStatistics(payload) {
   const logoSize = 110;
 
   if (mostFailedMatch) {
-    ctx.fillStyle = theme.STATS_CARD_COLOR;
+    ctx.fillStyle = statisticsTheme.STATS_RECT_COLOR;
     drawRoundRect(ctx, cardX, y, cardWidth, cardHeight, radius);
 
-    const content1Height = theme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + logoSize;
+    const content1Height = statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + logoSize;
     const content1Top = y + (cardHeight - content1Height) / 2;
 
-    const heading1Y = content1Top + theme.STATS_TITLE_FONT_SIZE;
-    ctx.font = `bold ${theme.STATS_TITLE_FONT_SIZE}px ${theme.FONT_FAMILY}`;
-    ctx.fillStyle = theme.TEXT_WHITE;
+    const heading1Y = content1Top + statisticsTheme.STATS_TITLE_FONT_SIZE;
+    ctx.font = `bold ${statisticsTheme.STATS_TITLE_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
+    ctx.fillStyle = statisticsTheme.TEXT_WHITE;
     const heading1 = "PARTIDO MÁS FALLADO";
     const heading1Width = ctx.measureText(heading1).width;
-    ctx.fillText(heading1, (theme.CANVAS_WIDTH - heading1Width) / 2, heading1Y);
+    ctx.fillText(heading1, (statisticsTheme.CANVAS_WIDTH - heading1Width) / 2, heading1Y);
 
-    const centerX = theme.CANVAS_WIDTH / 2;
+    const centerX = statisticsTheme.CANVAS_WIDTH / 2;
     const leftLogoX = centerX - logoSize - 80;
     const rightLogoX = centerX + 80;
-    const logoY = content1Top + theme.STATS_TITLE_FONT_SIZE + CONTENT_GAP;
+    const logoY = content1Top + statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP;
 
     const homeLogoSource =
       mostFailedMatch.homeTeamLogoUrl ??
@@ -141,80 +142,91 @@ async function renderStatistics(payload) {
     await drawTeamComponent(ctx, leftLogoX, logoY, logoSize, {
       logoBuffer: homeLogoBuffer,
       teamName: mostFailedMatch.homeTeam,
-      bgColor: mostFailedMatch.homeTeamBgColor ?? null,
+      bgColor:
+        extractBgColorFromFilename(homeLogoSource) ??
+        mostFailedMatch.homeTeamBgColor ??
+        null,
+      theme: statisticsTheme,
     });
 
-    ctx.font = `bold ${theme.STATS_VS_FONT_SIZE}px ${theme.FONT_FAMILY}`;
-    ctx.fillStyle = theme.TEXT_WHITE;
+    ctx.font = `bold ${statisticsTheme.STATS_VS_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
+    ctx.fillStyle = statisticsTheme.TEXT_WHITE;
     ctx.fillText(
       "VS",
       centerX - 15,
-      logoY + logoSize / 2 + theme.STATS_VS_FONT_SIZE / 3,
+      logoY + logoSize / 2 + statisticsTheme.STATS_VS_FONT_SIZE / 3,
     );
 
     await drawTeamComponent(ctx, rightLogoX, logoY, logoSize, {
       logoBuffer: awayLogoBuffer,
       teamName: mostFailedMatch.awayTeam,
-      bgColor: mostFailedMatch.awayTeamBgColor ?? null,
+      bgColor:
+        extractBgColorFromFilename(awayLogoSource) ??
+        mostFailedMatch.awayTeamBgColor ??
+        null,
+      theme: statisticsTheme,
     });
 
     y += cardHeight + CARD_GAP;
   }
 
-  ctx.fillStyle = theme.STATS_CARD_COLOR;
+  ctx.fillStyle = statisticsTheme.STATS_RECT_COLOR;
   drawRoundRect(ctx, cardX, y, cardWidth, cardHeight, radius);
 
   const content2Height =
-    theme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + theme.STATS_VALUE_FONT_SIZE;
+    statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + statisticsTheme.STATS_VALUE_FONT_SIZE;
   const content2Top = y + (cardHeight - content2Height) / 2;
 
-  const heading2Y = content2Top + theme.STATS_TITLE_FONT_SIZE;
-  ctx.font = `bold ${theme.STATS_TITLE_FONT_SIZE}px ${theme.FONT_FAMILY}`;
-  ctx.fillStyle = theme.TEXT_WHITE;
+  const heading2Y = content2Top + statisticsTheme.STATS_TITLE_FONT_SIZE;
+  ctx.font = `bold ${statisticsTheme.STATS_TITLE_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
+  ctx.fillStyle = statisticsTheme.TEXT_WHITE;
+  ctx.textAlign = "center";
   const heading2 = "MEDIA DE PUNTOS";
-  const heading2Width = ctx.measureText(heading2).width;
-  ctx.fillText(heading2, (theme.CANVAS_WIDTH - heading2Width) / 2, heading2Y);
+  ctx.fillText(heading2, statisticsTheme.CANVAS_WIDTH / 2, heading2Y);
 
   const value2Y =
     content2Top +
-    theme.STATS_TITLE_FONT_SIZE +
+    statisticsTheme.STATS_TITLE_FONT_SIZE +
     CONTENT_GAP +
-    theme.STATS_VALUE_FONT_SIZE;
-  ctx.font = `bold ${theme.STATS_VALUE_FONT_SIZE}px ${theme.FONT_FAMILY}`;
-  ctx.fillStyle = theme.TEXT_WHITE;
+    statisticsTheme.STATS_VALUE_FONT_SIZE;
+  ctx.font = `bold ${statisticsTheme.STATS_VALUE_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
+  ctx.fillStyle = statisticsTheme.TEXT_WHITE;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
   const value2 = String(averagePoints.toFixed(2));
-  const value2Width = ctx.measureText(value2).width;
-  ctx.fillText(value2, (theme.CANVAS_WIDTH - value2Width) / 2, value2Y);
+  ctx.fillText(value2, statisticsTheme.CANVAS_WIDTH / 2, value2Y);
 
   y += cardHeight + CARD_GAP;
 
   const correctCount = mostFailedMatch?.correctGuessesCount ?? 0;
-  ctx.fillStyle = theme.STATS_CARD_COLOR;
+  ctx.fillStyle = statisticsTheme.STATS_RECT_COLOR;
   drawRoundRect(ctx, cardX, y, cardWidth, cardHeight, radius);
 
-  const content3Height =
-    theme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + theme.STATS_VALUE_FONT_SIZE;
-  const content3Top = y + (cardHeight - content3Height) / 2;
-
-  const line1Y = content3Top + theme.STATS_TITLE_FONT_SIZE;
-  ctx.font = `bold ${theme.STATS_TITLE_FONT_SIZE}px ${theme.FONT_FAMILY}`;
-  ctx.fillStyle = theme.TEXT_WHITE;
-  const line1 = "ACIERTOS PARTIDO MÁS FALLADO";
-  const line1Width = ctx.measureText(line1).width;
-  ctx.fillText(line1, (theme.CANVAS_WIDTH - line1Width) / 2, line1Y);
-
-  const value3Y =
-    content3Top +
-    theme.STATS_TITLE_FONT_SIZE +
+  const card3ContentHeight =
+    statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + statisticsTheme.STATS_VALUE_FONT_SIZE;
+  const card3ContentTop = y + (cardHeight - card3ContentHeight) / 2;
+  const card3TitleY = card3ContentTop + statisticsTheme.STATS_TITLE_FONT_SIZE;
+  const card3ValueY =
+    card3ContentTop +
+    statisticsTheme.STATS_TITLE_FONT_SIZE +
     CONTENT_GAP +
-    theme.STATS_VALUE_FONT_SIZE;
-  ctx.font = `bold ${theme.STATS_VALUE_FONT_SIZE}px ${theme.FONT_FAMILY}`;
-  ctx.fillStyle = theme.TEXT_WHITE;
-  const value3 = String(correctCount);
-  const value3Width = ctx.measureText(value3).width;
-  ctx.fillText(value3, (theme.CANVAS_WIDTH - value3Width) / 2, value3Y);
+    statisticsTheme.STATS_VALUE_FONT_SIZE;
+  const card3CenterX = statisticsTheme.CANVAS_WIDTH / 2;
 
-  drawBrandingBottom(ctx, theme.CANVAS_WIDTH, height);
+  ctx.font = `bold ${statisticsTheme.STATS_TITLE_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
+  ctx.fillStyle = statisticsTheme.TEXT_WHITE;
+  ctx.textAlign = "center";
+  const card3Title = "ACIERTOS PARTIDO MÁS FALLADO";
+  ctx.fillText(card3Title, card3CenterX, card3TitleY);
+
+  ctx.font = `bold ${statisticsTheme.STATS_VALUE_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
+  ctx.fillStyle = statisticsTheme.TEXT_WHITE;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  const card3Value = String(correctCount);
+  ctx.fillText(card3Value, card3CenterX, card3ValueY);
+
+  drawBrandingBottom(ctx, statisticsTheme.CANVAS_WIDTH, height, statisticsTheme);
 
   return canvas.toDataURL("image/png");
 }

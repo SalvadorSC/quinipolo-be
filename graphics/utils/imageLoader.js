@@ -1,7 +1,10 @@
 const sharp = require("sharp");
 const path = require("path");
 const fs = require("fs");
-const { ASSETS_DIR, TEAMS_LOGOS_DIR } = require("../constants/theme");
+const { ASSETS_DIR, TEAMS_LOGOS_DIR, TEAMS_LOGOS_DIR1 } = require("../constants/theme");
+const { findLogoFileInDirs } = require("./teamLogoResolver");
+
+const TEAMS_LOGO_DIRS = [TEAMS_LOGOS_DIR, TEAMS_LOGOS_DIR1].filter(Boolean);
 
 async function rasterizeSvg(svgPath, width, height) {
   try {
@@ -41,11 +44,45 @@ async function loadTeamLogo(urlOrImageName, size = DEFAULT_LOGO_SIZE) {
       });
       buffer = Buffer.from(response.data);
     } else {
-      const filePath = path.join(TEAMS_LOGOS_DIR, urlOrImageName);
-      if (!fs.existsSync(filePath)) return null;
+      const ext = path.extname(urlOrImageName);
+      const baseName = path.basename(urlOrImageName, ext);
+      const baseUnderscore = baseName.replace(/\s+/g, "_");
+      const candidates = [
+        urlOrImageName,
+        ...(baseName.endsWith("_100x100")
+          ? []
+          : [`${baseName}_100x100.png`, `${baseUnderscore}_100x100.png`]),
+      ].filter((c, i, arr) => arr.indexOf(c) === i);
+      let filePath = null;
+      for (const dir of TEAMS_LOGO_DIRS) {
+        for (const name of candidates) {
+          const p = path.join(dir, name);
+          if (fs.existsSync(p)) {
+            filePath = p;
+            break;
+          }
+        }
+        if (filePath) break;
+      }
+      if (!filePath) {
+        const resolved = findLogoFileInDirs(urlOrImageName);
+        if (resolved) {
+          for (const dir of TEAMS_LOGO_DIRS) {
+            const p = path.join(dir, resolved);
+            if (fs.existsSync(p)) {
+              filePath = p;
+              break;
+            }
+          }
+        }
+      }
+      if (!filePath) return null;
       buffer = fs.readFileSync(filePath);
     }
-    return await sharp(buffer).resize(size, size).png().toBuffer();
+    return await sharp(buffer)
+      .resize(size, size, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+      .png()
+      .toBuffer();
   } catch {
     return null;
   }

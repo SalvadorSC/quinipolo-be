@@ -1,9 +1,22 @@
 const sharp = require("sharp");
 const { loadImage } = require("canvas");
-const theme = require("../constants/theme");
 
 const DEFAULT_PLACEHOLDER_COLOR = "rgba(255,255,255,0.3)";
-const SKIP_WORDS = new Set(["de", "del", "la", "el", "los", "las", "y", "i", "e", "en", "al", "a", "d"]);
+const SKIP_WORDS = new Set([
+  "de",
+  "del",
+  "la",
+  "el",
+  "los",
+  "las",
+  "y",
+  "i",
+  "e",
+  "en",
+  "al",
+  "a",
+  "d",
+]);
 
 /**
  * Get initials from team name. E.g. "Club natació Sant Feliu" → "CNSF", "Club Natació Molins de Rei" → "CNMR".
@@ -14,7 +27,10 @@ const SKIP_WORDS = new Set(["de", "del", "la", "el", "los", "las", "y", "i", "e"
  */
 function getInitials(teamName, maxLetters = 4) {
   if (!teamName || typeof teamName !== "string") return "";
-  const words = teamName.trim().split(/\s+/).filter((w) => w.length > 0 && !SKIP_WORDS.has(w.toLowerCase()));
+  const words = teamName
+    .trim()
+    .split(/\s+/)
+    .filter((w) => w.length > 0 && !SKIP_WORDS.has(w.toLowerCase()));
   if (words.length === 0) return "";
   if (words.length === 1) {
     return words[0].slice(0, 3).toUpperCase();
@@ -81,11 +97,15 @@ function drawRoundRect(ctx, x, y, w, h, r) {
   ctx.fill();
 }
 
-function drawPlaceholderCircle(ctx, x, y, size) {
-  ctx.fillStyle = DEFAULT_PLACEHOLDER_COLOR;
+function drawCircle(ctx, x, y, size) {
   ctx.beginPath();
   ctx.arc(x + size / 2, y + size / 2, size / 2, 0, Math.PI * 2);
   ctx.fill();
+}
+
+function drawPlaceholderCircle(ctx, x, y, size) {
+  ctx.fillStyle = DEFAULT_PLACEHOLDER_COLOR;
+  drawCircle(ctx, x, y, size);
 }
 
 function drawPlaceholderWithInitials(ctx, x, y, size, initials, theme) {
@@ -100,6 +120,8 @@ function drawPlaceholderWithInitials(ctx, x, y, size, initials, theme) {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(initials, x + size / 2, y + size / 2);
+    ctx.textAlign = "left";
+    ctx.textBaseline = "alphabetic";
   }
 }
 
@@ -115,18 +137,39 @@ function drawPlaceholderWithInitials(ctx, x, y, size, initials, theme) {
  * @param {string|null} options.teamName - Team name for initials when no logo (e.g. "Club Natació Sant Feliu" → "CNSF").
  * @param {string|null} options.bgColor - Background color (e.g. '#fff', 'rgba(255,0,0,0.5)'). If null and logo exists, uses complement of logo's average color.
  * @param {number} [options.radius] - Corner radius for background rect. Defaults to size * 0.2.
+ * @param {number} [options.padding] - Inset for logo/placeholder from container edges.
+ * @param {Object} options.theme - Theme object (FONT_FAMILY, TEXT_WHITE). Required when logoBuffer is null.
  */
 async function drawTeamComponent(ctx, x, y, size, options = {}) {
-  const { logoBuffer, teamName, bgColor, radius = Math.round(size * 0.2) } = options;
+  const {
+    logoBuffer,
+    teamName,
+    bgColor,
+    radius = Math.round(size * 0.2),
+    padding = 0,
+    theme,
+  } = options;
+
+  const innerSize = size - 2 * padding;
 
   if (!logoBuffer) {
     const initials = getInitials(teamName || "");
-    drawPlaceholderWithInitials(ctx, x, y, size, initials, theme);
+    ctx.fillStyle = "rgba(0,0,0,0.7)";
+    drawRoundRect(ctx, x, y, size, size, radius);
+    if (initials) {
+      drawPlaceholderWithInitials(
+        ctx,
+        x + padding,
+        y + padding,
+        innerSize,
+        initials,
+        theme,
+      );
+    }
     return;
   }
 
   let effectiveBgColor = bgColor;
-
   if (!effectiveBgColor) {
     const avgColor = await extractAverageColor(logoBuffer);
     if (avgColor) {
@@ -139,15 +182,48 @@ async function drawTeamComponent(ctx, x, y, size, options = {}) {
   ctx.fillStyle = effectiveBgColor;
   drawRoundRect(ctx, x, y, size, size, radius);
 
-  const logoImg = await loadImage(logoBuffer);
-  const padding = Math.round(size * 0.1);
-  ctx.drawImage(
-    logoImg,
-    x + padding,
-    y + padding,
-    size - padding * 2,
-    size - padding * 2
+  const clipX = x + padding;
+  const clipY = y + padding;
+  const clipSize = innerSize;
+  const innerRadius = Math.max(0, radius - padding);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(clipX + innerRadius, clipY);
+  ctx.lineTo(clipX + clipSize - innerRadius, clipY);
+  ctx.quadraticCurveTo(
+    clipX + clipSize,
+    clipY,
+    clipX + clipSize,
+    clipY + innerRadius,
   );
+  ctx.lineTo(clipX + clipSize, clipY + clipSize - innerRadius);
+  ctx.quadraticCurveTo(
+    clipX + clipSize,
+    clipY + clipSize,
+    clipX + clipSize - innerRadius,
+    clipY + clipSize,
+  );
+  ctx.lineTo(clipX + innerRadius, clipY + clipSize);
+  ctx.quadraticCurveTo(
+    clipX,
+    clipY + clipSize,
+    clipX,
+    clipY + clipSize - innerRadius,
+  );
+  ctx.lineTo(clipX, clipY + innerRadius);
+  ctx.quadraticCurveTo(clipX, clipY, clipX + innerRadius, clipY);
+  ctx.clip();
+  const logoImg = await loadImage(logoBuffer);
+  const imgW = logoImg.width;
+  const imgH = logoImg.height;
+  const scale = Math.min(clipSize / imgW, clipSize / imgH);
+  const drawW = imgW * scale;
+  const drawH = imgH * scale;
+  const offsetX = clipX + (clipSize - drawW) / 2;
+  const offsetY = clipY + (clipSize - drawH) / 2;
+  ctx.drawImage(logoImg, 0, 0, imgW, imgH, offsetX, offsetY, drawW, drawH);
+  ctx.restore();
 }
 
 module.exports = {

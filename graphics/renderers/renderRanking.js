@@ -4,7 +4,7 @@ const {
   loadLogoWatermarkBuffer,
 } = require("../utils/imageLoader");
 const { createCanvasContext } = require("../utils/canvasSetup");
-const theme = require("../constants/theme");
+const { rankingTheme } = require("../constants/theme");
 const { drawBrandingVertical } = require("../utils/drawBranding");
 
 const MEDAL_LABELS = { 1: "1", 2: "2", 3: "3" };
@@ -62,28 +62,28 @@ async function renderRanking(payload, rankingType = "quinipolo") {
   const listToShow = sorted.slice(0, RANKING_CAP);
 
   const { canvas, ctx } = createCanvasContext(
-    theme.CANVAS_WIDTH,
-    theme.RANKING_HEIGHT,
+    rankingTheme.CANVAS_WIDTH,
+    rankingTheme.RANKING_HEIGHT,
   );
 
   const [bgBuffer, logoBuffer] = await Promise.all([
-    loadBackgroundBuffer(theme.CANVAS_WIDTH, theme.RANKING_HEIGHT),
-    loadLogoWatermarkBuffer(theme.WATERMARK_SIZE),
+    loadBackgroundBuffer(rankingTheme.CANVAS_WIDTH, rankingTheme.RANKING_HEIGHT),
+    loadLogoWatermarkBuffer(rankingTheme.WATERMARK_SIZE),
   ]);
 
   if (bgBuffer) {
     const bgImage = await loadImage(bgBuffer);
-    ctx.drawImage(bgImage, 0, 0, theme.CANVAS_WIDTH, theme.RANKING_HEIGHT);
+    ctx.drawImage(bgImage, 0, 0, rankingTheme.CANVAS_WIDTH, rankingTheme.RANKING_HEIGHT);
   }
 
   if (logoBuffer) {
     const watermarkImg = await loadImage(logoBuffer);
-    ctx.globalAlpha = theme.WATERMARK_OPACITY;
-    const w = theme.WATERMARK_SIZE;
+    ctx.globalAlpha = rankingTheme.WATERMARK_OPACITY;
+    const w = rankingTheme.WATERMARK_SIZE;
     ctx.drawImage(
       watermarkImg,
-      (theme.CANVAS_WIDTH - w) / 2,
-      (theme.RANKING_HEIGHT - w) / 2,
+      (rankingTheme.CANVAS_WIDTH - w) / 2,
+      (rankingTheme.RANKING_HEIGHT - w) / 2,
       w,
       w,
     );
@@ -94,45 +94,46 @@ async function renderRanking(payload, rankingType = "quinipolo") {
     rankingType === "general"
       ? `RANKING GENERAL ${matchday}`
       : `RANKING ${matchday}`;
-  ctx.font = `bold ${theme.TITLE_FONT_SIZE}px ${theme.FONT_FAMILY}`;
+  ctx.font = `bold ${rankingTheme.TITLE_FONT_SIZE}px ${rankingTheme.FONT_FAMILY}`;
   const titleWidth = ctx.measureText(titleText).width;
-  ctx.fillStyle = theme.TITLE_COLOR;
+  ctx.fillStyle = rankingTheme.TITLE_COLOR;
   ctx.fillText(
     titleText,
-    (theme.CANVAS_WIDTH - titleWidth) / 2,
-    98 + theme.TITLE_FONT_SIZE,
+    (rankingTheme.CANVAS_WIDTH - titleWidth) / 2,
+    98 + rankingTheme.TITLE_FONT_SIZE,
   );
 
   if (logoBuffer) {
     const logoImg = await loadImage(logoBuffer);
-    const cornerLogoSize = Math.round(theme.LEADERBOARD_LOGO_SIZE * 1.5);
+    const cornerLogoSize = Math.round(rankingTheme.LEADERBOARD_LOGO_SIZE * 1.5);
     ctx.globalAlpha = 1;
     ctx.drawImage(
       logoImg,
-      theme.CANVAS_WIDTH - theme.PADDING - cornerLogoSize,
-      theme.RANKING_HEIGHT - theme.PADDING - cornerLogoSize,
+      rankingTheme.CANVAS_WIDTH - rankingTheme.PADDING - cornerLogoSize,
+      rankingTheme.RANKING_HEIGHT - rankingTheme.PADDING - cornerLogoSize,
       cornerLogoSize,
       cornerLogoSize,
     );
   }
 
-  const rowHeight = theme.ROW_HEIGHT;
-  const rowGap = theme.ROW_GAP;
-  const inset = theme.RANKING_CONTENT_INSET ?? 0;
-  const leftX = theme.PADDING + inset;
-  const rightX = theme.CANVAS_WIDTH - theme.PADDING - inset;
+  const rowHeight = rankingTheme.ROW_HEIGHT;
+  const rowGap = rankingTheme.ROW_GAP;
+  const inset = rankingTheme.RANKING_CONTENT_INSET ?? 0;
+  const leftX = rankingTheme.PADDING + inset;
+  const rightX = rankingTheme.CANVAS_WIDTH - rankingTheme.PADDING - inset;
   const rankColumnWidth = 50;
   const usernameX = leftX + rankColumnWidth + 20;
   const startY = 200;
 
-  ctx.font = `bold ${theme.LEADERBOARD_RESULT_FONT_SIZE}px ${theme.FONT_FAMILY}`;
-  ctx.fillStyle = theme.TEXT_WHITE;
+  ctx.font = `bold ${rankingTheme.LEADERBOARD_RESULT_FONT_SIZE}px ${rankingTheme.FONT_FAMILY}`;
+  ctx.fillStyle = rankingTheme.TEXT_WHITE;
 
-  drawBrandingVertical(ctx, theme.CANVAS_WIDTH, theme.RANKING_HEIGHT);
+  drawBrandingVertical(ctx, rankingTheme.CANVAS_WIDTH, rankingTheme.RANKING_HEIGHT, rankingTheme);
 
   listToShow.forEach((entry, i) => {
     const y = startY + i * (rowHeight + rowGap);
-    const rank = entry.rank ?? ranks.get(entry) ?? i + 1;
+    // Prefer BE-computed rank so tied scores show the same position number
+    const rank = ranks.get(entry) ?? entry.rank ?? i + 1;
     const rankDisplay = getRankDisplay(rank);
     const username = entry.username || "—";
     const points = String(entry.points ?? entry.totalPoints ?? 0);
@@ -142,24 +143,24 @@ async function renderRanking(payload, rankingType = "quinipolo") {
     ctx.fillText(
       rankDisplay,
       leftX,
-      y + rowHeight / 2 + theme.LEADERBOARD_RESULT_FONT_SIZE / 3,
+      y + rowHeight / 2 + rankingTheme.LEADERBOARD_RESULT_FONT_SIZE / 3,
     );
-    if (rankColor) ctx.fillStyle = theme.TEXT_WHITE;
+    if (rankColor) ctx.fillStyle = rankingTheme.TEXT_WHITE;
 
-    const usernameFontSize = theme.LEADERBOARD_USER_FONT_SIZE + 4;
-    ctx.font = `${usernameFontSize}px ${theme.FONT_FAMILY}`;
+    const usernameFontSize = rankingTheme.LEADERBOARD_USER_FONT_SIZE + 4;
+    ctx.font = `${usernameFontSize}px ${rankingTheme.FONT_FAMILY}`;
     ctx.fillText(
       username,
       usernameX,
       y + rowHeight / 2 + usernameFontSize / 3,
     );
 
-    ctx.font = `bold ${theme.LEADERBOARD_RESULT_FONT_SIZE}px ${theme.FONT_FAMILY}`;
+    ctx.font = `bold ${rankingTheme.LEADERBOARD_RESULT_FONT_SIZE}px ${rankingTheme.FONT_FAMILY}`;
     const pointsWidth = ctx.measureText(points).width;
     ctx.fillText(
       points,
       rightX - pointsWidth,
-      y + rowHeight / 2 + theme.LEADERBOARD_RESULT_FONT_SIZE / 3,
+      y + rowHeight / 2 + rankingTheme.LEADERBOARD_RESULT_FONT_SIZE / 3,
     );
 
     if (i < listToShow.length - 1) {
