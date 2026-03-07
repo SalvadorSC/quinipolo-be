@@ -20,6 +20,7 @@ const teamsRoutes = require("./routes/teams.js");
 const scraperRoutes = require("./routes/scraper.js");
 const answerStatisticsRoutes = require("./routes/answerStatistics.js");
 const graphicsRoutes = require("./routes/graphics.js");
+const logoMapperRoutes = require("./routes/logoMapper.js");
 
 // Enable CORS for all routes
 app.use(cors()); // Add this line
@@ -65,3 +66,4 @@ app.use("/api/teams", teamsRoutes);
 
 app.use("/api/scraper", scraperRoutes);
 app.use("/api/graphics", graphicsRoutes);
+app.use("/api/logo-mapper", logoMapperRoutes);
