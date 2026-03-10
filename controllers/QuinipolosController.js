@@ -29,21 +29,111 @@ const MOCK_CORRECTION_QUINIPOLO = {
   league_id: "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
   league_name: "Liga Waterpolo España",
   quinipolo: [
-    { gameType: "waterpolo", homeTeam: "CN Catalunya", awayTeam: "UE Horta", leagueId: "DHF", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Mataró", awayTeam: "CN Sant Feliu", leagueId: "DHF", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Caballa Ceuta", awayTeam: "CN Terrassa", leagueId: "DHM", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Sabadell", awayTeam: "CN Barcelona", leagueId: "DHM", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Sant Andreu", awayTeam: "CN Catalunya", leagueId: "DHM", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "Waterpolo Tenerife Echeyde", awayTeam: "CN Rubí", leagueId: "DHM", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "UVSE Margitsziget", awayTeam: "Olympiacos", leagueId: "CLF", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Terrassa", awayTeam: "CN Mediterrani", leagueId: "DHF", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Atlètic-Barceloneta", awayTeam: "CN Joventut", leagueId: "PDM", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Sabadell", awayTeam: "CN Sant Andreu", leagueId: "PDM", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Rubí", awayTeam: "CN Catalunya", leagueId: "PDM", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "Club Waterpolo Pontevedra", awayTeam: "CN Joventut", leagueId: "PDF", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Rubí", awayTeam: "CN Catalunya", leagueId: "PDF", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "Boadilla", awayTeam: "Málaga", leagueId: "PDF", isGame15: false },
-    { gameType: "waterpolo", homeTeam: "CN Sant Feliu", awayTeam: "UE Horta", leagueId: "PLENO_15", isGame15: true },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Catalunya",
+      awayTeam: "UE Horta",
+      leagueId: "DHF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Mataró",
+      awayTeam: "CN Sant Feliu",
+      leagueId: "DHF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Caballa Ceuta",
+      awayTeam: "CN Terrassa",
+      leagueId: "DHM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Sabadell",
+      awayTeam: "CN Barcelona",
+      leagueId: "DHM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Sant Andreu",
+      awayTeam: "CN Catalunya",
+      leagueId: "DHM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "Waterpolo Tenerife Echeyde",
+      awayTeam: "CN Rubí",
+      leagueId: "DHM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "UVSE Margitsziget",
+      awayTeam: "Olympiacos",
+      leagueId: "CLF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Terrassa",
+      awayTeam: "CN Mediterrani",
+      leagueId: "DHF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Atlètic-Barceloneta",
+      awayTeam: "CN Joventut",
+      leagueId: "PDM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Sabadell",
+      awayTeam: "CN Sant Andreu",
+      leagueId: "PDM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Rubí",
+      awayTeam: "CN Catalunya",
+      leagueId: "PDM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "Club Waterpolo Pontevedra",
+      awayTeam: "CN Joventut",
+      leagueId: "PDF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Rubí",
+      awayTeam: "CN Catalunya",
+      leagueId: "PDF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "Boadilla",
+      awayTeam: "Málaga",
+      leagueId: "PDF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Sant Feliu",
+      awayTeam: "UE Horta",
+      leagueId: "PLENO_15",
+      isGame15: true,
+    },
   ],
   correct_answers: [],
   has_been_corrected: false,
@@ -161,7 +251,8 @@ const createNewQuinipolo = async (req, res) => {
         return res.status(404).json({ error: "League not found" });
       }
 
-      const correctAnswers = req.body.correct_answers || req.body.correctAnswers || [];
+      const correctAnswers =
+        req.body.correct_answers || req.body.correctAnswers || [];
 
       // Create quinipolo in Supabase
       const insertPayload = {
@@ -514,7 +605,10 @@ const getQuinipoloByLeague = async (req, res) => {
 
 const getQuinipoloById = async (req, res) => {
   const { id } = req.params;
-  if (process.env.NODE_ENV !== "production" && id === MOCK_CORRECTION_QUINIPOLO_ID) {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    id === MOCK_CORRECTION_QUINIPOLO_ID
+  ) {
     return res.status(200).json(MOCK_CORRECTION_QUINIPOLO);
   }
   console.log("Fetching quinipolo by id", id);
@@ -1045,16 +1139,30 @@ const correctQuinipolo = async (req, res) => {
   const { id } = req.params;
   const { answers } = req.body;
 
-  if (process.env.NODE_ENV !== "production" && id === MOCK_CORRECTION_QUINIPOLO_ID) {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    id === MOCK_CORRECTION_QUINIPOLO_ID
+  ) {
     mockCorrectionLastAnswers = answers || [];
     return res.status(200).json({
       message: "Quinipolo corrected successfully (mock)",
       results: [
-        { username: "mock-user", pointsEarned: 10, totalPoints: 10, correct15thGame: true },
+        {
+          username: "mock-user",
+          pointsEarned: 10,
+          totalPoints: 10,
+          correct15thGame: true,
+        },
       ],
       leagueId: MOCK_CORRECTION_QUINIPOLO.league_id,
       participantsLeaderboard: [
-        { username: "mock-user", points: 10, totalPoints: 10, nQuinipolosParticipated: 1, fullCorrectQuinipolos: 1 },
+        {
+          username: "mock-user",
+          points: 10,
+          totalPoints: 10,
+          nQuinipolosParticipated: 1,
+          fullCorrectQuinipolos: 1,
+        },
       ],
       averagePointsThisQuinipolo: 10,
       mostFailed: null,
@@ -1218,7 +1326,10 @@ const correctQuinipolo = async (req, res) => {
         }
       }
     } catch (e) {
-      console.warn("Failed to compute matchday (ordinal of corrected, non-deleted):", e);
+      console.warn(
+        "Failed to compute matchday (ordinal of corrected, non-deleted):",
+        e,
+      );
     }
 
     res.status(200).json({
@@ -1295,7 +1406,10 @@ const editQuinipoloCorrection = async (req, res) => {
   const { id } = req.params;
   const { answers } = req.body;
 
-  if (process.env.NODE_ENV !== "production" && id === MOCK_CORRECTION_QUINIPOLO_ID) {
+  if (
+    process.env.NODE_ENV !== "production" &&
+    id === MOCK_CORRECTION_QUINIPOLO_ID
+  ) {
     return res.status(200).json({
       message: "Quinipolo correction edited successfully (mock)",
       results: [],
@@ -1511,8 +1625,11 @@ const editQuinipoloCorrection = async (req, res) => {
 
 const getQuinipoloCorrectedById = async (req, res) => {
   const { id } = req.params;
-  if (process.env.NODE_ENV !== "production" && id === MOCK_CORRECTION_QUINIPOLO_ID) {
-    const response = { ...MOCK_CORRECTION_QUINIPOLO };
+  if (
+    process.env.NODE_ENV !== "production" &&
+    id === MOCK_CORRECTION_QUINIPOLO_ID
+  ) {
+    const response = { ...MOCK_CORRECTION_QUINIPOLO, matchday: "J16" };
     if (mockCorrectionLastAnswers.length > 0) {
       response.correct_answers = mockCorrectionLastAnswers;
       response.has_been_corrected = true;
@@ -1559,6 +1676,38 @@ const getQuinipoloCorrectedById = async (req, res) => {
       }
     }
 
+    // Matchday = ordinal position of this quinipolo among corrected non-deleted (J1, J2, …).
+    let matchday = "";
+    try {
+      const { data: correctedIds, error: listError } = await supabase
+        .from("quinipolos")
+        .select("id")
+        .eq("league_id", quinipolo.league_id)
+        .eq("has_been_corrected", true)
+        .or("is_deleted.eq.false,is_deleted.is.null")
+        .order("end_date", { ascending: true })
+        .order("id", { ascending: true });
+      if (!listError && correctedIds && correctedIds.length > 0) {
+        const position =
+          correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
+        if (position > 0) {
+          const j =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
+              : position;
+          matchday = `J${j}`;
+        } else {
+          const fallback =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
+              : correctedIds.length;
+          matchday = `J${fallback}`;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to compute matchday for correction-see:", e);
+    }
+
     // Transform to match expected format
     const transformedQuinipolo = {
       id: quinipolo.id,
@@ -1571,6 +1720,7 @@ const getQuinipoloCorrectedById = async (req, res) => {
       is_deleted: quinipolo.is_deleted,
       participants_who_answered: quinipolo.participants_who_answered || [],
       correct_answers: quinipolo.correct_answers || [],
+      matchday: matchday || undefined,
       // Legacy fields for backward compatibility
       leagueName: quinipolo.leagues.league_name,
       leagueId: quinipolo.league_id,

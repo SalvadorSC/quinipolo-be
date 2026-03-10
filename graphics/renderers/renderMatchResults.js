@@ -176,7 +176,8 @@ async function renderMatchResults(payload, options = {}) {
           match.homeScore != null &&
           match.awayScore != null;
         const scoreCenterX = scoreRectX + scoreRectWidth / 2;
-        const hyphenGap = 10;
+        const hyphenGap = 20;
+        const hyphenGapTie = 10;
 
         if (hasTie) {
           const mainY = y + t.ROW_HEIGHT / 2;
@@ -216,11 +217,19 @@ async function renderMatchResults(payload, options = {}) {
           ctx.fillStyle = t.SCORE_TEXT_COLOR;
           ctx.font = `bold ${t.TIEBREAKER_FONT_SIZE}px ${t.FONT_FAMILY}`;
           ctx.textAlign = "right";
-          ctx.fillText(String(match.homeScore), scoreCenterX - hyphenGap, tieY);
+          ctx.fillText(
+            String(match.homeScore),
+            scoreCenterX - hyphenGapTie,
+            tieY,
+          );
           ctx.textAlign = "center";
           ctx.fillText(" - ", scoreCenterX, tieY);
           ctx.textAlign = "left";
-          ctx.fillText(String(match.awayScore), scoreCenterX + hyphenGap, tieY);
+          ctx.fillText(
+            String(match.awayScore),
+            scoreCenterX + hyphenGapTie,
+            tieY,
+          );
         } else {
           ctx.font = `bold ${t.RESULTS_FONT_SIZE}px ${t.FONT_FAMILY}`;
           ctx.fillStyle = t.SCORE_TEXT_COLOR;
