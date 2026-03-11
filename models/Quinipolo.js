@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const surveyItemSchema = new mongoose.Schema({
   gameType: {
     type: String,
-    enum: ["waterpolo", "football"],
+    enum: ["waterpolo", "football", "basketball", "handball", "tennis"],
   },
   homeTeam: {
     type: String,

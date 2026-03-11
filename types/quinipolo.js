@@ -38,7 +38,7 @@
 /**
  * Survey item structure
  * @typedef {Object} SurveyItem
- * @property {string} gameType - "waterpolo" | "football"
+ * @property {string} gameType - "waterpolo" | "football" | "basketball" | "handball" | "tennis"
  * @property {string} homeTeam - Home team name
  * @property {string} awayTeam - Away team name
  * @property {boolean} isGame15 - Whether this is the 15th game

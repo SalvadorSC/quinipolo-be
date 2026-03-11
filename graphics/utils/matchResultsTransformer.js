@@ -13,15 +13,48 @@ const LEAGUE_NAMES = {
   CLF: "Liga de Campeones Femenina",
   PLENO_15: "PLENO AL 15",
 };
-const PLENO_15_SUB_LABEL = "PDM";
-
 const IMAGE1_MATCH_COUNT = 7;
 const IMAGE2_MATCH_COUNT = 8;
 
 function buildMatchFromItem(item, answer, matchNumber) {
   const cancelled = answer?.cancelled;
-  const homeScore = cancelled ? null : (answer?.goalsHomeTeam ? parseInt(answer.goalsHomeTeam, 10) : null);
-  const awayScore = cancelled ? null : (answer?.goalsAwayTeam ? parseInt(answer.goalsAwayTeam, 10) : null);
+  const isGame15 = item?.isGame15 || matchNumber === 15;
+  const hasExact =
+    isGame15 &&
+    answer?.goalsHomeTeamExact != null &&
+    answer?.goalsAwayTeamExact != null &&
+    answer.goalsHomeTeamExact !== "" &&
+    answer.goalsAwayTeamExact !== "";
+  const homeScore = cancelled
+    ? null
+    : hasExact
+      ? parseInt(String(answer.goalsHomeTeamExact), 10)
+      : answer?.goalsHomeTeam
+        ? parseInt(answer.goalsHomeTeam, 10)
+        : null;
+  const awayScore = cancelled
+    ? null
+    : hasExact
+      ? parseInt(String(answer.goalsAwayTeamExact), 10)
+      : answer?.goalsAwayTeam
+        ? parseInt(answer.goalsAwayTeam, 10)
+        : null;
+  const regularHome =
+    answer?.regularGoalsHomeTeam != null
+      ? parseInt(String(answer.regularGoalsHomeTeam), 10)
+      : null;
+  const regularAway =
+    answer?.regularGoalsAwayTeam != null
+      ? parseInt(String(answer.regularGoalsAwayTeam), 10)
+      : null;
+  const hasTie =
+    !cancelled &&
+    !isNaN(regularHome) &&
+    !isNaN(regularAway) &&
+    regularHome === regularAway &&
+    !isNaN(homeScore) &&
+    !isNaN(awayScore) &&
+    (homeScore !== regularHome || awayScore !== regularAway);
 
   return {
     matchNumber,
@@ -29,6 +62,8 @@ function buildMatchFromItem(item, answer, matchNumber) {
     awayTeam: item.awayTeam,
     homeScore: isNaN(homeScore) ? null : homeScore,
     awayScore: isNaN(awayScore) ? null : awayScore,
+    regularGoalsHomeTeam: hasTie ? regularHome : null,
+    regularGoalsAwayTeam: hasTie ? regularAway : null,
     status: cancelled ? "postponed" : "completed",
     statusLabel: cancelled ? "APLAZADO" : undefined,
     isGame15: item.isGame15 || false,
@@ -47,11 +82,17 @@ function groupByLeague(matches) {
   let current = null;
   for (const m of matches) {
     const leagueId = m.leagueId;
-    const leagueSubLabel = leagueId === "PLENO_15" ? PLENO_15_SUB_LABEL : null;
+    const leagueSubLabel =
+      leagueId === "PLENO_15" ? (m.leagueSubLabel ?? null) : null;
     if (current && current.leagueId === leagueId) {
       current.matches.push(m);
     } else {
-      current = { leagueId, leagueName: m.leagueName, leagueSubLabel, matches: [m] };
+      current = {
+        leagueId,
+        leagueName: m.leagueName,
+        leagueSubLabel,
+        matches: [m],
+      };
       groups.push(current);
     }
   }
@@ -70,16 +111,23 @@ function buildMatchResultsFromCorrectionSee(correctionSee, matchday = "J16") {
   const allMatches = quinipolo.map((item, i) => {
     const matchNumber = i + 1;
     const answer = answerMap.get(matchNumber);
-    const leagueId = item.leagueId || item.league_id || "DHM";
-    const leagueName = LEAGUE_NAMES[leagueId] || leagueId;
+    const isGame15 = item?.isGame15 || matchNumber === 15;
+    const leagueId = isGame15 ? "PLENO_15" : item.leagueId;
+    const leagueName = isGame15
+      ? LEAGUE_NAMES.PLENO_15
+      : LEAGUE_NAMES[item.leagueId] || item.leagueId;
     const m = buildMatchFromItem(item, answer, matchNumber);
     m.leagueId = leagueId;
     m.leagueName = leagueName;
+    m.leagueSubLabel = isGame15 ? item.leagueId : null;
     return m;
   });
 
   const part1 = allMatches.slice(0, IMAGE1_MATCH_COUNT);
-  const part2 = allMatches.slice(IMAGE1_MATCH_COUNT, IMAGE1_MATCH_COUNT + IMAGE2_MATCH_COUNT);
+  const part2 = allMatches.slice(
+    IMAGE1_MATCH_COUNT,
+    IMAGE1_MATCH_COUNT + IMAGE2_MATCH_COUNT,
+  );
 
   const basePayload = { matchday };
 

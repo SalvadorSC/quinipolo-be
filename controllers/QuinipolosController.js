@@ -15,6 +15,140 @@ const {
   computeAnswerStatistics,
 } = require("../services/stats/computeAnswerStatistics");
 
+/** Global league: subtract 2 from matchday J for display (legacy adjustment). */
+const GLOBAL_LEAGUE_ID = "351a1949-f6c5-4940-ac70-1c7dd08e8b1a";
+const GLOBAL_LEAGUE_J_OFFSET = 2;
+
+/** Dev-only: fake quinipolo for testing correction flow. ID: mock-correction */
+const MOCK_CORRECTION_QUINIPOLO_ID = "mock-correction";
+/** In-memory store for last submitted mock correction (so CorrectionSuccess can fetch it for images) */
+let mockCorrectionLastAnswers = [];
+
+const MOCK_CORRECTION_QUINIPOLO = {
+  id: MOCK_CORRECTION_QUINIPOLO_ID,
+  league_id: "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+  league_name: "Liga Waterpolo España",
+  quinipolo: [
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Catalunya",
+      awayTeam: "UE Horta",
+      leagueId: "DHF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Mataró",
+      awayTeam: "CN Sant Feliu",
+      leagueId: "DHF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Caballa Ceuta",
+      awayTeam: "CN Terrassa",
+      leagueId: "DHM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Sabadell",
+      awayTeam: "CN Barcelona",
+      leagueId: "DHM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Sant Andreu",
+      awayTeam: "CN Catalunya",
+      leagueId: "DHM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "Waterpolo Tenerife Echeyde",
+      awayTeam: "CN Rubí",
+      leagueId: "DHM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "UVSE Margitsziget",
+      awayTeam: "Olympiacos",
+      leagueId: "CLF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Terrassa",
+      awayTeam: "CN Mediterrani",
+      leagueId: "DHF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Atlètic-Barceloneta",
+      awayTeam: "CN Joventut",
+      leagueId: "PDM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Sabadell",
+      awayTeam: "CN Sant Andreu",
+      leagueId: "PDM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Rubí",
+      awayTeam: "CN Catalunya",
+      leagueId: "PDM",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "Club Waterpolo Pontevedra",
+      awayTeam: "CN Joventut",
+      leagueId: "PDF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Rubí",
+      awayTeam: "CN Catalunya",
+      leagueId: "PDF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "Boadilla",
+      awayTeam: "Málaga",
+      leagueId: "PDF",
+      isGame15: false,
+    },
+    {
+      gameType: "waterpolo",
+      homeTeam: "CN Sant Feliu",
+      awayTeam: "UE Horta",
+      leagueId: "PLENO_15",
+      isGame15: true,
+    },
+  ],
+  correct_answers: [],
+  has_been_corrected: false,
+  end_date: new Date(Date.now() - 86400000).toISOString(),
+  creation_date: new Date().toISOString(),
+  is_deleted: false,
+  participants_who_answered: [],
+  leagueName: "Liga Waterpolo España",
+  leagueId: "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+  endDate: new Date(Date.now() - 86400000).toISOString(),
+  hasBeenCorrected: false,
+  creationDate: new Date().toISOString(),
+  _id: MOCK_CORRECTION_QUINIPOLO_ID,
+};
+
 /**
  * Adds new teams to the Supabase 'teams' table.
  * @param {Object} teamsObj - { waterpolo: [...], football: [...], basketball: [...] }
@@ -117,17 +251,25 @@ const createNewQuinipolo = async (req, res) => {
         return res.status(404).json({ error: "League not found" });
       }
 
+      const correctAnswers =
+        req.body.correct_answers || req.body.correctAnswers || [];
+
       // Create quinipolo in Supabase
+      const insertPayload = {
+        league_id: leagueId,
+        quinipolo: req.body.quinipolo,
+        end_date: endDate,
+        has_been_corrected: false,
+        creation_date: creationDate,
+        is_deleted: false,
+      };
+      if (correctAnswers.length > 0) {
+        insertPayload.correct_answers = correctAnswers;
+      }
+
       const { data: newQuinipolo, error: createError } = await supabase
         .from("quinipolos")
-        .insert({
-          league_id: leagueId,
-          quinipolo: req.body.quinipolo,
-          end_date: endDate,
-          has_been_corrected: false,
-          creation_date: creationDate,
-          is_deleted: false,
-        })
+        .insert(insertPayload)
         .select()
         .single();
 
@@ -169,7 +311,7 @@ const createNewQuinipolo = async (req, res) => {
 const createQuinipoloForAllLeagues = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { quinipolo, end_date, creation_date } = req.body;
+    const { quinipolo, end_date, creation_date, correct_answers } = req.body;
 
     // Check if user has admin privileges
     const { data: userProfile, error: userError } = await supabase
@@ -213,18 +355,23 @@ const createQuinipoloForAllLeagues = async (req, res) => {
     const createdQuinipolos = [];
     const errors = [];
 
+    const correctAnswers = correct_answers || [];
+    const baseInsertPayload = {
+      quinipolo: quinipolo,
+      end_date: end_date,
+      has_been_corrected: false,
+      creation_date: creation_date || new Date().toISOString(),
+      is_deleted: false,
+    };
+    if (correctAnswers.length > 0) {
+      baseInsertPayload.correct_answers = correctAnswers;
+    }
+
     for (const league of leagues) {
       try {
         const { data: newQuinipolo, error: createError } = await supabase
           .from("quinipolos")
-          .insert({
-            league_id: league.id,
-            quinipolo: quinipolo,
-            end_date: end_date,
-            has_been_corrected: false,
-            creation_date: creation_date || new Date().toISOString(),
-            is_deleted: false,
-          })
+          .insert({ ...baseInsertPayload, league_id: league.id })
           .select()
           .single();
 
@@ -284,7 +431,7 @@ const createQuinipoloForAllLeagues = async (req, res) => {
 const createQuinipoloForManagedLeagues = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { quinipolo, end_date, creation_date } = req.body;
+    const { quinipolo, end_date, creation_date, correct_answers } = req.body;
 
     // Check if user has admin privileges
     const { data: userProfile, error: userError } = await supabase
@@ -325,6 +472,18 @@ const createQuinipoloForManagedLeagues = async (req, res) => {
       return res.status(404).json({ error: "No active managed leagues found" });
     }
 
+    const correctAnswers = correct_answers || [];
+    const baseInsertPayload = {
+      quinipolo: quinipolo,
+      end_date: end_date,
+      has_been_corrected: false,
+      creation_date: creation_date || new Date().toISOString(),
+      is_deleted: false,
+    };
+    if (correctAnswers.length > 0) {
+      baseInsertPayload.correct_answers = correctAnswers;
+    }
+
     // Create quinipolo for each managed league
     const createdQuinipolos = [];
     const errors = [];
@@ -333,14 +492,7 @@ const createQuinipoloForManagedLeagues = async (req, res) => {
       try {
         const { data: newQuinipolo, error: createError } = await supabase
           .from("quinipolos")
-          .insert({
-            league_id: league.id,
-            quinipolo: quinipolo,
-            end_date: end_date,
-            has_been_corrected: false,
-            creation_date: creation_date || new Date().toISOString(),
-            is_deleted: false,
-          })
+          .insert({ ...baseInsertPayload, league_id: league.id })
           .select()
           .single();
 
@@ -398,28 +550,26 @@ const createQuinipoloForManagedLeagues = async (req, res) => {
 };
 
 const extractTeamsFromQuinipolo = (quinipoloItems) => {
-  const teams = {
-    waterpolo: new Set(),
-    football: new Set(),
-  };
+  const teams = {};
 
   quinipoloItems.forEach((item) => {
+    const sport = item.gameType;
+    if (!sport) return;
+
+    if (!teams[sport]) teams[sport] = new Set();
+
     const homeTeam = item.homeTeam.split("__")[0];
     const awayTeam = item.awayTeam.split("__")[0];
 
-    if (item.gameType === "waterpolo") {
-      teams.waterpolo.add(homeTeam);
-      teams.waterpolo.add(awayTeam);
-    } else if (item.gameType === "football") {
-      teams.football.add(homeTeam);
-      teams.football.add(awayTeam);
-    }
+    teams[sport].add(homeTeam);
+    teams[sport].add(awayTeam);
   });
 
-  return {
-    waterpolo: Array.from(teams.waterpolo),
-    football: Array.from(teams.football),
-  };
+  const result = {};
+  for (const [sport, teamSet] of Object.entries(teams)) {
+    result[sport] = Array.from(teamSet);
+  }
+  return result;
 };
 
 const getQuinipoloByLeague = async (req, res) => {
@@ -454,7 +604,14 @@ const getQuinipoloByLeague = async (req, res) => {
 };
 
 const getQuinipoloById = async (req, res) => {
-  console.log("Fetching quinipolo by id", req.params.id);
+  const { id } = req.params;
+  if (
+    process.env.NODE_ENV !== "production" &&
+    id === MOCK_CORRECTION_QUINIPOLO_ID
+  ) {
+    return res.status(200).json(MOCK_CORRECTION_QUINIPOLO);
+  }
+  console.log("Fetching quinipolo by id", id);
   try {
     const { data: quinipolo, error } = await supabase
       .from("quinipolos")
@@ -982,6 +1139,36 @@ const correctQuinipolo = async (req, res) => {
   const { id } = req.params;
   const { answers } = req.body;
 
+  if (
+    process.env.NODE_ENV !== "production" &&
+    id === MOCK_CORRECTION_QUINIPOLO_ID
+  ) {
+    mockCorrectionLastAnswers = answers || [];
+    return res.status(200).json({
+      message: "Quinipolo corrected successfully (mock)",
+      results: [
+        {
+          username: "mock-user",
+          pointsEarned: 10,
+          totalPoints: 10,
+          correct15thGame: true,
+        },
+      ],
+      leagueId: MOCK_CORRECTION_QUINIPOLO.league_id,
+      participantsLeaderboard: [
+        {
+          username: "mock-user",
+          points: 10,
+          totalPoints: 10,
+          nQuinipolosParticipated: 1,
+          fullCorrectQuinipolos: 1,
+        },
+      ],
+      averagePointsThisQuinipolo: 10,
+      mostFailed: null,
+    });
+  }
+
   try {
     // Check if quinipolo exists and get league_id
     const { data: quinipolo, error: quinipoloError } = await supabase
@@ -1110,19 +1297,39 @@ const correctQuinipolo = async (req, res) => {
       console.warn("Failed to fetch participants leaderboard:", e);
     }
 
+    // Matchday = ordinal position of this quinipolo among corrected non-deleted (J1, J2, …). Do not count deleted.
     let matchday = "";
     try {
-      const { count, error: countError } = await supabase
+      const { data: correctedIds, error: listError } = await supabase
         .from("quinipolos")
-        .select("*", { count: "exact", head: true })
+        .select("id")
         .eq("league_id", quinipolo.league_id)
         .eq("has_been_corrected", true)
-        .or("is_deleted.eq.false,is_deleted.is.null");
-      if (!countError && count != null) {
-        matchday = `J${count}`;
+        .or("is_deleted.eq.false,is_deleted.is.null")
+        .order("end_date", { ascending: true })
+        .order("id", { ascending: true });
+      if (!listError && correctedIds && correctedIds.length > 0) {
+        const position =
+          correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
+        if (position > 0) {
+          const j =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
+              : position;
+          matchday = `J${j}`;
+        } else {
+          const fallback =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
+              : correctedIds.length;
+          matchday = `J${fallback}`;
+        }
       }
     } catch (e) {
-      console.warn("Failed to count corrected quinipolos for matchday:", e);
+      console.warn(
+        "Failed to compute matchday (ordinal of corrected, non-deleted):",
+        e,
+      );
     }
 
     res.status(200).json({
@@ -1198,6 +1405,20 @@ const getUserPointsGained = async (quinipoloId, correctedAnswers) => {
 const editQuinipoloCorrection = async (req, res) => {
   const { id } = req.params;
   const { answers } = req.body;
+
+  if (
+    process.env.NODE_ENV !== "production" &&
+    id === MOCK_CORRECTION_QUINIPOLO_ID
+  ) {
+    return res.status(200).json({
+      message: "Quinipolo correction edited successfully (mock)",
+      results: [],
+      leagueId: MOCK_CORRECTION_QUINIPOLO.league_id,
+      participantsLeaderboard: [],
+      averagePointsThisQuinipolo: 0,
+      mostFailed: null,
+    });
+  }
 
   try {
     // Get current quinipolo with corrections
@@ -1347,20 +1568,37 @@ const editQuinipoloCorrection = async (req, res) => {
       console.warn("Failed to fetch participants leaderboard (edit):", e);
     }
 
+    // Matchday = ordinal position of this quinipolo among corrected non-deleted (J1, J2, …). Do not count deleted.
     let matchday = "";
     try {
-      const { count, error: countError } = await supabase
+      const { data: correctedIds, error: listError } = await supabase
         .from("quinipolos")
-        .select("*", { count: "exact", head: true })
+        .select("id")
         .eq("league_id", quinipolo.league_id)
         .eq("has_been_corrected", true)
-        .or("is_deleted.eq.false,is_deleted.is.null");
-      if (!countError && count != null) {
-        matchday = `J${count}`;
+        .or("is_deleted.eq.false,is_deleted.is.null")
+        .order("end_date", { ascending: true })
+        .order("id", { ascending: true });
+      if (!listError && correctedIds && correctedIds.length > 0) {
+        const position =
+          correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
+        if (position > 0) {
+          const j =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
+              : position;
+          matchday = `J${j}`;
+        } else {
+          const fallback =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
+              : correctedIds.length;
+          matchday = `J${fallback}`;
+        }
       }
     } catch (e) {
       console.warn(
-        "Failed to count corrected quinipolos for matchday (edit):",
+        "Failed to compute matchday (ordinal of corrected, non-deleted) on edit:",
         e,
       );
     }
@@ -1387,6 +1625,18 @@ const editQuinipoloCorrection = async (req, res) => {
 
 const getQuinipoloCorrectedById = async (req, res) => {
   const { id } = req.params;
+  if (
+    process.env.NODE_ENV !== "production" &&
+    id === MOCK_CORRECTION_QUINIPOLO_ID
+  ) {
+    const response = { ...MOCK_CORRECTION_QUINIPOLO, matchday: "J16" };
+    if (mockCorrectionLastAnswers.length > 0) {
+      response.correct_answers = mockCorrectionLastAnswers;
+      response.has_been_corrected = true;
+      response.hasBeenCorrected = true;
+    }
+    return res.status(200).json(response);
+  }
 
   try {
     const { data: quinipolo, error } = await supabase
@@ -1426,6 +1676,38 @@ const getQuinipoloCorrectedById = async (req, res) => {
       }
     }
 
+    // Matchday = ordinal position of this quinipolo among corrected non-deleted (J1, J2, …).
+    let matchday = "";
+    try {
+      const { data: correctedIds, error: listError } = await supabase
+        .from("quinipolos")
+        .select("id")
+        .eq("league_id", quinipolo.league_id)
+        .eq("has_been_corrected", true)
+        .or("is_deleted.eq.false,is_deleted.is.null")
+        .order("end_date", { ascending: true })
+        .order("id", { ascending: true });
+      if (!listError && correctedIds && correctedIds.length > 0) {
+        const position =
+          correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
+        if (position > 0) {
+          const j =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
+              : position;
+          matchday = `J${j}`;
+        } else {
+          const fallback =
+            quinipolo.league_id === GLOBAL_LEAGUE_ID
+              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
+              : correctedIds.length;
+          matchday = `J${fallback}`;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to compute matchday for correction-see:", e);
+    }
+
     // Transform to match expected format
     const transformedQuinipolo = {
       id: quinipolo.id,
@@ -1438,6 +1720,7 @@ const getQuinipoloCorrectedById = async (req, res) => {
       is_deleted: quinipolo.is_deleted,
       participants_who_answered: quinipolo.participants_who_answered || [],
       correct_answers: quinipolo.correct_answers || [],
+      matchday: matchday || undefined,
       // Legacy fields for backward compatibility
       leagueName: quinipolo.leagues.league_name,
       leagueId: quinipolo.league_id,
