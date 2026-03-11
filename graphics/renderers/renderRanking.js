@@ -103,18 +103,19 @@ async function renderRanking(payload, rankingType = "quinipolo") {
     98 + rankingTheme.TITLE_FONT_SIZE,
   );
 
-  if (logoBuffer) {
-    const logoImg = await loadImage(logoBuffer);
-    const cornerLogoSize = Math.round(rankingTheme.LEADERBOARD_LOGO_SIZE * 1.5);
-    ctx.globalAlpha = 1;
-    ctx.drawImage(
-      logoImg,
-      rankingTheme.CANVAS_WIDTH - rankingTheme.PADDING - cornerLogoSize,
-      rankingTheme.RANKING_HEIGHT - rankingTheme.PADDING - cornerLogoSize,
-      cornerLogoSize,
-      cornerLogoSize,
-    );
-  }
+  // Small quinipolo logo in corner (commented out)
+  // if (logoBuffer) {
+  //   const logoImg = await loadImage(logoBuffer);
+  //   const cornerLogoSize = Math.round(rankingTheme.LEADERBOARD_LOGO_SIZE * 1.5);
+  //   ctx.globalAlpha = 1;
+  //   ctx.drawImage(
+  //     logoImg,
+  //     rankingTheme.CANVAS_WIDTH - rankingTheme.PADDING - cornerLogoSize,
+  //     rankingTheme.RANKING_HEIGHT - rankingTheme.PADDING - cornerLogoSize,
+  //     cornerLogoSize,
+  //     cornerLogoSize,
+  //   );
+  // }
 
   const rowHeight = rankingTheme.ROW_HEIGHT;
   const rowGap = rankingTheme.ROW_GAP;

@@ -9,10 +9,15 @@ const { statisticsTheme } = require("../constants/theme");
 const { drawTeamComponent } = require("../components/teamComponent");
 const { drawBrandingBottom } = require("../utils/drawBranding");
 const teamNameToImage = require("../data/teamNameToImage.json");
-const { extractBgColorFromFilename } = require("../utils/teamLogoResolver");
+const {
+  extractBgColorFromFilename,
+  resolveTeamLogoSource,
+} = require("../utils/teamLogoResolver");
 
 const CARD_GAP = 24;
 const CONTENT_GAP = 40;
+const TITLE_VALUE_GAP = 20;
+const LAST_TWO_CARDS_CONTENT_OFFSET_UP = 15;
 
 function getStatsCardDimensions(imgHeight) {
   const blocksTotalHeight = imgHeight * 0.7;
@@ -43,7 +48,10 @@ async function renderStatistics(payload) {
   } = payload;
 
   const height = statisticsTheme.STATISTICS_HEIGHT;
-  const { canvas, ctx } = createCanvasContext(statisticsTheme.CANVAS_WIDTH, height);
+  const { canvas, ctx } = createCanvasContext(
+    statisticsTheme.CANVAS_WIDTH,
+    height,
+  );
 
   const [bgBuffer, logoBuffer] = await Promise.all([
     loadBackgroundBuffer(statisticsTheme.CANVAS_WIDTH, height),
@@ -79,36 +87,27 @@ async function renderStatistics(payload) {
     98 + statisticsTheme.TITLE_FONT_SIZE,
   );
 
-  if (logoBuffer) {
-    const logoImg = await loadImage(logoBuffer);
-    const cornerLogoSize = Math.round(statisticsTheme.LEADERBOARD_LOGO_SIZE * 1.2);
-    ctx.globalAlpha = 1;
-    ctx.drawImage(
-      logoImg,
-      statisticsTheme.CANVAS_WIDTH - statisticsTheme.PADDING - cornerLogoSize,
-      98,
-      cornerLogoSize,
-      cornerLogoSize,
-    );
-  }
-
   const { cardHeight } = getStatsCardDimensions(height);
   const horizontalInset = statisticsTheme.STATS_CARD_HORIZONTAL_INSET ?? 0;
-  const cardWidth = statisticsTheme.CANVAS_WIDTH - statisticsTheme.PADDING * 2 - horizontalInset;
+  const cardWidth =
+    statisticsTheme.CANVAS_WIDTH -
+    statisticsTheme.PADDING * 2 -
+    horizontalInset;
   const cardX = statisticsTheme.PADDING + horizontalInset / 2;
   const radius = statisticsTheme.STATS_CARD_RADIUS ?? 16;
 
   const blocksTotalHeight = height * 0.7;
-  const startY = (height - blocksTotalHeight) / 2;
+  const startY = (height - blocksTotalHeight) / 2 + 30;
   let y = startY;
 
-  const logoSize = 110;
+  const logoSize = 180;
 
   if (mostFailedMatch) {
     ctx.fillStyle = statisticsTheme.STATS_RECT_COLOR;
     drawRoundRect(ctx, cardX, y, cardWidth, cardHeight, radius);
 
-    const content1Height = statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + logoSize;
+    const content1Height =
+      statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + logoSize;
     const content1Top = y + (cardHeight - content1Height) / 2;
 
     const heading1Y = content1Top + statisticsTheme.STATS_TITLE_FONT_SIZE;
@@ -116,12 +115,17 @@ async function renderStatistics(payload) {
     ctx.fillStyle = statisticsTheme.TEXT_WHITE;
     const heading1 = "PARTIDO MÁS FALLADO";
     const heading1Width = ctx.measureText(heading1).width;
-    ctx.fillText(heading1, (statisticsTheme.CANVAS_WIDTH - heading1Width) / 2, heading1Y);
+    ctx.fillText(
+      heading1,
+      (statisticsTheme.CANVAS_WIDTH - heading1Width) / 2,
+      heading1Y,
+    );
 
     const centerX = statisticsTheme.CANVAS_WIDTH / 2;
     const leftLogoX = centerX - logoSize - 80;
     const rightLogoX = centerX + 80;
-    const logoY = content1Top + statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP;
+    const logoY =
+      content1Top + statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP;
 
     const homeLogoSource =
       mostFailedMatch.homeTeamLogoUrl ??
@@ -132,20 +136,34 @@ async function renderStatistics(payload) {
       mostFailedMatch.awayTeamImageName ??
       teamNameToImage[mostFailedMatch.awayTeam];
 
-    const homeLogoBuffer = homeLogoSource
-      ? await loadTeamLogo(homeLogoSource, logoSize)
+    const mapping = { ...teamNameToImage };
+    if (homeLogoSource) mapping[mostFailedMatch.homeTeam] = homeLogoSource;
+    if (awayLogoSource) mapping[mostFailedMatch.awayTeam] = awayLogoSource;
+    const homeResolved =
+      homeLogoSource &&
+      (await resolveTeamLogoSource(mostFailedMatch.homeTeam, mapping));
+    const awayResolved =
+      awayLogoSource &&
+      (await resolveTeamLogoSource(mostFailedMatch.awayTeam, mapping));
+    const homeLogoFile = homeResolved ?? homeLogoSource;
+    const awayLogoFile = awayResolved ?? awayLogoSource;
+
+    const homeLogoBuffer = homeLogoFile
+      ? await loadTeamLogo(homeLogoFile, logoSize)
       : null;
-    const awayLogoBuffer = awayLogoSource
-      ? await loadTeamLogo(awayLogoSource, logoSize)
+    const awayLogoBuffer = awayLogoFile
+      ? await loadTeamLogo(awayLogoFile, logoSize)
       : null;
 
+    const logoPadding = 10;
     await drawTeamComponent(ctx, leftLogoX, logoY, logoSize, {
       logoBuffer: homeLogoBuffer,
       teamName: mostFailedMatch.homeTeam,
       bgColor:
-        extractBgColorFromFilename(homeLogoSource) ??
+        extractBgColorFromFilename(homeLogoFile) ??
         mostFailedMatch.homeTeamBgColor ??
         null,
+      padding: logoPadding,
       theme: statisticsTheme,
     });
 
@@ -161,9 +179,10 @@ async function renderStatistics(payload) {
       logoBuffer: awayLogoBuffer,
       teamName: mostFailedMatch.awayTeam,
       bgColor:
-        extractBgColorFromFilename(awayLogoSource) ??
+        extractBgColorFromFilename(awayLogoFile) ??
         mostFailedMatch.awayTeamBgColor ??
         null,
+      padding: logoPadding,
       theme: statisticsTheme,
     });
 
@@ -174,8 +193,11 @@ async function renderStatistics(payload) {
   drawRoundRect(ctx, cardX, y, cardWidth, cardHeight, radius);
 
   const content2Height =
-    statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + statisticsTheme.STATS_VALUE_FONT_SIZE;
-  const content2Top = y + (cardHeight - content2Height) / 2;
+    statisticsTheme.STATS_TITLE_FONT_SIZE +
+    TITLE_VALUE_GAP +
+    statisticsTheme.STATS_VALUE_FONT_SIZE;
+  const content2Top =
+    y + (cardHeight - content2Height) / 2 - LAST_TWO_CARDS_CONTENT_OFFSET_UP;
 
   const heading2Y = content2Top + statisticsTheme.STATS_TITLE_FONT_SIZE;
   ctx.font = `bold ${statisticsTheme.STATS_TITLE_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
@@ -187,7 +209,7 @@ async function renderStatistics(payload) {
   const value2Y =
     content2Top +
     statisticsTheme.STATS_TITLE_FONT_SIZE +
-    CONTENT_GAP +
+    TITLE_VALUE_GAP +
     statisticsTheme.STATS_VALUE_FONT_SIZE;
   ctx.font = `bold ${statisticsTheme.STATS_VALUE_FONT_SIZE}px ${statisticsTheme.FONT_FAMILY}`;
   ctx.fillStyle = statisticsTheme.TEXT_WHITE;
@@ -203,13 +225,18 @@ async function renderStatistics(payload) {
   drawRoundRect(ctx, cardX, y, cardWidth, cardHeight, radius);
 
   const card3ContentHeight =
-    statisticsTheme.STATS_TITLE_FONT_SIZE + CONTENT_GAP + statisticsTheme.STATS_VALUE_FONT_SIZE;
-  const card3ContentTop = y + (cardHeight - card3ContentHeight) / 2;
+    statisticsTheme.STATS_TITLE_FONT_SIZE +
+    TITLE_VALUE_GAP +
+    statisticsTheme.STATS_VALUE_FONT_SIZE;
+  const card3ContentTop =
+    y +
+    (cardHeight - card3ContentHeight) / 2 -
+    LAST_TWO_CARDS_CONTENT_OFFSET_UP;
   const card3TitleY = card3ContentTop + statisticsTheme.STATS_TITLE_FONT_SIZE;
   const card3ValueY =
     card3ContentTop +
     statisticsTheme.STATS_TITLE_FONT_SIZE +
-    CONTENT_GAP +
+    TITLE_VALUE_GAP +
     statisticsTheme.STATS_VALUE_FONT_SIZE;
   const card3CenterX = statisticsTheme.CANVAS_WIDTH / 2;
 
@@ -226,7 +253,12 @@ async function renderStatistics(payload) {
   const card3Value = String(correctCount);
   ctx.fillText(card3Value, card3CenterX, card3ValueY);
 
-  drawBrandingBottom(ctx, statisticsTheme.CANVAS_WIDTH, height, statisticsTheme);
+  drawBrandingBottom(
+    ctx,
+    statisticsTheme.CANVAS_WIDTH,
+    height,
+    statisticsTheme,
+  );
 
   return canvas.toDataURL("image/png");
 }
