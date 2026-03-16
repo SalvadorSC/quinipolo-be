@@ -14,6 +14,10 @@ const { computeMostFailed } = require("../services/stats/computeMostFailed");
 const {
   computeAnswerStatistics,
 } = require("../services/stats/computeAnswerStatistics");
+const {
+  notifyNewQuinipolo,
+  notifyQuinolosCorrected,
+} = require("../services/NotificationService");
 
 /** Global league: subtract 2 from matchday J for display (legacy adjustment). */
 const GLOBAL_LEAGUE_ID = "351a1949-f6c5-4940-ac70-1c7dd08e8b1a";
@@ -292,11 +296,10 @@ const createNewQuinipolo = async (req, res) => {
         await addNewTeams(teams);
       }
 
-      // Send notifications to all users in the league
-      // await NotificationService.notifyNewQuinipolo(
-      //   newQuinipolo.id,
-      //   req.body.leagueId
-      // );
+      // Send notifications to all users in the league (non-blocking)
+      notifyNewQuinipolo(newQuinipolo.id, leagueId).catch((err) =>
+        console.error('[Notifications] notifyNewQuinipolo failed:', err)
+      );
 
       res.status(201).json(quinipoloWithLeagueName);
     } else {
@@ -1331,6 +1334,11 @@ const correctQuinipolo = async (req, res) => {
         e,
       );
     }
+
+    // Notify users who answered (non-blocking)
+    notifyQuinolosCorrected(id, quinipolo.league_id).catch((err) =>
+      console.error('[Notifications] notifyQuinolosCorrected failed:', err)
+    );
 
     res.status(200).json({
       message: "Quinipolo corrected successfully",

@@ -4,6 +4,8 @@ const router = express.Router();
 const LeaguesController = require("../controllers/LeaguesController");
 const QuinipolosController = require("../controllers/QuinipolosController");
 const LeaderboardController = require("../controllers/LeaderboardController");
+const SeedController = require("../controllers/SeedController");
+const { authenticateToken } = require("../middleware/auth");
 
 //getAllLeaguesData,
 // getLeagueData,
@@ -89,6 +91,13 @@ router.put(
 router.post(
   "/join-by-link/:shareToken",
   LeaguesController.joinLeagueByShareLink
+);
+
+// Seed test data for a league (systemAdmin only)
+router.post(
+  "/:leagueId/seed-test-data",
+  authenticateToken,
+  SeedController.seedLeagueTestData
 );
 
 module.exports = router;
