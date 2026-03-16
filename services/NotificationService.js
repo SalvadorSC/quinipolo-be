@@ -1,7 +1,16 @@
-const { Expo } = require('expo-server-sdk');
 const { supabase } = require('./supabaseClient');
 
-const expo = new Expo({ useFcmV1: true });
+let _expo = null;
+let _Expo = null;
+
+async function getExpo() {
+  if (!_expo) {
+    const mod = await import('expo-server-sdk');
+    _Expo = mod.Expo;
+    _expo = new _Expo({ useFcmV1: true });
+  }
+  return { expo: _expo, Expo: _Expo };
+}
 
 /**
  * Fetch active push tokens for all users in a league.
@@ -38,6 +47,7 @@ async function getTokensForLeague(leagueId) {
  * Send push notifications and record them in the notifications table.
  */
 async function sendNotifications(messages, notificationRecords) {
+  const { expo, Expo } = await getExpo();
   const validMessages = messages.filter((msg) => Expo.isExpoPushToken(msg.to));
 
   if (!validMessages.length) return;
