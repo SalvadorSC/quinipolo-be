@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --test test/*.test.js",
     "download-logos": "node services/scraper/downloadLogos.js",
     "find-larger-logos": "node services/scraper/findLargerLogosViaSearch.js",
     "fetch-logos-by-list": "node services/scraper/fetchLogosByTeamList.js"

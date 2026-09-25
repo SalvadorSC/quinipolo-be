@@ -14,7 +14,7 @@ const createLeagueTable = async () => {
     created_by UUID REFERENCES profiles(id),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    status VARCHAR DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+    status VARCHAR DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended', 'finished')),
     current_participants INTEGER DEFAULT 0
   );
   */
@@ -84,7 +84,8 @@ const getAllLeagues = async (userId = null) => {
       profiles!leagues_created_by_fkey(username, full_name, email)
     `
     )
-    .eq("status", "active");
+    // Finished seasons stay visible. Scheduling a quinipolo is rejected separately.
+    .in("status", ["active", "finished"]);
 
   if (userId) {
     // Get leagues where user is a participant or moderator
