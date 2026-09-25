@@ -1,6 +1,7 @@
-// League lifecycle for quinipolo scheduling.
+// League lifecycle.
 // "finished" leagues stay readable (history, leaderboards, past quinipolos)
-// but cannot receive a newly scheduled quinipolo.
+// but cannot receive a newly scheduled quinipolo or a new member.
+// Inactive and suspended leagues are not treated as closed.
 
 const LEAGUE_STATUS_FINISHED = "finished";
 const LEAGUE_STATUS_ACTIVE = "active";

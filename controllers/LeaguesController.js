@@ -3,6 +3,10 @@ const Leaderboard = require("../models/Leaderboard");
 const User = require("../models/User");
 const { supabase } = require("../services/supabaseClient");
 const { GLOBAL_LEAGUE_ID } = require("../config");
+const {
+  isLeagueFinished,
+  rejectIfLeagueFinished,
+} = require("../services/leagueStatus");
 
 const getAllLeaguesData = async (req, res) => {
   try {
@@ -400,7 +404,14 @@ const joinLeague = async (req, res) => {
     }
 
     // Use the Supabase version to join the league
-    await joinLeagueByIdSupabase(leagueId, profile.id, username);
+    const joinResult = await joinLeagueByIdSupabase(
+      leagueId,
+      profile.id,
+      username
+    );
+    if (joinResult && rejectIfLeagueFinished(res, joinResult.league)) {
+      return;
+    }
 
     // Get updated league data
     const { data: league, error: leagueError } = await supabase
@@ -504,7 +515,7 @@ const updateLeagueModerators = async (req, res) => {
     // Ensure league exists and retrieve creator (cannot be demoted)
     const { data: leagueRow, error: leagueErr } = await supabase
       .from("leagues")
-      .select("id, created_by")
+      .select("id, created_by, status")
       .eq("id", leagueId)
       .single();
     if (leagueErr) {
@@ -533,6 +544,14 @@ const updateLeagueModerators = async (req, res) => {
     // Ensure creator stays moderator
     if (creatorId && !moderatorIdSet.has(creatorId)) {
       moderatorIdSet.add(creatorId);
+    }
+
+    // Adding someone who is not already a member is a join.
+    const addsNewMember = [...moderatorIdSet].some(
+      (userId) => !currentUserIds.has(userId)
+    );
+    if (addsNewMember && rejectIfLeagueFinished(res, leagueRow)) {
+      return;
     }
 
     // Upsert memberships for provided moderatorIds
@@ -634,6 +653,24 @@ const joinLeagueByIdSupabase = async (leagueId, userId, username) => {
     if (existingUserLeague) {
       console.log("User already in league");
       return;
+    }
+
+    const { data: league, error: leagueStatusError } = await supabase
+      .from("leagues")
+      .select("id, status")
+      .eq("id", leagueId)
+      .maybeSingle();
+
+    if (leagueStatusError) {
+      console.error("Error fetching league for join:", leagueStatusError);
+      return;
+    }
+
+    // Same gate as scheduling a quinipolo: finished seasons stay readable
+    // but cannot take new members. Already-members above stay idempotent.
+    if (isLeagueFinished(league)) {
+      console.log("Refusing join: league is finished", leagueId);
+      return { league };
     }
 
     // Add user to user_leagues table
@@ -911,6 +948,38 @@ const updatePetitionStatus = async (
       return res.status(404).json({ error: "Petition not found" });
     }
 
+    // Accepting a petition for someone who is not already a member is a join.
+    // Refuse before the petition is marked accepted.
+    if (addToArray && newStatus === "accepted") {
+      const { data: existingMembership, error: membershipError } =
+        await supabase
+          .from("user_leagues")
+          .select("user_id")
+          .eq("user_id", petitionRow.user_id)
+          .eq("league_id", leagueId)
+          .maybeSingle();
+
+      if (membershipError) {
+        console.error("Error checking user_leagues:", membershipError);
+        return res.status(500).send("Internal Server Error");
+      }
+
+      if (!existingMembership) {
+        const { data: leagueRow, error: leagueStatusError } = await supabase
+          .from("leagues")
+          .select("id, status")
+          .eq("id", leagueId)
+          .maybeSingle();
+        if (leagueStatusError) {
+          console.error("Error fetching league status:", leagueStatusError);
+          return res.status(500).send("Internal Server Error");
+        }
+        if (rejectIfLeagueFinished(res, leagueRow)) {
+          return;
+        }
+      }
+    }
+
     // Update status
     const { error: updateError } = await supabase
       .from("league_petitions")
@@ -1185,7 +1254,14 @@ const joinLeagueByShareLink = async (req, res) => {
     }
 
     // Add user to the league
-    await joinLeagueByIdSupabase(shareLink.league_id, userId, username);
+    const joinResult = await joinLeagueByIdSupabase(
+      shareLink.league_id,
+      userId,
+      username
+    );
+    if (joinResult && rejectIfLeagueFinished(res, joinResult.league)) {
+      return;
+    }
 
     // Increment uses count
     const { error: updateError } = await supabase
