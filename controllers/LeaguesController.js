@@ -607,7 +607,8 @@ const joinLeagueByIdSupabase = async (leagueId, userId, username) => {
   try {
     console.log("Joining league (Supabase)", username, leagueId);
 
-    // Ensure global league exists if joining global league
+    // Alias "global" joins whatever GLOBAL_LEAGUE_ID points at.
+    // After the 2026-27 cutover that is the free system league (no Stripe).
     if (leagueId === "global") {
       const globalLeagueId = await ensureGlobalLeagueExists();
       if (!globalLeagueId) {

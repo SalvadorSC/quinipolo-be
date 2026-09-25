@@ -102,7 +102,7 @@ const updateLeaderboard = async (
 /**
  * Example response:
  * {
- *   leagueId: "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+ *   leagueId: "<league-uuid>",
  *   participantsLeaderboard: [
  *     {
  *       username: "user1",

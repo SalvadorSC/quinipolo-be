@@ -18,10 +18,14 @@ const {
   notifyNewQuinipolo,
   notifyQuinolosCorrected,
 } = require("../services/NotificationService");
-
-/** Global league: subtract 2 from matchday J for display (legacy adjustment). */
-const GLOBAL_LEAGUE_ID = "351a1949-f6c5-4940-ac70-1c7dd08e8b1a";
-const GLOBAL_LEAGUE_J_OFFSET = 2;
+const {
+  isLeagueFinished,
+  rejectIfLeagueFinished,
+} = require("../services/leagueStatus");
+const { matchdayNumber } = require("../services/globalMatchday");
+const {
+  LEGACY_GLOBAL_LEAGUE_2025_2026_ID,
+} = require("../config");
 
 /** Dev-only: fake quinipolo for testing correction flow. ID: mock-correction */
 const MOCK_CORRECTION_QUINIPOLO_ID = "mock-correction";
@@ -30,7 +34,7 @@ let mockCorrectionLastAnswers = [];
 
 const MOCK_CORRECTION_QUINIPOLO = {
   id: MOCK_CORRECTION_QUINIPOLO_ID,
-  league_id: "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+  league_id: LEGACY_GLOBAL_LEAGUE_2025_2026_ID,
   league_name: "Liga Waterpolo España",
   quinipolo: [
     {
@@ -146,7 +150,7 @@ const MOCK_CORRECTION_QUINIPOLO = {
   is_deleted: false,
   participants_who_answered: [],
   leagueName: "Liga Waterpolo España",
-  leagueId: "351a1949-f6c5-4940-ac70-1c7dd08e8b1a",
+  leagueId: LEGACY_GLOBAL_LEAGUE_2025_2026_ID,
   endDate: new Date(Date.now() - 86400000).toISOString(),
   hasBeenCorrected: false,
   creationDate: new Date().toISOString(),
@@ -246,13 +250,20 @@ const createNewQuinipolo = async (req, res) => {
       // Get league from Supabase instead of MongoDB
       const { data: league, error: leagueError } = await supabase
         .from("leagues")
-        .select("league_name")
+        .select("league_name, status")
         .eq("id", leagueId)
         .single();
 
-      if (leagueError) {
+      if (leagueError || !league) {
         console.error("Error fetching league:", leagueError);
+        if (leagueError && leagueError.code !== "PGRST116") {
+          return res.status(500).json({ error: "Failed to load league" });
+        }
         return res.status(404).json({ error: "League not found" });
+      }
+
+      if (rejectIfLeagueFinished(res, league)) {
+        return;
       }
 
       const correctAnswers =
@@ -339,10 +350,11 @@ const createQuinipoloForAllLeagues = async (req, res) => {
       return res.status(400).json({ error: "End date is required" });
     }
 
-    // Get all active leagues
+    // Only active leagues. Finished seasons are excluded (HTTP 409 on the
+    // single-league create path; this bulk path never inserts for them).
     const { data: leagues, error: leaguesError } = await supabase
       .from("leagues")
-      .select("id, league_name")
+      .select("id, league_name, status")
       .eq("status", "active");
 
     if (leaguesError) {
@@ -371,6 +383,15 @@ const createQuinipoloForAllLeagues = async (req, res) => {
     }
 
     for (const league of leagues) {
+      if (isLeagueFinished(league)) {
+        errors.push({
+          league: league.league_name,
+          league_id: league.id,
+          code: "LEAGUE_FINISHED",
+          error: "Esta liga está finalizada y no admite nuevos quinipolos.",
+        });
+        continue;
+      }
       try {
         const { data: newQuinipolo, error: createError } = await supabase
           .from("quinipolos")
@@ -459,10 +480,10 @@ const createQuinipoloForManagedLeagues = async (req, res) => {
       return res.status(400).json({ error: "End date is required" });
     }
 
-    // Get all active managed leagues only
+    // Only active managed leagues. Finished seasons cannot receive a new quinipolo.
     const { data: leagues, error: leaguesError } = await supabase
       .from("leagues")
-      .select("id, league_name")
+      .select("id, league_name, status")
       .eq("status", "active")
       .eq("tier", "managed");
 
@@ -492,6 +513,15 @@ const createQuinipoloForManagedLeagues = async (req, res) => {
     const errors = [];
 
     for (const league of leagues) {
+      if (isLeagueFinished(league)) {
+        errors.push({
+          league: league.league_name,
+          league_id: league.id,
+          code: "LEAGUE_FINISHED",
+          error: "Esta liga está finalizada y no admite nuevos quinipolos.",
+        });
+        continue;
+      }
       try {
         const { data: newQuinipolo, error: createError } = await supabase
           .from("quinipolos")
@@ -1315,17 +1345,12 @@ const correctQuinipolo = async (req, res) => {
         const position =
           correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
         if (position > 0) {
-          const j =
-            quinipolo.league_id === GLOBAL_LEAGUE_ID
-              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
-              : position;
-          matchday = `J${j}`;
+          matchday = `J${matchdayNumber(quinipolo.league_id, position)}`;
         } else {
-          const fallback =
-            quinipolo.league_id === GLOBAL_LEAGUE_ID
-              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
-              : correctedIds.length;
-          matchday = `J${fallback}`;
+          matchday = `J${matchdayNumber(
+            quinipolo.league_id,
+            correctedIds.length
+          )}`;
         }
       }
     } catch (e) {
@@ -1591,17 +1616,12 @@ const editQuinipoloCorrection = async (req, res) => {
         const position =
           correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
         if (position > 0) {
-          const j =
-            quinipolo.league_id === GLOBAL_LEAGUE_ID
-              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
-              : position;
-          matchday = `J${j}`;
+          matchday = `J${matchdayNumber(quinipolo.league_id, position)}`;
         } else {
-          const fallback =
-            quinipolo.league_id === GLOBAL_LEAGUE_ID
-              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
-              : correctedIds.length;
-          matchday = `J${fallback}`;
+          matchday = `J${matchdayNumber(
+            quinipolo.league_id,
+            correctedIds.length
+          )}`;
         }
       }
     } catch (e) {
@@ -1699,17 +1719,12 @@ const getQuinipoloCorrectedById = async (req, res) => {
         const position =
           correctedIds.findIndex((row) => row.id === quinipolo.id) + 1;
         if (position > 0) {
-          const j =
-            quinipolo.league_id === GLOBAL_LEAGUE_ID
-              ? Math.max(1, position - GLOBAL_LEAGUE_J_OFFSET)
-              : position;
-          matchday = `J${j}`;
+          matchday = `J${matchdayNumber(quinipolo.league_id, position)}`;
         } else {
-          const fallback =
-            quinipolo.league_id === GLOBAL_LEAGUE_ID
-              ? Math.max(1, correctedIds.length - GLOBAL_LEAGUE_J_OFFSET)
-              : correctedIds.length;
-          matchday = `J${fallback}`;
+          matchday = `J${matchdayNumber(
+            quinipolo.league_id,
+            correctedIds.length
+          )}`;
         }
       }
     } catch (e) {
