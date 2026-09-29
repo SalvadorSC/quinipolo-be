@@ -5,6 +5,7 @@ const Quinipolo = require("../models/Quinipolo");
 const User = require("../models/User");
 const { supabase } = require("../services/supabaseClient");
 const { validateUsername } = require("../utils/usernameValidation");
+const { resolveMatchSearchAccess } = require("../services/matchSearchAccess");
 
 const getAllUsers = async (req, res) => {
   try {
@@ -156,7 +157,8 @@ const getAllUserInformation = async (req, res) => {
     username: profile.username,
     birthday: profile.birthday,
     isUserOver18: profile.is_user_over_18,
-    hasScraperAccess: profile.has_scraper_access || false, // Access to scraper features
+    // Legacy column profiles.has_scraper_access is ignored. See matchSearchAccess.
+    hasScraperAccess: resolveMatchSearchAccess(profile),
   };
 
   res.status(200).json(userData);
