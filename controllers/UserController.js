@@ -5,7 +5,6 @@ const Quinipolo = require("../models/Quinipolo");
 const User = require("../models/User");
 const { supabase } = require("../services/supabaseClient");
 const { validateUsername } = require("../utils/usernameValidation");
-const { resolveMatchSearchAccess } = require("../services/matchSearchAccess");
 
 const getAllUsers = async (req, res) => {
   try {
@@ -157,8 +156,9 @@ const getAllUserInformation = async (req, res) => {
     username: profile.username,
     birthday: profile.birthday,
     isUserOver18: profile.is_user_over_18,
-    // Legacy column profiles.has_scraper_access is ignored. See matchSearchAccess.
-    hasScraperAccess: resolveMatchSearchAccess(profile),
+    // Hardcoded true so web/mobile show Autocompletar without FE changes.
+    // Legacy profiles.has_scraper_access is unused.
+    hasScraperAccess: true,
   };
 
   res.status(200).json(userData);

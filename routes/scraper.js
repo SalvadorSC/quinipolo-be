@@ -4,9 +4,8 @@ const router = express.Router();
 const ScraperController = require("../controllers/ScraperController");
 const { authenticateToken } = require("../middleware/auth");
 
-// Match search for creating a quinipolo. Available for every active league.
-// The UI shows it from profiles.hasScraperAccess, which the profile API
-// always sets. Finished leagues are rejected when the quinipolo is saved.
+// Match search when creating a quinipolo. The profile API hardcodes
+// hasScraperAccess so every active league can use it.
 router.get("/matches", ScraperController.getMatches);
 
 // Get results for a quinipolo
