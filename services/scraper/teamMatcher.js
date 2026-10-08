@@ -9,13 +9,31 @@ const PREFIX_SINGLE = new Set(["cn", "cd", "ce", "club", "cnb"]);
 
 let teamMapCache = null;
 let aliasIndexCache = null;
+let teamMapUnavailable = false;
 
 /**
  * Fetches teams from Supabase and builds the team map
  */
+function useUnmatchedNames(reason) {
+  if (!teamMapUnavailable) {
+    console.warn(`Team-name matching skipped: ${reason}`);
+  }
+  teamMapUnavailable = true;
+  teamMapCache = [];
+  aliasIndexCache = new Map();
+  return teamMapCache;
+}
+
 async function fetchTeamMap() {
   if (teamMapCache) {
     return teamMapCache;
+  }
+
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("Supabase credentials are not configured");
+    }
+    return useUnmatchedNames("Supabase credentials are not configured");
   }
 
   try {
@@ -55,7 +73,10 @@ async function fetchTeamMap() {
     return teamMapCache;
   } catch (error) {
     console.error("Error building team map:", error);
-    throw error;
+    if (process.env.NODE_ENV === "production") {
+      throw error;
+    }
+    return useUnmatchedNames(error.message || "team map request failed");
   }
 }
 
@@ -323,6 +344,10 @@ function getConfidenceThresholds(name, isChampionsLeague = false) {
  */
 function matchTeamNameSync(flashscoreName, isChampionsLeague = false) {
   if (!flashscoreName) {
+    return flashscoreName;
+  }
+
+  if (teamMapUnavailable) {
     return flashscoreName;
   }
 

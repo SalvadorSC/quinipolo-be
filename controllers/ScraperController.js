@@ -4,8 +4,9 @@ const { fetchLastWeekResults } = require("../services/scraper/resultsService");
 
 /**
  * GET /api/scraper/matches
- * Fetches matches from Flashscore and returns selected matches
- * for the next 7 days based on league quotas
+ * Fetches matches from Flashscore, with Leverade filling Spanish leagues
+ * Flashscore does not have for the current season, and returns selected
+ * matches for the next 7 days based on league quotas
  */
 const getMatches = async (req, res) => {
   try {

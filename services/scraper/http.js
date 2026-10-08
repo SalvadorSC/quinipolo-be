@@ -12,14 +12,34 @@ async function fetchHtml(url) {
     const response = await axios.get(url, { headers: DEFAULT_HEADERS });
     return response.data;
   } catch (error) {
-    const reason =
-      axios.isAxiosError(error) && error.code === "ERR_NETWORK"
-        ? "Network access appears to be disabled."
-        : "Unexpected fetch failure.";
-    const message = `Failed to fetch ${url}. ${reason}`;
-    throw new Error(message);
+    throw new Error(fetchErrorMessage(url, error));
   }
 }
 
-module.exports = { fetchHtml };
+async function fetchJson(url, options = {}) {
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        ...DEFAULT_HEADERS,
+        Accept: "application/json",
+      },
+      timeout: options.timeout ?? 15000,
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error(fetchErrorMessage(url, error));
+  }
+}
+
+function fetchErrorMessage(url, error) {
+  const reason =
+    axios.isAxiosError(error) && error.code === "ERR_NETWORK"
+      ? "Network access appears to be disabled."
+      : axios.isAxiosError(error) && error.code === "ECONNABORTED"
+        ? "The request timed out."
+        : "Unexpected fetch failure.";
+  return `Failed to fetch ${url}. ${reason}`;
+}
+
+module.exports = { fetchHtml, fetchJson };
 

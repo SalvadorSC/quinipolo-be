@@ -21,6 +21,7 @@ async function fetchFlashscoreMatches() {
           startTime: new Date(event.timestamp).toISOString(),
           sourceUrl: league.flashscoreUrl,
           flashscoreId: event.id,
+          source: "flashscore",
         });
       });
     } catch (error) {
