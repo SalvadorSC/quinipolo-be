@@ -151,8 +151,8 @@ async function fetchLastWeekResults(quinipoloId, days = 7) {
 
     // Attach team IDs to results
     const resultsWithTeamIds = filteredResults.map((result) => {
-      const homeTeamName = matchTeamNameSync(result.homeTeam, false);
-      const awayTeamName = matchTeamNameSync(result.awayTeam, false);
+      const homeTeamName = matchTeamNameSync(result.homeTeam, false, result.leagueId);
+      const awayTeamName = matchTeamNameSync(result.awayTeam, false, result.leagueId);
       
       const homeTeamId = getTeamIdByName(homeTeamName);
       const awayTeamId = getTeamIdByName(awayTeamName);

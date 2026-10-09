@@ -39,7 +39,9 @@ Node.js/Express backend for the Quinipolo application.
    - `LEGACY_GLOBAL_LEAGUE_ID` (optional): 2025-2026 Global id, used only so that season's matchday labels keep their historical offset. Defaults to `351a1949-f6c5-4940-ac70-1c7dd08e8b1a`. Do not point this at the 2026-2027 Global.
 
    ### Scraper Configuration
-   - `SCRAPER_USE_RFEN`: Set to `true` to use RFEN results, `false` otherwise
+   - `SCRAPER_USE_RFEN`: Set to `true` to use RFEN results, `false` otherwise. The old rfen.es results pages are unused by default.
+   - `SCRAPER_USE_LEVERADE`: Defaults to on. Set to `false` to skip the Leverade backup that fills Spanish leagues missing from Flashscore (PDM, PDF, SDM, and a thin DHM/DHF). No API key is required.
+   - `LEVERADE_TOURNAMENT_DHM`, `LEVERADE_TOURNAMENT_DHF`, `LEVERADE_TOURNAMENT_PDM`, `LEVERADE_TOURNAMENT_PDF`, `LEVERADE_TOURNAMENT_SDM`: Optional. Override the 2026/27 Leverade tournament ids (`1338504`, `1338505`, `1338507`, `1338508`, `1338515`) when a new season is published. Leave unset to use those defaults.
 
 ## Installation
 

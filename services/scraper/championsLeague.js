@@ -20,6 +20,7 @@ async function fetchChampionsLeagueMatches() {
           sourceUrl: feed.flashscoreUrl,
           flashscoreId: event.id,
           isChampionsLeague: true,
+          source: "flashscore",
         });
       });
     } catch (error) {

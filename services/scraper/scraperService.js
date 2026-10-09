@@ -1,6 +1,11 @@
-const { leagues, championsLeagueReplacementOrder } = require("./config");
+const {
+  leagues,
+  championsLeagueReplacementOrder,
+  maxClfFill,
+} = require("./config");
 const { fetchFlashscoreMatches } = require("./flashscore");
 const { fetchChampionsLeagueMatches } = require("./championsLeague");
+const { fetchLeveradeMatches } = require("./leverade");
 const { fetchRfenResults } = require("./rfen");
 const { fetchFlashscoreHeadToHeadScores } = require("./flashscoreHeadToHead");
 const {
@@ -9,8 +14,13 @@ const {
   getHeadToHeadScore,
   getTableGap,
 } = require("./headToHead");
-const { getWindowBounds, isWithinWindow } = require("./dateUtils");
+const {
+  getWindowBounds,
+  isWithinWindow,
+  filterMatchesWithinWindow,
+} = require("./dateUtils");
 const { matchTeamNameSync, fetchTeamMap } = require("./teamMatcher");
+const { normalizeTeamName } = require("./teamNames");
 
 const USE_RFEN_RESULTS = process.env.SCRAPER_USE_RFEN === "true";
 
@@ -24,7 +34,7 @@ async function fetchAndSelectMatches() {
       })
     : Promise.resolve([]);
 
-  const [domesticMatches, championsMatchesRaw, completedResults] =
+  const [flashscoreMatches, championsMatchesRaw, leveradeMatches, completedResults] =
     await Promise.all([
       fetchFlashscoreMatches().catch((err) => {
         console.error("Flashscore fetch failed:", err.message);
@@ -34,8 +44,21 @@ async function fetchAndSelectMatches() {
         console.error("Champions League fetch failed:", err.message);
         return [];
       }),
+      fetchLeveradeMatches(start, end).catch((err) => {
+        console.error("Leverade fetch failed:", err.message);
+        return [];
+      }),
       completedResultsPromise,
     ]);
+
+  // Supplement using only fixtures inside the window. Flashscore's season
+  // pages still list 2025/26 games, so a raw count would hide the empty
+  // 2026/27 leagues.
+  const domesticMatches = supplementDomesticMatches(
+    filterMatchesWithinWindow(flashscoreMatches, start, end),
+    filterMatchesWithinWindow(leveradeMatches, start, end)
+  );
+  warnEmptyLeagues(domesticMatches);
 
   const championsMatches = assignChampionReplacements(championsMatchesRaw);
   const allMatches = [...domesticMatches, ...championsMatches];
@@ -75,6 +98,8 @@ async function fetchAndSelectMatches() {
         new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
     );
 
+  logWindowCounts(matchesInWindow);
+
   await fetchTeamMap();
   const normalizedMatches = matchesInWindow.map((match) => {
     const isChampionsLeague =
@@ -83,8 +108,8 @@ async function fetchAndSelectMatches() {
       match.leagueId === "CLF";
     return {
       ...match,
-      homeTeam: matchTeamNameSync(match.homeTeam, isChampionsLeague),
-      awayTeam: matchTeamNameSync(match.awayTeam, isChampionsLeague),
+      homeTeam: matchStoredName(match.homeTeam, match, isChampionsLeague),
+      awayTeam: matchStoredName(match.awayTeam, match, isChampionsLeague),
     };
   });
 
@@ -100,18 +125,106 @@ async function fetchAndSelectMatches() {
   };
 }
 
+/**
+ * When Flashscore has fewer in-window matches than a league's quota, add
+ * Leverade fixtures that are not the same game. Leagues already at quota
+ * keep the Flashscore rows so head-to-head difficulty still applies.
+ */
+function supplementDomesticMatches(primaryMatches, backupMatches) {
+  const result = [...primaryMatches];
+
+  leagues.forEach((league) => {
+    const primary = primaryMatches.filter((match) => match.leagueId === league.id);
+    if (primary.length >= league.quota) return;
+
+    const backups = backupMatches.filter((match) => match.leagueId === league.id);
+    let added = 0;
+    backups.forEach((match) => {
+      const duplicate = result.some(
+        (existing) =>
+          existing.leagueId === league.id && isSameFixture(existing, match)
+      );
+      if (duplicate) return;
+      result.push(match);
+      added += 1;
+    });
+
+    if (added > 0) {
+      console.log(
+        `Leverade filled ${added} ${league.id} match${
+          added === 1 ? "" : "es"
+        } (${primary.length} already came from Flashscore).`
+      );
+    }
+  });
+
+  return result;
+}
+
+function warnEmptyLeagues(matches) {
+  leagues.forEach((league) => {
+    const count = matches.filter((match) => match.leagueId === league.id).length;
+    if (count === 0) {
+      console.warn(
+        `No ${league.id} matches (${league.name}) in the auto-fill window after Flashscore and Leverade.`
+      );
+    }
+  });
+}
+
+function logWindowCounts(matches) {
+  const counts = {};
+  matches.forEach((match) => {
+    counts[match.leagueId] = (counts[match.leagueId] || 0) + 1;
+  });
+  const summary = Object.entries(counts)
+    .map(([leagueId, count]) => `${leagueId}=${count}`)
+    .join(" ");
+  console.log(`Auto-fill matches in window: ${summary || "none"}`);
+}
+
+function isSameFixture(a, b) {
+  if (!a || !b || a.leagueId !== b.leagueId) return false;
+  if (madridDateKey(a.startTime) !== madridDateKey(b.startTime)) return false;
+  const sameOrder =
+    teamsLooselyEqual(a.homeTeam, b.homeTeam) &&
+    teamsLooselyEqual(a.awayTeam, b.awayTeam);
+  const swapped =
+    teamsLooselyEqual(a.homeTeam, b.awayTeam) &&
+    teamsLooselyEqual(a.awayTeam, b.homeTeam);
+  return sameOrder || swapped;
+}
+
+function teamsLooselyEqual(a, b) {
+  const left = normalizeTeamName(a);
+  const right = normalizeTeamName(b);
+  if (!left || !right) return false;
+  if (left === right) return true;
+  const shorter = left.length <= right.length ? left : right;
+  const longer = left.length <= right.length ? right : left;
+  return shorter.length >= 5 && longer.includes(shorter);
+}
+
+function madridDateKey(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Madrid",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
 function assignChampionReplacements(matches) {
   const ordered = [...matches].sort(
     (a, b) => new Date(a.startTime) - new Date(b.startTime)
   );
 
-  ordered.forEach((match, index) => {
-    match.replacementLeagueId = championsLeagueReplacementOrder[index] ?? null;
-    // Preserve leagueId (CL for Men, CLF for Women) instead of overwriting
+  ordered.forEach((match) => {
     if (!match.leagueId) {
       match.leagueId = "CL";
     }
-    // Preserve leagueName if already set, otherwise set default
     if (!match.leagueName) {
       match.leagueName =
         match.leagueId === "CLF"
@@ -130,21 +243,58 @@ function computeAdjustedQuotas(matches) {
     quotas[league.id] = league.quota;
   });
 
-  const champions = matches.filter((match) => match.isChampionsLeague);
+  const domesticCounts = {};
+  leagues.forEach((league) => {
+    domesticCounts[league.id] = matches.filter(
+      (match) => match.leagueId === league.id && !match.isChampionsLeague
+    ).length;
+  });
+
+  // Only the shortfall of DHM/DHF/SDM can be given to Champions League.
+  // A league that already has its fixtures keeps them.
+  const slots = [];
+  championsLeagueReplacementOrder.forEach((leagueId) => {
+    const shortfall = Math.max(
+      0,
+      (quotas[leagueId] || 0) - (domesticCounts[leagueId] || 0)
+    );
+    for (let i = 0; i < shortfall; i += 1) slots.push(leagueId);
+  });
+
+  const champions = matches
+    .filter((match) => match.isChampionsLeague)
+    .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
+  champions.forEach((match) => {
+    match.replacementLeagueId = null;
+  });
+
+  const men = champions.filter((match) => match.leagueId !== "CLF");
+  const women = champions.filter((match) => match.leagueId === "CLF");
+
   let championsQuota = 0;
   let championsWomenQuota = 0;
-  champions.forEach((match, index) => {
-    const replacementId = championsLeagueReplacementOrder[index];
-    if (replacementId && quotas[replacementId] > 0) {
-      quotas[replacementId] -= 1;
-      match.replacementLeagueId = replacementId;
-      if (match.leagueId === "CLF") {
-        championsWomenQuota += 1;
-      } else {
-        championsQuota += 1;
-      }
+  let slotIndex = 0;
+
+  const takeSlot = (match) => {
+    if (slotIndex >= slots.length) return false;
+    if (match.leagueId === "CLF" && championsWomenQuota >= maxClfFill) {
+      return false;
     }
-  });
+    const replacementId = slots[slotIndex];
+    if (!replacementId || !(quotas[replacementId] > 0)) return false;
+    quotas[replacementId] -= 1;
+    match.replacementLeagueId = replacementId;
+    slotIndex += 1;
+    if (match.leagueId === "CLF") {
+      championsWomenQuota += 1;
+    } else {
+      championsQuota += 1;
+    }
+    return true;
+  };
+
+  men.forEach((match) => takeSlot(match));
+  women.forEach((match) => takeSlot(match));
 
   if (championsQuota > 0) {
     quotas.CL = championsQuota;
@@ -206,7 +356,14 @@ function buildMatchId(match, index) {
   if (match.flashscoreId) {
     return match.flashscoreId;
   }
+  if (match.leveradeId) {
+    return `lev-${match.leveradeId}`;
+  }
   return `${match.leagueId}-${match.homeTeam}-${match.awayTeam}-${match.startTime}-${index}`;
+}
+
+function matchStoredName(name, match, isChampionsLeague) {
+  return matchTeamNameSync(name, isChampionsLeague, match.leagueId);
 }
 
 function buildPresetSelections(matches, quotas) {
@@ -243,17 +400,48 @@ function selectForStrategy(matchesByLeague, quotas, strategy, allMatches) {
     });
   });
   if (selection.length < 15 && allMatches) {
-    const remaining = allMatches.filter((m) => !selection.includes(m.matchId));
-    const backfill =
-      strategy === "easy"
-        ? [...remaining].sort((a, b) => b.closeness - a.closeness)
-        : [...remaining].sort((a, b) => a.closeness - b.closeness);
-    const needed = 15 - selection.length;
-    for (let i = 0; i < needed && i < backfill.length; i++) {
-      selection.push(backfill[i].matchId);
-    }
+    const remaining = allMatches.filter(
+      (match) => !selection.includes(match.matchId)
+    );
+    const domestic = remaining.filter((match) => !match.isChampionsLeague);
+    const clMen = remaining.filter(
+      (match) => match.isChampionsLeague && match.leagueId !== "CLF"
+    );
+    const clf = remaining.filter((match) => match.leagueId === "CLF");
+    const ordered = [
+      ...sortBackfill(domestic, strategy),
+      ...sortBackfill(clMen, strategy),
+      ...sortBackfill(clf, strategy),
+    ];
+    ordered.forEach((match) => {
+      if (selection.length >= 15) return;
+      if (
+        match.leagueId === "CLF" &&
+        countSelected(selection, "CLF", allMatches) >= maxClfFill
+      ) {
+        return;
+      }
+      selection.push(match.matchId);
+    });
   }
   return selection.slice(0, 15);
+}
+
+function sortBackfill(matches, strategy) {
+  const copy = [...matches];
+  if (strategy === "easy") {
+    copy.sort((a, b) => b.closeness - a.closeness);
+  } else {
+    copy.sort((a, b) => a.closeness - b.closeness);
+  }
+  return copy;
+}
+
+function countSelected(ids, leagueId, matches) {
+  const selected = new Set(ids);
+  return matches.filter(
+    (match) => selected.has(match.matchId) && match.leagueId === leagueId
+  ).length;
 }
 
 function pickMatchesForLeague(matches, quota, strategy) {
@@ -301,4 +489,11 @@ function buildLegacySelection(matches, presets) {
     .slice(0, 15);
 }
 
-module.exports = { fetchAndSelectMatches };
+module.exports = {
+  fetchAndSelectMatches,
+  supplementDomesticMatches,
+  computeAdjustedQuotas,
+  buildPresetSelections,
+  warnEmptyLeagues,
+  isSameFixture,
+};
