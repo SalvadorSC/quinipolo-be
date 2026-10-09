@@ -1,0 +1,1671 @@
+[
+  {
+    "id": "e3f16901-0404-43f9-b1a3-b7086b3b837d",
+    "name": "A.E. Santa Eulàlia F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Santa Eulalia F",
+      "AESE F",
+      "Agrupació Esportiva Santa Eulàlia F"
+    ]
+  },
+  {
+    "id": "cc6b6144-24d0-4dae-a10e-ae71c0243f51",
+    "name": "A.N. Brescia",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "488ef999-8650-4a12-93a6-37efb317655f",
+    "name": "A.R. Concepción Ciudad Lineal F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Concepción F"
+    ]
+  },
+  {
+    "id": "e277081e-3bbb-4261-b04a-0ad4718910aa",
+    "name": "A.R. Concepción Ciudad Lineal M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Concepción M"
+    ]
+  },
+  {
+    "id": "224a0af3-414b-4f8f-b9ce-8bcf8d6b315a",
+    "name": "A.S Roma F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Roma F"
+    ]
+  },
+  {
+    "id": "ee69c7e0-7f45-4bb0-acab-0f5aaf93ed19",
+    "name": "AESE F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "ca5f1699-e98c-4524-9044-95fa34ebb52e",
+    "name": "Alemania",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Germany"
+    ]
+  },
+  {
+    "id": "c88177b3-6bde-4f80-913b-617a5990fab3",
+    "name": "Alimos F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "60f4d66b-dee0-41f4-865e-7076fd98bb7d",
+    "name": "ANO Glyfadas F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "8247d58c-96cb-45ef-8d54-13ee7d85b1f5",
+    "name": "Apollon Smyrnis M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "611c1c6e-cae2-45a0-8ede-5fe05cea1dcd",
+    "name": "Askartza B",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "df31d786-5a4d-4445-870a-980e5fdd013e",
+    "name": "Askartza F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "381d8b54-c70d-4217-8f45-b4525c43e1ba",
+    "name": "Austràlia F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "830a5622-6ffa-4f0a-bfef-b84559b703a1",
+    "name": "Buducnost",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "b151afbf-80ff-419f-b420-917a9c324e38",
+    "name": "BVSC",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "def1a413-8574-482e-8c29-a655ab039bde",
+    "name": "BVSC ",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "4e210457-72f5-49a3-b640-fd41c077c01c",
+    "name": "BVSC F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "0bd4dc93-34ad-4bd1-a30c-07548ea02ee0",
+    "name": "C. Las Encinas De Boadilla M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Boadilla M"
+    ]
+  },
+  {
+    "id": "6761064c-7764-4bc8-8ae8-df63dde64e01",
+    "name": "C. Waterpolo Dos Hermanas F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Dos hermanas F"
+    ]
+  },
+  {
+    "id": "160d6d04-c254-4396-b015-e8c896a1a53a",
+    "name": "C. Waterpolo Dos Hermanas M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Dos hermanas M"
+    ]
+  },
+  {
+    "id": "0811a570-8ae8-4160-a902-0eecdcf27cf8",
+    "name": "C. Waterpolo Elx F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Elx F"
+    ]
+  },
+  {
+    "id": "54a3a8ae-d21a-4d40-a702-d72150a05c64",
+    "name": "C. Waterpolo Elx M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Elx M"
+    ]
+  },
+  {
+    "id": "4384bad0-3d62-4fb2-ae4d-2d4ae08ad6b8",
+    "name": "C. Waterpolo Navarra M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Navarra M"
+    ]
+  },
+  {
+    "id": "e79590aa-19ec-4a4b-a7d2-06a220848325",
+    "name": "C. Waterpolo Pontevedra F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "ee5853e8-c8a4-4c92-8b62-97e9c0e8d167",
+    "name": "C. Waterpolo Sevilla F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Sevilla F"
+    ]
+  },
+  {
+    "id": "562cc600-f9fd-4303-9a03-34edab39da32",
+    "name": "C. Waterpolo Sevilla M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Sevilla M"
+    ]
+  },
+  {
+    "id": "a09001e5-6dfe-4cb9-b338-14fa14e9bfac",
+    "name": "C.C Ciudad de Alcorcon F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "a972a0b9-0b04-4bbb-a454-996a145e52b7",
+    "name": "C.C Ciudad de Alcorcon M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Alcorcon M"
+    ]
+  },
+  {
+    "id": "6348e0b0-db31-4db9-b12a-be2174faf392",
+    "name": "C.C. Napoli",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "c995f2c2-70ac-4c6a-9d08-8a8c5573f863",
+    "name": "C.D Ciudad de Rivas F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "2dd7c852-db40-43ca-b84a-c70ffafc2dd8",
+    "name": "C.D. Waterpolo Malaga F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Málaga F"
+    ]
+  },
+  {
+    "id": "6dc7b9ca-e9e5-4235-a909-c1e9813746b2",
+    "name": "C.D. Waterpolo Malaga M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Málaga M"
+    ]
+  },
+  {
+    "id": "737d2405-54bc-4f64-8cf8-51d80d5fa142",
+    "name": "C.D. Waterpolo Turia F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Turia F"
+    ]
+  },
+  {
+    "id": "3cffab82-2803-49e4-9fa1-f1c46af54d62",
+    "name": "C.D. Waterpolo Turia M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Turia M"
+    ]
+  },
+  {
+    "id": "0a1f894b-c928-4e4c-bbd4-87af0a3acc75",
+    "name": "C.E. Mediterrani F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Mediterrani F"
+    ]
+  },
+  {
+    "id": "8b904166-5ab3-400a-8875-bcfd86c7af35",
+    "name": "C.E. Mediterrani M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Mediterrani M"
+    ]
+  },
+  {
+    "id": "25996701-66e5-401c-9c4f-9d5902be1964",
+    "name": "C.N Manresa M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Manresa M"
+    ]
+  },
+  {
+    "id": "58e39acd-e6f9-469b-818f-c2223e66326d",
+    "name": "C.N Montjuïc F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Montjuic F"
+    ]
+  },
+  {
+    "id": "d97b5b5a-c26c-4dfc-b085-5fad25b3afca",
+    "name": "C.N Montjuïc M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Montjuic M"
+    ]
+  },
+  {
+    "id": "295468a2-0388-4388-a271-8d245a14c826",
+    "name": "C.N Sant Andreu F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Sant Andreu F",
+      "C.N. Sant Andreu F"
+    ]
+  },
+  {
+    "id": "2d3b28e7-6da5-4b1e-947f-17f9ab0a7a9f",
+    "name": "C.N Sant Andreu M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Sant Andreu M",
+      "C.N Sant Andreu M ",
+      "C.N. Sant Andreu M"
+    ]
+  },
+  {
+    "id": "527ae0ff-d147-480d-81a2-a40a26e3056e",
+    "name": "C.N. Atlètic-Barceloneta F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "CNAB F",
+      "Barceloneta F"
+    ]
+  },
+  {
+    "id": "e040c65e-9eb1-440d-bf0f-7aa2eaf7cdc7",
+    "name": "C.N. Atlètic-Barceloneta M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "CNAB M",
+      "Barceloneta M"
+    ]
+  },
+  {
+    "id": "fb7c8bc1-ca35-4bbd-8d97-1848cd906410",
+    "name": "C.N. Badia M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "d56bb776-1c30-442b-a474-3d4fb3345b16",
+    "name": "C.N. Barcelona F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "CNB F"
+    ]
+  },
+  {
+    "id": "a2fe7b86-ebc7-4c62-9c76-139ea903f82f",
+    "name": "C.N. Barcelona M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "CNB M"
+    ]
+  },
+  {
+    "id": "ea8acf3a-572f-4a72-b27f-e171eae95bc9",
+    "name": "C.N. Boadilla F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Boadilla F"
+    ]
+  },
+  {
+    "id": "fb55d5ce-0c8b-4b35-84b6-902ef4620014",
+    "name": "C.N. Boadilla M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Boadilla M"
+    ]
+  },
+  {
+    "id": "d9332f07-7f47-465f-9209-aca1ad54908b",
+    "name": "C.N. Caballa M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Caballa M"
+    ]
+  },
+  {
+    "id": "8949f5b3-cd66-4c55-ac53-d880b70b1d5f",
+    "name": "C.N. Catalunya F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Catalunya F"
+    ]
+  },
+  {
+    "id": "6234938a-9a98-47e1-ad0d-5c7732c3fb9a",
+    "name": "C.N. Catalunya M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Catalunya M"
+    ]
+  },
+  {
+    "id": "16608d0d-c50a-41ad-9bc4-192046bbe16f",
+    "name": "C.N. Ciutat de Palma F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "8282b099-4c81-4fa3-8e83-c4b9e861cfcd",
+    "name": "C.N. Ciutat de Palma M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "ca6c4bd4-f9d0-4c50-950f-9260d56dafc1",
+    "name": "C.N. Cuatro Caminos F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Cuatro Caminos F"
+    ]
+  },
+  {
+    "id": "600c0d50-b761-40a1-9895-dcb1f34bea2b",
+    "name": "C.N. Echeyde B M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Echeyde B",
+      "Echeyde B M"
+    ]
+  },
+  {
+    "id": "36a6e1af-802d-4b88-b274-fbfa374a65b6",
+    "name": "C.N. Echeyde F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Echeyde F"
+    ]
+  },
+  {
+    "id": "af751f96-fb94-4465-8ce5-b5bd22abde98",
+    "name": "C.N. Echeyde M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Echeyde M"
+    ]
+  },
+  {
+    "id": "707e8d80-8dd7-409e-b314-cd648a44ce25",
+    "name": "C.N. Godella F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "1c4999bb-dcb4-4472-882f-bc380b72157c",
+    "name": "C.N. Godella M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "7b1b7c20-3ce7-4ecb-952f-dc51203d9ead",
+    "name": "C.N. Granollers F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Granollers F"
+    ]
+  },
+  {
+    "id": "0849b04d-9777-4cf3-a17d-123470e1fa06",
+    "name": "C.N. Granollers M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Granollers M"
+    ]
+  },
+  {
+    "id": "c6d44f75-5d07-48f0-94f7-d543bb76d0d1",
+    "name": "C.N. Helios M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Helios M"
+    ]
+  },
+  {
+    "id": "08b23125-e809-4e32-90a2-d8ff0f102294",
+    "name": "C.N. Las Palmas M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "0def2357-90dd-4e50-ac55-db40d91782b7",
+    "name": "C.N. Marseille M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "52a65cf2-4edd-422e-b4c0-00885a255d68",
+    "name": "C.N. Mataró F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "14da4e2e-72ad-46b0-a163-a398b27a12ff",
+    "name": "C.N. Mataró M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "2a684564-12f0-4d83-89c4-77593e782808",
+    "name": "C.N. Mataró Ma",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "8b962bce-254a-4a2c-8130-5aa482a37093",
+    "name": "C.N. Metropole M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "6dc0a2f8-2d2b-462d-b29e-746614eea4a3",
+    "name": "C.N. Molins de Rei F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "60364012-9ec4-4d98-b44c-1f2d7ca7bbb3",
+    "name": "C.N. Molins de Rei M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "a8318e7e-9f34-4e23-807d-da1a6aeba3fa",
+    "name": "C.N. Poble Nou F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "9412a44c-0f5d-4f54-afe3-be5c560461e0",
+    "name": "C.N. Poble Nou M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "859cb29c-c252-4a93-8bc9-e3f549dbb31d",
+    "name": "C.N. Premià M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "9496c151-4e03-4e2a-adcb-69307463a81d",
+    "name": "C.N. Rubí F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "10d8dd3a-d822-493c-8809-9943c3730093",
+    "name": "C.N. Rubí M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "b08659c5-66fe-4201-9645-039f7e04ef01",
+    "name": "C.N. Sabadell F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "6a744912-0fcf-493e-ba42-16cc7204affc",
+    "name": "C.N. Sabadell M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "72a6e461-d3c3-46e3-afbd-0e23c0a4f4f2",
+    "name": "C.N. Sant Feliu F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "94ec133e-d995-43f9-bc93-11102d0ba60d",
+    "name": "C.N. Sant Feliu M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "8a272709-03de-4f38-9238-3eddc896034f",
+    "name": "C.N. Terrassa F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Terrassa F"
+    ]
+  },
+  {
+    "id": "11b89adb-d43e-4a2d-a380-3dfb53fe8daf",
+    "name": "C.N. Terrassa M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "93733c3d-bcb2-4c99-82fd-7533200c6725",
+    "name": "C.N. Tres Cantos M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "a0f17412-4c42-4990-aed3-cbc6b5547331",
+    "name": "C.N. Vallirana F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "9f75392a-6174-431b-8816-9f8e940a0122",
+    "name": "C.N. Vallirana M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "2656351b-1024-4821-b8ac-61f795aea5fb",
+    "name": "Ciutat de Palma M",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "629b949e-5382-4d26-94e8-e36f678974bb",
+    "name": "Claret Askartza M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "055aa048-5954-4fec-97c1-604c17155837",
+    "name": "CN Barcelona",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "47a35bab-a8d1-464f-9fbd-d8cd03ee669c",
+    "name": "CN Ciudad de Alcorcón",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "778469aa-3016-44c5-b9e0-fab86e8f822b",
+    "name": "CN Cuatro Caminos",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "a5814e1e-840b-4bc8-be6e-2f9f5e3bc9a5",
+    "name": "CN Las Palmas",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "f0049c6b-590d-44e5-bf8b-4a7eb6cdfccd",
+    "name": "CN Metropole",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "3ddff45e-3e71-4e39-a8eb-001fc052e009",
+    "name": "Croacia",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "55fd57cf-729e-4e13-9377-21b60d087e05",
+    "name": "Croacia F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Croatia F"
+    ]
+  },
+  {
+    "id": "67e2def7-f438-443a-8117-4c397bb75b25",
+    "name": "CS Plebiscito Padova F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "eab1a057-ed8f-4d71-bc8c-fc6ce255038f",
+    "name": "CSA Steaua Bucarest M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "bae55f2f-d580-4fd8-b532-9e6ac8380c4a",
+    "name": "CW Pontevedra",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "7ad0b93e-1142-482f-abab-6120edfbd69f",
+    "name": "CW Sant Adrià",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "4ffacc7d-d85d-4db3-bd86-35208ad5cd95",
+    "name": "D.N Portugalete M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "0400b200-6e8c-4bf4-b5ff-fc2f7021fe1a",
+    "name": "De Akker Bolonia",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "2a88a7cd-e28b-4927-90fb-a5ab93cc0299",
+    "name": "Dinamarca/Islandia",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "c89edd83-90cd-44c7-9ff9-46625906aa7a",
+    "name": "Donk F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "b58c61a2-87fc-4f30-b6aa-5f3ebb006a25",
+    "name": "Donosti ",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "08cee729-617b-4d85-9d7c-efc96708d426",
+    "name": "Dubrovnik",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "bed6aba7-206d-4678-a326-6426dd1bed31",
+    "name": "Dunaujvaros F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "3b708df8-a7dc-4db5-832a-5b5b6eb3be9d",
+    "name": "E. Piraeus F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "0853f02d-229b-442d-bd62-54135289e7e9",
+    "name": "E. Waterpolo Zaragoza F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "e5d8c228-56c7-4bf1-91fc-3d7f27c32c0a",
+    "name": "EE.UU.",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "a685ae7e-9cf2-4a35-a9ab-7238d4abc6ae",
+    "name": "EE.UU. F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "79d4e8e5-a94b-4f97-a9a5-da12e652b715",
+    "name": "Eger F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "c6945a8e-1cc8-4945-a419-5d1781e97f8f",
+    "name": "Ekipe Orizzonte F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "d316ea67-f81a-4245-96e4-bc6d6471f815",
+    "name": "Elx Humans",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "83a3d584-0b9c-4267-9b53-a0ceffdac8e5",
+    "name": "ESLOVAQUIA",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "2eb3a965-6687-4f1e-adf3-87a853ac5c0d",
+    "name": "ESPAÑA",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Spain"
+    ]
+  },
+  {
+    "id": "caab42ad-275e-42c7-898f-1c1cc39a2d75",
+    "name": "España F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Spain F"
+    ]
+  },
+  {
+    "id": "3fc61c27-877f-46fb-a34a-a43cda8d8c23",
+    "name": "Estrella Roja",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "7159d85d-c493-442f-a503-ec0f94b79773",
+    "name": "Ethnikos",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "6c09cfef-daf2-4be9-9ffe-0dba7c8f1df3",
+    "name": "Ferencvarosi",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "c8533762-6c64-4c3c-9fdb-c1991649a097",
+    "name": "Ferencvárosi T.C. F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "f05f3eae-97a4-4f18-a46c-b5d637f710f8",
+    "name": "Ferencvárosi T.C. M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "1280b0d2-8e18-4192-a40c-0ad1ae0388a7",
+    "name": "Francia",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "FRANCIA",
+      "France"
+    ]
+  },
+  {
+    "id": "407a8973-7f1b-4b41-93cc-6f85b785fa5b",
+    "name": "Francia F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "France"
+    ]
+  },
+  {
+    "id": "bacb18e6-d0f8-4555-b7c3-d13eb27d1378",
+    "name": "GEORGIA",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "27757140-59d9-4be2-afa5-86088f20ef75",
+    "name": "Gran Bretaña F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "United Kingdom"
+    ]
+  },
+  {
+    "id": "459711bc-55e8-404a-ad15-d62ae1175e4a",
+    "name": "Grecia",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Greece"
+    ]
+  },
+  {
+    "id": "d47cf0f0-173c-4cb7-9385-091fc5852e7c",
+    "name": "Grecia F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Greece F"
+    ]
+  },
+  {
+    "id": "f6d9530c-e4c7-4d66-aa44-3f3ad6984bd5",
+    "name": "Hannover",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "3e4602e1-8ba5-469e-9544-8bec19555a11",
+    "name": "Holanda F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Netherlands F"
+    ]
+  },
+  {
+    "id": "492d7aa2-1df0-4ffe-9482-42c986e6df84",
+    "name": "Honved SE",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "7b9d5005-3b43-4922-bb64-a4c549a5da1f",
+    "name": "Hungria",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "HUNGRIA"
+    ]
+  },
+  {
+    "id": "5367e659-aa07-40c6-913d-3099a9792a95",
+    "name": "Hungria F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Hungary"
+    ]
+  },
+  {
+    "id": "0f73e236-a4ee-45dc-a208-1aedbf7ae3e1",
+    "name": "ISRAEL",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "563753d8-9c01-4212-ad9f-0c63de8834b9",
+    "name": "ITALIA",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Italy"
+    ]
+  },
+  {
+    "id": "c865b439-0dc7-4155-bf2b-9a66f305cb64",
+    "name": "Italia F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Italy F"
+    ]
+  },
+  {
+    "id": "6c6dba88-d826-4b2e-b185-0ef566f91769",
+    "name": "Jadran HN",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Jadran NH"
+    ]
+  },
+  {
+    "id": "a9efcbfe-27cf-437f-9ad5-08fe6fa134a5",
+    "name": "Jadran ST",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "3ab82a11-c5cd-4717-b660-7ea45a2b873c",
+    "name": "Japó F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "fe94c98b-0320-4045-ba22-83e081a426a8",
+    "name": "Jug Dubrovnik",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "12d621bc-77b1-4ee6-bca0-c5570cb7b831",
+    "name": "KVK Radnički Kragujevac M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "1bda6592-23d4-4734-8673-61fb7799b36f",
+    "name": "Larraina",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "0b07b980-d43b-45ce-96fc-3fbbbe2fc2a5",
+    "name": "Leioa  F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "2df32e52-671f-45a6-a0b3-adafb3095ca5",
+    "name": "Leioa Waterpolo F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Leioa F"
+    ]
+  },
+  {
+    "id": "f5c8463c-edb3-46f5-a6f9-b824c35c68b7",
+    "name": "Lille F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "406f3488-7d0a-44c7-b67b-d04a16717be3",
+    "name": "Marsella",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "173cb71c-57b0-490d-8cb3-8447e7264988",
+    "name": "Metropole",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "c90f9e3c-eed3-495c-a774-d83deae0659b",
+    "name": "Mladost",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "76c4365a-86cc-4485-8f42-011f09a6b78f",
+    "name": "MONTENEGRO",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "b7f5844a-24b0-4c91-a95d-920c13334a86",
+    "name": "Nancy F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "b070882b-05bb-4241-9e83-57338d5ae9f3",
+    "name": "Nautica Portugalete",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "f6d98018-05dc-43e4-ba12-5575087ae7ea",
+    "name": "Nautica Portugalete B",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "f1a4975c-5e93-4c86-9f26-6267b976f9cc",
+    "name": "Navarra B",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "a8f1c050-5b07-438d-9c8f-9d3404ea325a",
+    "name": "Olimpic Roma",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "2da2d57e-e4a9-463f-a8f6-b97073e1acfa",
+    "name": "Olympiacos F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "acbaa430-c083-4dd2-a52b-461fcd80f85c",
+    "name": "Olympiacos M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "75c57d10-05c0-4e30-ace9-42393925383f",
+    "name": "Oradea",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "68866036-4bae-4812-b1ca-231e2d8e4b16",
+    "name": "Oradea M",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "58dd9e37-3d60-4542-8342-fc4e0db53636",
+    "name": "Orizzonte Catania F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "8d617256-4a14-4700-9929-29960b237367",
+    "name": "Ortigia",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "e768a19a-53b3-4d87-b0ce-c313eb1c2331",
+    "name": "Paises Bajos",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "PAISES BAJOS"
+    ]
+  },
+  {
+    "id": "a58bc9b2-c19c-4ba3-9c52-3e1b9432bbaa",
+    "name": "Paises Bajos F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Netherlands F"
+    ]
+  },
+  {
+    "id": "4f060066-4d7d-4ec7-93ea-2326cf59ac76",
+    "name": "Panathinaikos Waterpolo C. M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "3eb1b9f8-10f6-45b3-8391-0afbc35adb1c",
+    "name": "Panionios Waterpolo C. F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "36f0cb41-2e68-453b-8cd6-bfc26a75f9b1",
+    "name": "Panionios Waterpolo C. M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "85162f36-01c9-4dba-933d-8a36f1056de5",
+    "name": "Partizan",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "5aad6e2e-7440-46fb-827b-3ee5871363b1",
+    "name": "Polar Bears F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "653b75c2-e8c5-40f5-9656-71776e9ef918",
+    "name": "Portugal F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "20d298c6-91cd-4a6e-b7d5-8bc0d1001827",
+    "name": "Posillipo",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "b120b82b-8de6-4493-aec3-b0dd2d03a1f7",
+    "name": "Pozuelo",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "913fc350-3211-4b71-9b92-08159c2bff22",
+    "name": "Primorac",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "616b9fcc-b7c2-4c5a-892d-ff018c914d5e",
+    "name": "Primorac Kotor",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "f338c9e2-3894-426e-9295-02d89f61296c",
+    "name": "Pro Recco Waterpolo",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "33d42580-b938-4d20-85e6-157194607e47",
+    "name": "Radnicki",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "509a1626-f920-4f8e-8026-da28b647a0dd",
+    "name": "Rapallo F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "90c08a3f-2f87-474d-bc21-24573a25bf68",
+    "name": "Rari Nantes Savona M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "1bfef3b2-7039-49b2-957f-bbe6d98585c8",
+    "name": "Real Canoe N.C. 2 M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Real Canoe 2"
+    ]
+  },
+  {
+    "id": "23547148-5526-4570-bf9e-08eb34fe9e81",
+    "name": "Real Canoe N.C. F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Real Canoe F"
+    ]
+  },
+  {
+    "id": "c289d48e-f1ff-4b1a-b2a5-a86016ec3beb",
+    "name": "Real Canoe N.C. M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Real Canoe M"
+    ]
+  },
+  {
+    "id": "d66aca91-37f5-4f2b-b941-22dcd4d2c81c",
+    "name": "Roma",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "98184a0a-d7d8-45d1-b7b4-4afbd7f6a089",
+    "name": "Roma ",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "4dffad9d-2ba3-4c22-8eee-11846938e597",
+    "name": "Roma F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "59f3372f-9481-48b4-b227-87ba82c16631",
+    "name": "Roma Vis Nova",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "aa78c2a7-461b-4e9d-aaf7-77d27b2e5f6c",
+    "name": "RUMANIA",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "56eea90e-79a2-4270-9e2f-929fe6341442",
+    "name": "Rumania F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "14576518-5e01-4ce6-b99d-d5c6bdf3d56d",
+    "name": "Sabac",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "197db173-2f82-40a5-8691-c79761bdbacb",
+    "name": "SAN Giljan ASC",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "e37e4e68-2baf-40f6-b79f-aea0bdc5fa14",
+    "name": "Sant Feliu",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "d881c83a-c066-4c3d-87bc-368da38a0765",
+    "name": "Savona M",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "a44f8db8-7638-412d-b7b0-014bf4753f7d",
+    "name": "SC Quinto M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "dc8943a2-8de2-473c-a4de-a2aa7af212e3",
+    "name": "Serbia",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "SERBIA",
+      "SERBIA "
+    ]
+  },
+  {
+    "id": "825a2e98-cddd-405c-b641-b09cbdc68a2a",
+    "name": "slavia Praga",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "88fdbdd7-eb25-4014-a9fe-b0a0ea70525e",
+    "name": "strakonice",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "2d5ac7b7-7add-45aa-b847-4db161299280",
+    "name": "Szolnoki",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "49cded94-ca92-49cd-b44e-1233bdc493c4",
+    "name": "Telimar Pallanuoto M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "ddcd02b0-d444-4c62-9cc1-b42455dd8bc0",
+    "name": "Terrassa ",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "7d91a792-0e6e-40b5-9bf9-60fe6b48ddfe",
+    "name": "Trieste",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "5d6fc33c-aa52-46f9-87e7-ecfe72220315",
+    "name": "Trieste F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "612ceb28-73b5-4fcd-937c-f3207599dc0e",
+    "name": "U.E Horta F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Horta F"
+    ]
+  },
+  {
+    "id": "f00557fc-0416-428c-b9a5-9d824a234627",
+    "name": "U.E Horta M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Horta M"
+    ]
+  },
+  {
+    "id": "9b4333b0-2057-4421-95d5-116884005d6f",
+    "name": "U.E. Horta",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "9e10ff9e-90b2-471e-a14e-13c4b5660b5b",
+    "name": "Unión Waterpolo Tenerife M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Tenerife M",
+      "U.W. Tenerife M"
+    ]
+  },
+  {
+    "id": "d854eb89-7d09-4fc1-9a8a-e422c935a5e2",
+    "name": "UPNA",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": [
+      "Navarra F"
+    ]
+  },
+  {
+    "id": "f1f8b11e-4d3d-4193-a656-deaf679c147d",
+    "name": "UPNA F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Navarra F"
+    ]
+  },
+  {
+    "id": "4b91294e-78f8-4a4d-9877-5eaf0825a938",
+    "name": "URBAT IKE",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Urbat M"
+    ]
+  },
+  {
+    "id": "5504c3b3-b716-427e-ab50-5a764662256a",
+    "name": "UVSE F",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "6d30772d-7993-4b60-8e7f-b34d201a15df",
+    "name": "Vasas",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "7d28f036-30b0-46f2-a31b-cff374eeb992",
+    "name": "Vk Novi Beograd",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "f33c3db9-6767-4f8e-a4c2-97ec8e7ea696",
+    "name": "Vouliagmeni ",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "73878dcc-2781-4d5e-8f4c-44917cfdc135",
+    "name": "Vouliagmeni F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  },
+  {
+    "id": "71e3d26a-65a4-4509-adaf-870c4ae77207",
+    "name": "W.P.C. Dinamo Tblisi M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": []
+  },
+  {
+    "id": "c730f68d-258a-4958-ba8b-ef68781e6dc0",
+    "name": "Waterpolo Brains F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Colegio Brains F"
+    ]
+  },
+  {
+    "id": "1328b343-c49c-4071-8cad-062a898571db",
+    "name": "Waterpolo Brains M",
+    "sport": "waterpolo",
+    "gender": "m",
+    "alias": [
+      "Colegio Brains M"
+    ]
+  },
+  {
+    "id": "7a92d3e1-3c46-4e4f-92c3-0e95581d75c0",
+    "name": "Waterpolo Ciudad de Rivas F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Rivas F"
+    ]
+  },
+  {
+    "id": "a2672287-a360-472a-a976-1b5f92d241fd",
+    "name": "Waterpolo Iruña 9802 F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": [
+      "Iruña F"
+    ]
+  },
+  {
+    "id": "3380bd64-1242-476b-a905-202e6d85b271",
+    "name": "Waterpolo Málaga",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "62519330-5cfe-4a68-b827-0d08c28b4fae",
+    "name": "Waterpolo Sevilla",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "232b99f9-99f3-4d16-a4ac-d8fd0b5971d7",
+    "name": "Waterpolo Turia",
+    "sport": "waterpolo",
+    "gender": null,
+    "alias": []
+  },
+  {
+    "id": "62592716-b402-4362-a92c-fed2aaee85f2",
+    "name": "ZV de ZAAN F",
+    "sport": "waterpolo",
+    "gender": "f",
+    "alias": []
+  }
+]

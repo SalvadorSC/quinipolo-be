@@ -23,7 +23,6 @@ const { matchTeamNameSync, fetchTeamMap } = require("./teamMatcher");
 const { normalizeTeamName } = require("./teamNames");
 
 const USE_RFEN_RESULTS = process.env.SCRAPER_USE_RFEN === "true";
-const WOMEN_LEAGUES = new Set(["DHF", "PDF", "CLF"]);
 
 async function fetchAndSelectMatches() {
   const { start, end } = getWindowBounds();
@@ -363,23 +362,8 @@ function buildMatchId(match, index) {
   return `${match.leagueId}-${match.homeTeam}-${match.awayTeam}-${match.startTime}-${index}`;
 }
 
-function teamQueryName(name, match) {
-  if (!name) return name;
-  if (
-    match.source === "leverade" &&
-    WOMEN_LEAGUES.has(match.leagueId) &&
-    !/\sF$/i.test(name)
-  ) {
-    return `${name} F`;
-  }
-  return name;
-}
-
 function matchStoredName(name, match, isChampionsLeague) {
-  const query = teamQueryName(name, match);
-  const matched = matchTeamNameSync(query, isChampionsLeague);
-  if (query !== name && matched === query) return name;
-  return matched;
+  return matchTeamNameSync(name, isChampionsLeague, match.leagueId);
 }
 
 function buildPresetSelections(matches, quotas) {
@@ -512,5 +496,4 @@ module.exports = {
   buildPresetSelections,
   warnEmptyLeagues,
   isSameFixture,
-  teamQueryName,
 };

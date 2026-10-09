@@ -16,7 +16,6 @@ const {
   buildPresetSelections,
   warnEmptyLeagues,
   isSameFixture,
-  teamQueryName,
 } = require("../services/scraper/scraperService");
 const { maxClfFill } = require("../services/scraper/config");
 
@@ -132,21 +131,6 @@ test("sponsor prefixes use the club name and unrelated clubs are ignored", () =>
       `${team} -> ${club}`
     );
   });
-});
-
-test("women's Leverade names are queried with an F suffix", () => {
-  assert.equal(
-    teamQueryName("C.N. ECHEYDE", { source: "leverade", leagueId: "DHF" }),
-    "C.N. ECHEYDE F"
-  );
-  assert.equal(
-    teamQueryName("C.N. ECHEYDE F", { source: "leverade", leagueId: "PDF" }),
-    "C.N. ECHEYDE F"
-  );
-  assert.equal(
-    teamQueryName("Barceloneta", { source: "flashscore", leagueId: "DHF" }),
-    "Barceloneta"
-  );
 });
 
 function flash(leagueId, home, away, startTime) {

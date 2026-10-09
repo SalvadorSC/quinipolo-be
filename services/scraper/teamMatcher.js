@@ -3,7 +3,6 @@
 const { supabase } = require("../../services/supabaseClient");
 
 const TOP_CANDIDATES = 5;
-const FEMALE_FLAG = /\bF$/i;
 const PREFIX_PAIRS = new Set(["cn", "cd", "ce"]);
 const PREFIX_SINGLE = new Set(["cn", "cd", "ce", "club", "cnb"]);
 
@@ -47,25 +46,7 @@ async function fetchTeamMap() {
       throw error;
     }
 
-    teamMapCache = teams.map((team) => {
-      // Get aliases from database
-      const dbAliases = Array.isArray(team.alias) ? team.alias : [];
-
-      // Generate aliases from team name (like buildTeamMap.mjs does)
-      const generatedAliases = buildAliases(team.name);
-
-      // Combine and deduplicate
-      const allAliases = new Set([...dbAliases, ...generatedAliases]);
-      const aliases = Array.from(allAliases);
-
-      return {
-        id: String(team.id),
-        name: String(team.name),
-        sport: String(team.sport),
-        gender: team.gender,
-        aliases: aliases,
-      };
-    });
+    teamMapCache = buildTeamMapRecords(teams);
 
     // Build alias index (like the original ALIAS_INDEX)
     aliasIndexCache = buildAliasIndex(teamMapCache);
@@ -168,14 +149,130 @@ function stripClubPrefixes(value) {
   return tokens.filter((token) => token !== "waterpolo").join(" ");
 }
 
+const LEAGUE_GENDER = {
+  DHM: "m",
+  DHF: "f",
+  PDM: "m",
+  PDF: "f",
+  SDM: "m",
+  CL: "m",
+  CLF: "f",
+};
+
+const SMALL_WORDS = new Set(["de", "del", "y"]);
+
+function buildTeamMapRecords(teams) {
+  return teams.map((team) => {
+    const dbAliases = Array.isArray(team.alias)
+      ? team.alias
+      : Array.isArray(team.aliases)
+        ? team.aliases
+        : [];
+    const aliases = Array.from(new Set([...dbAliases, ...buildAliases(team.name)]));
+    return {
+      id: String(team.id),
+      name: String(team.name),
+      sport: String(team.sport || "waterpolo"),
+      gender: team.gender || null,
+      aliases,
+    };
+  });
+}
+
+function installTeamMap(records) {
+  teamMapUnavailable = false;
+  teamMapCache = buildTeamMapRecords(records);
+  aliasIndexCache = buildAliasIndex(teamMapCache);
+  return teamMapCache;
+}
+
+function resetTeamMap() {
+  teamMapCache = null;
+  aliasIndexCache = null;
+  teamMapUnavailable = false;
+}
+
 function detectGender(value) {
-  const trimmed = value.trim();
-  const parts = trimmed.split(/\s+/);
+  const token = detectGenderToken(value);
+  return token ? token.toUpperCase() : undefined;
+}
+
+function detectGenderToken(value) {
+  if (!value) return undefined;
+  const parts = String(value).trim().split(/\s+/);
   const last = parts[parts.length - 1];
-  if (last && last.length === 1 && FEMALE_FLAG.test(last)) {
-    return "F";
-  }
+  if (last && /^f$/i.test(last)) return "f";
+  if (last && /^m$/i.test(last)) return "m";
   return undefined;
+}
+
+function expectedGender(name, leagueId) {
+  if (leagueId && LEAGUE_GENDER[leagueId]) return LEAGUE_GENDER[leagueId];
+  return detectGenderToken(name);
+}
+
+function reserveKind(value) {
+  if (!value) return null;
+  const tokens = normalize(value).split(" ").filter(Boolean);
+  if (tokens.includes("2") || tokens.includes("ii")) return "2";
+  if (tokens.includes("b")) return "b";
+  return null;
+}
+
+function entryReserveKind(entry) {
+  const kinds = [reserveKind(entry.name)];
+  for (const alias of entry.aliases || []) kinds.push(reserveKind(alias));
+  if (kinds.includes("2")) return "2";
+  if (kinds.includes("b")) return "b";
+  return null;
+}
+
+function teamGender(entry) {
+  if (entry.gender === "m" || entry.gender === "f") return entry.gender;
+  return detectGenderToken(entry.name);
+}
+
+function baseKeyFromNormalized(normalized) {
+  return normalized
+    .replace(/\s+[mf]$/, "")
+    .replace(/\s+(?:b|2|ii)(?=\s|$)/g, "")
+    .replace(/^(?:b|2|ii)\s+/, "")
+    .split(" ")
+    .filter((token) => token.length > 1)
+    .join(" ")
+    .trim();
+}
+
+function tokensCover(shorter, longer) {
+  if (!shorter || !longer || shorter === longer) return false;
+  const shortTokens = shorter.split(" ").filter(Boolean);
+  const longTokens = new Set(longer.split(" ").filter(Boolean));
+  if (!shortTokens.length) return false;
+  if (!shortTokens.every((token) => longTokens.has(token))) return false;
+  return shortTokens.some((token) => token.length >= 5);
+}
+
+function titleCaseTeamName(name) {
+  if (!name) return name;
+  return String(name)
+    .trim()
+    .split(/\s+/)
+    .map((token, index) => formatTeamToken(token, index === 0))
+    .join(" ");
+}
+
+function formatTeamToken(token, isFirst) {
+  if (token.includes(".")) {
+    const pieces = token.split(".");
+    const cased = pieces
+      .map((piece) => (piece ? piece[0].toLocaleUpperCase("es") : ""))
+      .join(".");
+    return token.endsWith(".") ? `${cased}.`.replace(/\.\.$/, ".") : cased;
+  }
+  if (/^[A-Za-z]$/.test(token)) return token.toLocaleUpperCase("es");
+  const lower = token.toLocaleLowerCase("es");
+  if (!isFirst && SMALL_WORDS.has(lower)) return lower;
+  return lower.charAt(0).toLocaleUpperCase("es") + lower.slice(1);
 }
 
 function similarity(a, b) {
@@ -211,96 +308,138 @@ function levenshtein(a, b) {
   return matrix[rows - 1][cols - 1];
 }
 
-function bestAliasConfidence(entry, normalizedInput) {
-  const aliasSet = new Set();
-  aliasSet.add(normalize(entry.name));
-  for (const alias of entry.aliases ?? []) {
-    if (alias) {
-      aliasSet.add(normalize(alias));
-    }
+function scoreEntry(entry, normalizedInput, inputBase) {
+  const forms = new Set([normalize(entry.name)]);
+  for (const alias of entry.aliases || []) {
+    if (alias) forms.add(normalize(alias));
   }
   let best = 0;
-  for (const alias of aliasSet) {
-    best = Math.max(best, similarity(normalizedInput, alias));
-    if (best === 1) {
-      break;
+  for (const form of forms) {
+    best = Math.max(best, similarity(normalizedInput, form));
+    const base = baseKeyFromNormalized(form);
+    if (inputBase && base && inputBase === base) {
+      best = Math.max(best, 0.98);
+    } else if (
+      inputBase &&
+      base &&
+      (tokensCover(inputBase, base) || tokensCover(base, inputBase))
+    ) {
+      const shared = inputBase.split(" ").filter((token) => base.split(" ").includes(token));
+      const coverage =
+        shared.join(" ").length /
+        Math.max(inputBase.length, base.length, 1);
+      best = Math.max(best, 0.9 + 0.05 * coverage);
     }
   }
   return best;
 }
 
-function buildCandidates(normalizedInput, inputGender, teamMap) {
-  return teamMap
-    .map((entry) => {
-      const candidateGender = detectGender(entry.name);
-      if (
-        (inputGender === "F" && candidateGender !== "F") ||
-        (candidateGender === "F" && inputGender !== "F")
-      ) {
-        return undefined;
-      }
-      const confidence = bestAliasConfidence(entry, normalizedInput);
-      if (confidence === 0) {
-        return undefined;
-      }
-      return {
-        id: entry.id,
-        name: entry.name,
-        confidence,
-      };
-    })
-    .filter((candidate) => Boolean(candidate && candidate.confidence > 0))
-    .sort((a, b) => b.confidence - a.confidence);
+// "waterpolo" is stripped before similarity, so two clubs that share a
+// place name ("Ciudad de Rivas") tie. Count the original tokens, including
+// "waterpolo", and keep the name that still contains more of them.
+function specificityScore(input, entry) {
+  const inputTokens = new Set(rawTokens(input));
+  const forms = [entry.name, ...(entry.aliases || [])];
+  let best = 0;
+  for (const form of forms) {
+    const shared = rawTokens(form).filter((token) => inputTokens.has(token));
+    const score = shared.reduce((sum, token) => sum + token.length, 0);
+    if (score > best) best = score;
+  }
+  return best;
 }
 
-function getMatchDiagnostics(input) {
+function rawTokens(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .split(" ")
+    .filter((token) => token.length > 1 && token !== "club");
+}
+
+function rankCandidates(input, leagueId) {
+  const normalizedInput = normalize(input);
+  const inputBase = baseKeyFromNormalized(normalizedInput);
+  const gender = expectedGender(input, leagueId);
+  const inputReserve = reserveKind(input);
+
+  let ranked = teamMapCache
+    .map((entry) => ({
+      id: entry.id,
+      name: entry.name,
+      confidence: scoreEntry(entry, normalizedInput, inputBase),
+      specificity: specificityScore(input, entry),
+      reserve: entryReserveKind(entry),
+      genderRank: gender && teamGender(entry) === gender ? (entry.gender === gender ? 2 : 1) : 0,
+      entry,
+    }))
+    .filter((candidate) => candidate.confidence > 0);
+
+  if (inputReserve) {
+    ranked = ranked.filter((candidate) => candidate.reserve === inputReserve);
+  } else {
+    ranked = ranked.filter((candidate) => !candidate.reserve);
+  }
+
+  ranked.sort(
+    (a, b) =>
+      b.confidence - a.confidence ||
+      b.genderRank - a.genderRank ||
+      b.specificity - a.specificity
+  );
+
+  if (gender) {
+    const gendered = ranked.filter(
+      (candidate) => candidate.genderRank > 0 && candidate.confidence >= 0.9
+    );
+    if (gendered.length) {
+      gendered.sort(
+        (a, b) =>
+          b.genderRank - a.genderRank ||
+          b.confidence - a.confidence ||
+          b.specificity - a.specificity
+      );
+      const rest = ranked.filter((candidate) => !gendered.includes(candidate));
+      ranked = [...gendered, ...rest];
+    }
+  }
+
+  if (!inputReserve && leagueId === "SDM" && ranked.length) {
+    const lead = ranked[0];
+    const leadBase = baseKeyFromNormalized(normalize(lead.name));
+    const second = teamMapCache.find((entry) => {
+      if (entryReserveKind(entry) !== "2") return false;
+      if (baseKeyFromNormalized(normalize(entry.name)) !== leadBase) return false;
+      if (gender && teamGender(entry) && teamGender(entry) !== gender) return false;
+      return true;
+    });
+    if (second) {
+      const promoted = {
+        id: second.id,
+        name: second.name,
+        confidence: Math.max(lead.confidence, 0.98),
+        reserve: "2",
+        genderRank: gender && teamGender(second) === gender ? 2 : 0,
+      };
+      ranked = [promoted, ...ranked.filter((candidate) => candidate.id !== second.id)];
+    }
+  }
+
+  return ranked;
+}
+
+function getMatchDiagnostics(input, leagueId) {
   if (!input) return undefined;
+  if (!teamMapCache || !aliasIndexCache) return undefined;
 
-  const normalized = normalize(input);
-  const inputGender = detectGender(input);
-
-  // Get team map and alias index
-  const teamMap = teamMapCache;
-  const aliasIndex = aliasIndexCache;
-
-  if (!teamMap || !aliasIndex) {
-    return undefined;
-  }
-
-  // Try exact alias match first
-  const exactMatch = aliasIndex.get(normalized);
-  if (exactMatch) {
-    return {
-      best: {
-        id: exactMatch.id,
-        name: exactMatch.name,
-        confidence: 1,
-        suggestions: [],
-      },
-      candidates: [
-        {
-          id: exactMatch.id,
-          name: exactMatch.name,
-          confidence: 1,
-        },
-      ],
-    };
-  }
-
-  // Try fuzzy matching
-  const candidates = buildCandidates(normalized, inputGender, teamMap);
-  if (candidates.length === 0) {
-    return { candidates: [] };
-  }
-
-  const bestCandidate = candidates[0];
-  const rest = candidates.slice(1);
-  const bestResult = {
-    ...bestCandidate,
-    suggestions: rest.slice(0, TOP_CANDIDATES - 1),
-  };
+  const candidates = rankCandidates(input, leagueId);
+  if (!candidates.length) return { candidates: [] };
+  const [best, ...rest] = candidates;
   return {
-    best: bestResult,
+    best: { ...best, suggestions: rest.slice(0, TOP_CANDIDATES - 1) },
     candidates,
   };
 }
@@ -342,13 +481,13 @@ function getConfidenceThresholds(name, isChampionsLeague = false) {
  * @param {string} flashscoreName - The team name from Flashscore
  * @param {boolean} isChampionsLeague - Whether this is a Champions League match (default: false)
  */
-function matchTeamNameSync(flashscoreName, isChampionsLeague = false) {
+function matchTeamNameSync(flashscoreName, isChampionsLeague = false, leagueId) {
   if (!flashscoreName) {
     return flashscoreName;
   }
 
   if (teamMapUnavailable) {
-    return flashscoreName;
+    return titleCaseTeamName(flashscoreName);
   }
 
   if (!teamMapCache || !aliasIndexCache) {
@@ -357,19 +496,21 @@ function matchTeamNameSync(flashscoreName, isChampionsLeague = false) {
     );
   }
 
-  const diagnostics = getMatchDiagnostics(flashscoreName);
+  const diagnostics = getMatchDiagnostics(flashscoreName, leagueId);
   const result = diagnostics?.best;
+  const fallback = titleCaseTeamName(flashscoreName);
 
   if (!result) {
     console.warn(
       `No Supabase team candidates for "${flashscoreName}". Consider adding an alias.`
     );
-    return flashscoreName;
+    return fallback;
   }
 
   const thresholds = getConfidenceThresholds(flashscoreName, isChampionsLeague);
+  const structural = result.confidence >= 0.9;
 
-  if (result.confidence >= thresholds.confident) {
+  if (result.confidence >= thresholds.confident || structural) {
     return result.name;
   }
 
@@ -389,7 +530,7 @@ function matchTeamNameSync(flashscoreName, isChampionsLeague = false) {
       result.name
     } (${(result.confidence * 100).toFixed(1)}%)`
   );
-  return flashscoreName;
+  return fallback;
 }
 
 /**
@@ -423,4 +564,7 @@ module.exports = {
   matchTeamNameSync,
   getTeamNameById,
   fetchTeamMap,
+  installTeamMap,
+  resetTeamMap,
+  titleCaseTeamName,
 };
