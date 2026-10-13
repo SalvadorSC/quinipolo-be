@@ -1,4 +1,9 @@
 const { supabase } = require("../services/supabaseClient");
+const {
+  fetchAllEq,
+  fetchProfilesByIds,
+  selectInBatches,
+} = require("../services/batchedQuery");
 
 const updateLeaderboard = async (
   username,
@@ -115,57 +120,52 @@ const updateLeaderboard = async (
  *   ]
  * }
  */
+// Full league leaderboard with usernames. Throws if the profile lookup fails
+// so callers cannot turn a transport error into a board of "unknown" names.
+// A username is "unknown" only when that profile row is actually missing.
+async function loadParticipantsLeaderboard(leagueId) {
+  const rows = await fetchAllEq(supabase, {
+    table: "leaderboard",
+    columns:
+      "user_id, points, n_quinipolos_participated, full_correct_quinipolos",
+    column: "league_id",
+    value: leagueId,
+    order: [
+      { column: "points", ascending: false },
+      { column: "user_id", ascending: true },
+    ],
+  });
+  if (rows.length === 0) return [];
+
+  const profiles = await fetchProfilesByIds(
+    supabase,
+    rows.map((row) => row.user_id)
+  );
+  const usernames = new Map(
+    profiles.map((profile) => [profile.id, profile.username])
+  );
+  return rows.map((row) => ({
+    username: usernames.get(row.user_id) || "unknown",
+    points: row.points,
+    totalPoints: row.points, // for compatibility with FE
+    nQuinipolosParticipated: row.n_quinipolos_participated,
+    fullCorrectQuinipolos: row.full_correct_quinipolos,
+  }));
+}
+
 const getLeaderboardByLeagueId = async (req, res) => {
   const leagueId = req.params.leagueId;
   try {
-    // 1. Get leaderboard rows for this league
-    const { data: leaderboardRows, error: leaderboardError } = await supabase
-      .from("leaderboard")
-      .select(
-        "user_id, points, n_quinipolos_participated, full_correct_quinipolos"
-      )
-      .eq("league_id", leagueId)
-      .order("points", { ascending: false });
-
-    if (leaderboardError) {
-      return res.status(500).json({ error: leaderboardError.message });
-    }
-
-    if (!leaderboardRows || leaderboardRows.length === 0) {
-      return res.status(200).json({ leagueId, participantsLeaderboard: [] });
-    }
-
-    // 2. Get usernames for all user_ids
-    const userIds = leaderboardRows.map((row) => row.user_id);
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, username")
-      .in("id", userIds);
-
-    if (profilesError) {
-      return res.status(500).json({ error: profilesError.message });
-    }
-
-    const userMap = Object.fromEntries(
-      (profiles || []).map((p) => [p.id, p.username])
-    );
-
-    // 3. Map leaderboard rows to include username
-    const participantsLeaderboard = leaderboardRows.map((row) => ({
-      username: userMap[row.user_id] || "unknown",
-      points: row.points,
-      totalPoints: row.points, // for compatibility with FE
-      nQuinipolosParticipated: row.n_quinipolos_participated,
-      fullCorrectQuinipolos: row.full_correct_quinipolos,
-    }));
-
+    const participantsLeaderboard = await loadParticipantsLeaderboard(leagueId);
     return res.status(200).json({
       leagueId,
       participantsLeaderboard,
     });
   } catch (error) {
     console.error("Error fetching leaderboard:", error);
-    return res.status(500).json({ error: "Internal Server Error" });
+    return res.status(500).json({
+      error: error?.message || "Internal Server Error",
+    });
   }
 };
 
@@ -318,6 +318,7 @@ const createLeaderboard = async (leagueId) => {
 module.exports = {
   updateLeaderboard,
   getLeaderboardByLeagueId,
+  loadParticipantsLeaderboard,
   updateLeaderboardForEditedCorrection,
   createLeaderboard,
 };
@@ -334,18 +335,16 @@ const updateLeaderboardBatch = async (leagueId, userDeltas) => {
 
     const uniqueUserIds = Array.from(new Set(userDeltas.map((u) => u.user_id)));
 
-    // Fetch existing entries in one go
-    const { data: existingRows, error: existingError } = await supabase
-      .from("leaderboard")
-      .select(
-        "user_id, points, n_quinipolos_participated, full_correct_quinipolos"
-      )
-      .eq("league_id", leagueId)
-      .in("user_id", uniqueUserIds);
-
-    if (existingError) {
-      throw existingError;
-    }
+    // Existing rows, batched. One `.in(user_id)` of every answerer overflows
+    // the request URL on a large league and aborts the correction.
+    const existingRows = await selectInBatches(supabase, {
+      table: "leaderboard",
+      columns:
+        "user_id, points, n_quinipolos_participated, full_correct_quinipolos",
+      column: "user_id",
+      ids: uniqueUserIds,
+      refine: (query) => query.eq("league_id", leagueId),
+    });
 
     const existingByUserId = new Map(
       (existingRows || []).map((r) => [r.user_id, r])

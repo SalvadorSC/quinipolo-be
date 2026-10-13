@@ -2,6 +2,11 @@
 const Leaderboard = require("../models/Leaderboard");
 const User = require("../models/User");
 const { supabase } = require("../services/supabaseClient");
+const {
+  countEq,
+  fetchAllEq,
+  fetchProfilesByIds,
+} = require("../services/batchedQuery");
 const { GLOBAL_LEAGUE_ID } = require("../config");
 const {
   isLeagueFinished,
@@ -18,7 +23,34 @@ const getAllLeaguesData = async (req, res) => {
   }
 };
 
-// Helper to build enriched leagues list
+// Member rows for one league, with usernames. Profile query failures throw.
+// A single missing profile row is "unknown"; a failed lookup is not.
+async function loadLeagueParticipants(leagueId) {
+  const memberships = await fetchAllEq(supabase, {
+    table: "user_leagues",
+    columns: "user_id, role",
+    column: "league_id",
+    value: leagueId,
+  });
+  if (memberships.length === 0) return [];
+
+  const profiles = await fetchProfilesByIds(
+    supabase,
+    memberships.map((row) => row.user_id)
+  );
+  const usernames = new Map(
+    profiles.map((profile) => [profile.id, profile.username])
+  );
+  return memberships.map((membership) => ({
+    user_id: membership.user_id,
+    username: usernames.get(membership.user_id) || "unknown",
+    role: membership.role,
+  }));
+}
+
+// Helper to build enriched leagues list. The list does not include member
+// rows — only the count — so a 400-member league does not fan out into a
+// profiles `.in(id)` that the API gateway rejects.
 const buildAllLeaguesResponse = async () => {
   const { data: leagues, error: leaguesError } = await supabase
     .from("leagues")
@@ -27,30 +59,11 @@ const buildAllLeaguesResponse = async () => {
 
   const result = await Promise.all(
     leagues.map(async (league) => {
-      // Fetch user_leagues with roles
-      const { data: userLeagues } = await supabase
-        .from("user_leagues")
-        .select("user_id, role")
-        .eq("league_id", league.id);
-
-      let participants = [];
-      if (userLeagues && userLeagues.length > 0) {
-        const userIds = userLeagues.map((u) => u.user_id);
-        // Fetch usernames
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, username")
-          .in("id", userIds);
-
-        if (profiles) {
-          participants = userLeagues.map((ul) => ({
-            user_id: ul.user_id,
-            username:
-              profiles.find((p) => p.id === ul.user_id)?.username || "unknown",
-            role: ul.role,
-          }));
-        }
-      }
+      const participantsCount = await countEq(supabase, {
+        table: "user_leagues",
+        column: "league_id",
+        value: league.id,
+      });
 
       // Petitions from league_petitions table
       let participantPetitions = [];
@@ -82,8 +95,7 @@ const buildAllLeaguesResponse = async () => {
 
       return {
         ...league,
-        participants,
-        participantsCount: participants.length,
+        participantsCount,
         participantPetitions,
         moderatorPetitions,
       };
@@ -115,34 +127,17 @@ const getLeagueData = async (req, res) => {
 
     // FE will handle hiding special leagues like "Test" for non-moderators
 
-    // 2. Get user_ids and roles from user_leagues
-    const { data: userLeagues, error: userLeaguesError } = await supabase
-      .from("user_leagues")
-      .select("user_id, role")
-      .eq("league_id", leagueId);
-
-    if (userLeaguesError) {
-      return res.status(500).json({ error: userLeaguesError.message });
-    }
-    const userIds = userLeagues.map((u) => u.user_id);
-
-    let participants = [];
-    if (userIds.length > 0) {
-      // 3. Get usernames from profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, username")
-        .in("id", userIds);
-
-      if (profilesError) {
-        return res.status(500).json({ error: profilesError.message });
-      }
-      participants = userLeagues.map((ul) => ({
-        user_id: ul.user_id,
-        username:
-          profiles.find((p) => p.id === ul.user_id)?.username || "unknown",
-        role: ul.role,
-      }));
+    // 2. Members and usernames. An unbatched profiles `.in(id)` of all 400
+    // members is the prod 500 on GET /api/leagues/:id (35-byte body
+    // {"error":"TypeError: fetch failed"}). Batches stay under that URL limit.
+    let participants;
+    try {
+      participants = await loadLeagueParticipants(leagueId);
+    } catch (participantsError) {
+      console.error("Error loading league participants:", participantsError);
+      return res
+        .status(500)
+        .json({ error: participantsError.message || "Internal Server Error" });
     }
 
     // 4. Get moderator petitions and participant petitions from league_petitions table
@@ -755,26 +750,7 @@ const buildLeagueResponse = async (leagueId) => {
   if (leagueError || !league)
     throw leagueError || new Error("League not found");
 
-  const { data: userLeagues } = await supabase
-    .from("user_leagues")
-    .select("user_id, role")
-    .eq("league_id", leagueId);
-
-  const userIds = (userLeagues || []).map((u) => u.user_id);
-  let profiles = [];
-  if (userIds.length > 0) {
-    const { data: profilesData } = await supabase
-      .from("profiles")
-      .select("id, username")
-      .in("id", userIds);
-    profiles = profilesData || [];
-  }
-
-  const participants = (userLeagues || []).map((ul) => ({
-    user_id: ul.user_id,
-    username: profiles.find((p) => p.id === ul.user_id)?.username || "unknown",
-    role: ul.role,
-  }));
+  const participants = await loadLeagueParticipants(leagueId);
 
   // Fetch petitions from league_petitions table (align with getLeagueData)
   let participantPetitions = [];
