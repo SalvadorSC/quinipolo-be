@@ -5,8 +5,10 @@ const {
 const {
   updateLeaderboard,
   updateLeaderboardBatch,
+  loadParticipantsLeaderboard,
 } = require("./LeaderboardController");
 const { supabase } = require("../services/supabaseClient");
+const { fetchProfilesByIds } = require("../services/batchedQuery");
 const {
   computeAveragePoints,
 } = require("../services/stats/computeAveragePoints");
@@ -1064,14 +1066,11 @@ const processAndCorrectAnswers = async (
     };
   });
 
-  // Bulk fetch usernames
+  // Usernames for everyone who answered. Batched; a lookup error aborts
+  // before leaderboard writes instead of labeling those players "unknown".
   const userIds = Array.from(new Set(perAnswer.map((r) => r.user_id)));
-  const { data: profiles, error: profilesError } = await supabase
-    .from("profiles")
-    .select("id, username")
-    .in("id", userIds);
-  if (profilesError) throw profilesError;
-  const idToUsername = new Map((profiles || []).map((p) => [p.id, p.username]));
+  const profiles = await fetchProfilesByIds(supabase, userIds);
+  const idToUsername = new Map(profiles.map((p) => [p.id, p.username]));
 
   // Build leaderboard deltas for batch update
   const deltas = perAnswer.map((r) => ({
@@ -1167,6 +1166,26 @@ const processAndCorrectAnswers = async (
 
   return feedbackForModerator;
 };
+
+// The correction is already persisted by the time this runs. A failed
+// username lookup must not be rewritten as "unknown", and the response must
+// not invite a second submit (that would apply the points again).
+async function loadSavedCorrectionLeaderboard(res, leagueId) {
+  try {
+    return await loadParticipantsLeaderboard(leagueId);
+  } catch (error) {
+    console.error(
+      "Leaderboard usernames failed after the correction was saved:",
+      error
+    );
+    res.status(500).json({
+      message:
+        "Leaderboard usernames could not be loaded. The correction was saved; do not submit it again.",
+      error: error?.message || error,
+    });
+    return null;
+  }
+}
 
 const correctQuinipolo = async (req, res) => {
   const { id } = req.params;
@@ -1298,37 +1317,12 @@ const correctQuinipolo = async (req, res) => {
       : [];
     const mostFailed = await computeMostFailed(id, answers, surveyItems);
 
-    // Fetch full participants leaderboard for the league (to include non-respondents)
-    let participantsLeaderboard = [];
-    try {
-      const { data: leaderboardRows, error: leaderboardError } = await supabase
-        .from("leaderboard")
-        .select(
-          "user_id, points, n_quinipolos_participated, full_correct_quinipolos",
-        )
-        .eq("league_id", quinipolo.league_id)
-        .order("points", { ascending: false });
-
-      if (!leaderboardError && leaderboardRows && leaderboardRows.length > 0) {
-        const userIds = leaderboardRows.map((row) => row.user_id);
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, username")
-          .in("id", userIds);
-        const userMap = Object.fromEntries(
-          (profiles || []).map((p) => [p.id, p.username]),
-        );
-        participantsLeaderboard = leaderboardRows.map((row) => ({
-          username: userMap[row.user_id] || "unknown",
-          points: row.points,
-          totalPoints: row.points,
-          nQuinipolosParticipated: row.n_quinipolos_participated,
-          fullCorrectQuinipolos: row.full_correct_quinipolos,
-        }));
-      }
-    } catch (e) {
-      console.warn("Failed to fetch participants leaderboard:", e);
-    }
+    // Full league leaderboard, including people who did not answer.
+    const participantsLeaderboard = await loadSavedCorrectionLeaderboard(
+      res,
+      quinipolo.league_id
+    );
+    if (participantsLeaderboard == null) return;
 
     // Matchday = ordinal position of this quinipolo among corrected non-deleted (J1, J2, …). Do not count deleted.
     let matchday = "";
@@ -1569,37 +1563,12 @@ const editQuinipoloCorrection = async (req, res) => {
       : [];
     const mostFailed = await computeMostFailed(id, answers, surveyItems);
 
-    // Fetch full participants leaderboard for the league (to include non-respondents)
-    let participantsLeaderboard = [];
-    try {
-      const { data: leaderboardRows, error: leaderboardError } = await supabase
-        .from("leaderboard")
-        .select(
-          "user_id, points, n_quinipolos_participated, full_correct_quinipolos",
-        )
-        .eq("league_id", quinipolo.league_id)
-        .order("points", { ascending: false });
-
-      if (!leaderboardError && leaderboardRows && leaderboardRows.length > 0) {
-        const userIds = leaderboardRows.map((row) => row.user_id);
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("id, username")
-          .in("id", userIds);
-        const userMap = Object.fromEntries(
-          (profiles || []).map((p) => [p.id, p.username]),
-        );
-        participantsLeaderboard = leaderboardRows.map((row) => ({
-          username: userMap[row.user_id] || "unknown",
-          points: row.points,
-          totalPoints: row.points,
-          nQuinipolosParticipated: row.n_quinipolos_participated,
-          fullCorrectQuinipolos: row.full_correct_quinipolos,
-        }));
-      }
-    } catch (e) {
-      console.warn("Failed to fetch participants leaderboard (edit):", e);
-    }
+    // Full league leaderboard, including people who did not answer.
+    const participantsLeaderboard = await loadSavedCorrectionLeaderboard(
+      res,
+      quinipolo.league_id
+    );
+    if (participantsLeaderboard == null) return;
 
     // Matchday = ordinal position of this quinipolo among corrected non-deleted (J1, J2, …). Do not count deleted.
     let matchday = "";

@@ -1,4 +1,5 @@
 const { supabase } = require('./supabaseClient');
+const { fetchAllEq, selectInBatches } = require('./batchedQuery');
 
 let _expo = null;
 let _Expo = null;
@@ -16,31 +17,33 @@ async function getExpo() {
  * Fetch active push tokens for all users in a league.
  */
 async function getTokensForLeague(leagueId) {
-  // Get all user IDs in this league
-  const { data: members, error: membersError } = await supabase
-    .from('user_leagues')
-    .select('user_id')
-    .eq('league_id', leagueId);
-
-  if (membersError || !members?.length) {
-    console.warn('[Notifications] No members found for league:', leagueId, membersError);
+  let members;
+  try {
+    members = await fetchAllEq(supabase, {
+      table: 'user_leagues',
+      columns: 'user_id',
+      column: 'league_id',
+      value: leagueId,
+    });
+  } catch (error) {
+    console.warn('[Notifications] No members found for league:', leagueId, error);
     return [];
   }
 
-  const userIds = members.map((m) => m.user_id);
+  if (!members.length) return [];
 
-  const { data: tokens, error: tokensError } = await supabase
-    .from('notification_tokens')
-    .select('user_id, expo_push_token')
-    .in('user_id', userIds)
-    .eq('is_active', true);
-
-  if (tokensError) {
-    console.error('[Notifications] Error fetching tokens:', tokensError);
+  try {
+    return await selectInBatches(supabase, {
+      table: 'notification_tokens',
+      columns: 'user_id, expo_push_token',
+      column: 'user_id',
+      ids: members.map((member) => member.user_id),
+      refine: (query) => query.eq('is_active', true),
+    });
+  } catch (error) {
+    console.error('[Notifications] Error fetching tokens:', error);
     return [];
   }
-
-  return tokens || [];
 }
 
 /**
@@ -141,22 +144,36 @@ async function notifyQuinolosCorrected(quinipoloId, leagueId) {
     const leagueName = league?.league_name || 'tu liga';
 
     // Only notify users who actually answered this quinipolo
-    const { data: answers } = await supabase
-      .from('answers')
-      .select('user_id')
-      .eq('quinipolo_id', quinipoloId);
+    let answers;
+    try {
+      answers = await fetchAllEq(supabase, {
+        table: 'answers',
+        columns: 'user_id',
+        column: 'quinipolo_id',
+        value: quinipoloId,
+      });
+    } catch (error) {
+      console.error('[Notifications] Error fetching answers:', error);
+      return;
+    }
 
-    if (!answers?.length) return;
+    if (!answers.length) return;
 
-    const userIds = answers.map((a) => a.user_id);
+    let tokens;
+    try {
+      tokens = await selectInBatches(supabase, {
+        table: 'notification_tokens',
+        columns: 'user_id, expo_push_token',
+        column: 'user_id',
+        ids: answers.map((answer) => answer.user_id),
+        refine: (query) => query.eq('is_active', true),
+      });
+    } catch (error) {
+      console.error('[Notifications] Error fetching tokens:', error);
+      return;
+    }
 
-    const { data: tokens, error: tokensError } = await supabase
-      .from('notification_tokens')
-      .select('user_id, expo_push_token')
-      .in('user_id', userIds)
-      .eq('is_active', true);
-
-    if (tokensError || !tokens?.length) return;
+    if (!tokens.length) return;
 
     const title = '¡Quinipolo corregido!';
     const body = `Tu quinipolo de ${leagueName} ya ha sido corregido. ¡Comprueba tus puntos!`;
