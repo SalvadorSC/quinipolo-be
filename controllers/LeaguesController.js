@@ -127,7 +127,9 @@ const getLeagueData = async (req, res) => {
 
     // FE will handle hiding special leagues like "Test" for non-moderators
 
-    // 2. Members and usernames. Batched so a 400-member league still resolves.
+    // 2. Members and usernames. An unbatched profiles `.in(id)` of all 400
+    // members is the prod 500 on GET /api/leagues/:id (35-byte body
+    // {"error":"TypeError: fetch failed"}). Batches stay under that URL limit.
     let participants;
     try {
       participants = await loadLeagueParticipants(leagueId);

@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const http = require("node:http");
 const path = require("node:path");
 
 const {
@@ -12,7 +13,13 @@ const {
 } = require("../services/batchedQuery");
 
 const GLOBAL_ID = "d1380c88-eaea-43a6-be7d-3d556b8fedce";
+const LEGACY_ID = "351a1949-f6c5-4940-ac70-1c7dd08e8b1a";
+const LEGACY_MEMBERS = 8;
 const SMALL_ID = "small-league";
+// Prod detail 500 for Global: res.json({ error: "TypeError: fetch failed" }).
+const PROD_DETAIL_FAILURE = JSON.stringify({
+  error: "TypeError: fetch failed",
+});
 
 function memberId(index) {
   return `00000000-0000-4000-8000-${String(index).padStart(12, "0")}`;
@@ -322,7 +329,17 @@ function mockRes() {
 
 function useStore({ profileError = null, countError = null, omitProfileId = null } = {}) {
   const memberIds = Array.from({ length: 400 }, (_, index) => memberId(index));
-  const counts = { [GLOBAL_ID]: 400, [SMALL_ID]: 2 };
+  const counts = {
+    [GLOBAL_ID]: 400,
+    [LEGACY_ID]: LEGACY_MEMBERS,
+    [SMALL_ID]: 2,
+  };
+  const idsForLeague = (leagueId) => {
+    if (leagueId === GLOBAL_ID) return memberIds;
+    if (leagueId === LEGACY_ID) return memberIds.slice(0, LEGACY_MEMBERS);
+    if (leagueId === SMALL_ID) return memberIds.slice(0, 2);
+    return [];
+  };
 
   respond = (call) => {
     if (call.table === "leagues" && call.mode === "list") {
@@ -352,8 +369,13 @@ function useStore({ profileError = null, countError = null, omitProfileId = null
       return {
         data: {
           id,
-          league_name: id === GLOBAL_ID ? "Global 26-27" : "Friends",
-          current_participants: counts[id] || 0,
+          league_name:
+            id === GLOBAL_ID
+              ? "Global 26-27"
+              : id === LEGACY_ID
+                ? "Global (2025-2026)"
+                : "Friends",
+          current_participants: counts[id] ?? 0,
           status: "active",
         },
         error: null,
@@ -368,8 +390,7 @@ function useStore({ profileError = null, countError = null, omitProfileId = null
 
     if (call.table === "user_leagues") {
       const leagueId = filterValue(call, "eq", "league_id");
-      const ids =
-        leagueId === SMALL_ID ? memberIds.slice(0, 2) : memberIds;
+      const ids = idsForLeague(leagueId);
       const page = call.range
         ? ids.slice(call.range[0], call.range[1] + 1)
         : ids;
@@ -491,6 +512,74 @@ test("a failed member count is an error, not participantsCount 0", async () => {
 
   assert.equal(res.statusCode, 500);
   assert.equal(Array.isArray(res.body), false);
+});
+
+function listen(app) {
+  return new Promise((resolve) => {
+    const server = app.listen(0, "127.0.0.1", () => resolve(server));
+  });
+}
+
+function get(server, requestPath) {
+  const { port } = server.address();
+  return new Promise((resolve, reject) => {
+    http
+      .get({ hostname: "127.0.0.1", port, path: requestPath }, (res) => {
+        const chunks = [];
+        res.on("data", (chunk) => chunks.push(chunk));
+        res.on("end", () => {
+          const raw = Buffer.concat(chunks);
+          let json = null;
+          try {
+            json = JSON.parse(raw.toString("utf8"));
+          } catch {
+            json = null;
+          }
+          resolve({ status: res.statusCode, raw, json });
+        });
+      })
+      .on("error", reject);
+  });
+}
+
+test("GET /api/leagues/:id returns members for Global and for the small league", async () => {
+  assert.equal(Buffer.byteLength(PROD_DETAIL_FAILURE), 35);
+
+  const express = require("express");
+  const app = express();
+  app.get("/api/leagues/:leagueId", getLeagueData);
+  const server = await listen(app);
+  try {
+    const global = await get(server, `/api/leagues/${GLOBAL_ID}`);
+    assert.equal(global.status, 200);
+    assert.notEqual(global.raw.toString("utf8"), PROD_DETAIL_FAILURE);
+    assert.equal(global.json.league_name, "Global 26-27");
+    assert.equal(global.json.participants.length, 400);
+    assert.equal(
+      global.json.participants.every(
+        (participant) =>
+          participant.username && participant.username !== "unknown"
+      ),
+      true
+    );
+    assert.deepEqual(inSizes("profiles", "id"), [100, 100, 100, 100]);
+
+    calls.length = 0;
+    const small = await get(server, `/api/leagues/${LEGACY_ID}`);
+    assert.equal(small.status, 200);
+    assert.equal(small.json.id, LEGACY_ID);
+    assert.equal(small.json.league_name, "Global (2025-2026)");
+    assert.equal(small.json.participants.length, LEGACY_MEMBERS);
+    assert.equal(
+      small.json.participants.every(
+        (participant) => participant.username !== "unknown"
+      ),
+      true
+    );
+    assert.deepEqual(inSizes("profiles", "id"), [LEGACY_MEMBERS]);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
 });
 
 test("league detail resolves usernames for 400 members", async () => {
