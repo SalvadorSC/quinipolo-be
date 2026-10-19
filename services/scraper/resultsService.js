@@ -1,4 +1,5 @@
 const { fetchFlashscoreResults } = require("./flashscore");
+const { fetchLeveradeResults } = require("./leverade");
 const { getWindowBounds, isWithinWindow } = require("./dateUtils");
 const { matchTeamNameSync, fetchTeamMap, getTeamNameById } = require("./teamMatcher");
 const { supabase } = require("../../services/supabaseClient");
@@ -113,6 +114,90 @@ function calculateMatchConfidence(result, question, teamMap) {
 }
 
 /**
+ * Adds teams-table names and ids to scraped results so they can be scored
+ * against quinipolo questions.
+ */
+function attachTeamIds(results, teamMap) {
+  const getTeamIdByName = (name) => {
+    const team = teamMap.find((t) => t.name === name);
+    return team ? team.id : null;
+  };
+
+  return results.map((result) => {
+    const homeTeamName = matchTeamNameSync(result.homeTeam, false, result.leagueId);
+    const awayTeamName = matchTeamNameSync(result.awayTeam, false, result.leagueId);
+
+    return {
+      ...result,
+      homeTeamMatched: homeTeamName,
+      awayTeamMatched: awayTeamName,
+      homeTeamId: getTeamIdByName(homeTeamName),
+      awayTeamId: getTeamIdByName(awayTeamName),
+    };
+  });
+}
+
+/**
+ * Picks the best result for each question (above the confidence threshold).
+ * @param {Array} results - Results with team ids attached
+ * @param {Array} questions - quinipolo.quinipolo
+ * @param {string} leagueId - quinipolo league id
+ * @param {Array} teamMap - teams table rows
+ * @param {Array<number>} [onlyIndices] - limit matching to these 0-based questions
+ */
+function matchResultsToQuestions(results, questions, leagueId, teamMap, onlyIndices) {
+  const indices = onlyIndices || questions.map((_, index) => index);
+  const matchedResults = [];
+
+  for (const i of indices) {
+    const question = questions[i];
+    if (!question) continue;
+
+    let bestMatch = null;
+    let bestConfidence = 0;
+
+    for (const result of results) {
+      const confidence = calculateMatchConfidence(
+        result,
+        { ...question, leagueId },
+        teamMap
+      );
+
+      if (confidence > bestConfidence) {
+        bestConfidence = confidence;
+
+        // Determine outcome using form team names
+        let outcome = getMatchOutcome(result);
+        if (outcome !== "Tie" && outcome !== "Tie (PEN)" && outcome !== "N/A") {
+          if (outcome === result.homeTeam || outcome === result.homeTeamMatched) {
+            outcome = question.homeTeam;
+          } else if (outcome === result.awayTeam || outcome === result.awayTeamMatched) {
+            outcome = question.awayTeam;
+          }
+        }
+
+        bestMatch = {
+          ...result,
+          matchNumber: i + 1,
+          confidence,
+          outcome,
+          // Use form team names instead of scraped names
+          homeTeam: question.homeTeam,
+          awayTeam: question.awayTeam,
+        };
+      }
+    }
+
+    // Only include if confidence is above threshold
+    if (bestMatch && bestConfidence > 0.3) {
+      matchedResults.push(bestMatch);
+    }
+  }
+
+  return matchedResults;
+}
+
+/**
  * Fetches last week's results and matches them to a quinipolo
  * @param {string} quinipoloId - Quinipolo ID to match results against
  * @param {number} days - Number of days to look back (default: 7)
@@ -142,88 +227,48 @@ async function fetchLastWeekResults(quinipoloId, days = 7) {
 
     // Load team map for matching
     const teamMap = await fetchTeamMap();
-    
-    // Helper function to get team ID by name
-    const getTeamIdByName = (name) => {
-      const team = teamMap.find((t) => t.name === name);
-      return team ? team.id : null;
-    };
-
-    // Attach team IDs to results
-    const resultsWithTeamIds = filteredResults.map((result) => {
-      const homeTeamName = matchTeamNameSync(result.homeTeam, false, result.leagueId);
-      const awayTeamName = matchTeamNameSync(result.awayTeam, false, result.leagueId);
-      
-      const homeTeamId = getTeamIdByName(homeTeamName);
-      const awayTeamId = getTeamIdByName(awayTeamName);
-      
-      return {
-        ...result,
-        homeTeamMatched: homeTeamName,
-        awayTeamMatched: awayTeamName,
-        homeTeamId,
-        awayTeamId,
-      };
-    });
-
-    // Match results to quinipolo questions
     const quinipoloMatches = quinipolo.quinipolo || [];
-    const matchedResults = [];
 
-    for (let i = 0; i < quinipoloMatches.length; i++) {
-      const question = quinipoloMatches[i];
-      
-      // Find best matching result
-      let bestMatch = null;
-      let bestConfidence = 0;
+    // Flashscore first
+    const matchedResults = matchResultsToQuestions(
+      attachTeamIds(filteredResults, teamMap),
+      quinipoloMatches,
+      quinipolo.league_id,
+      teamMap
+    );
 
-      for (const result of resultsWithTeamIds) {
-        const confidence = calculateMatchConfidence(
-          result,
-          {
-            ...question,
-            leagueId: quinipolo.league_id,
-          },
-          teamMap
-        );
+    // Leverade fallback for questions Flashscore did not match (Primera,
+    // Segunda, or anything missing from the Flashscore results page)
+    const matchedNumbers = new Set(matchedResults.map((m) => m.matchNumber));
+    const unmatchedIndices = quinipoloMatches
+      .map((_, index) => index)
+      .filter((index) => !matchedNumbers.has(index + 1));
 
-        if (confidence > bestConfidence) {
-          bestConfidence = confidence;
-          
-          // Determine outcome using form team names
-          let outcome = getMatchOutcome(result);
-          // Map outcome to form team names if it's a team name
-          if (outcome !== "Tie" && outcome !== "Tie (PEN)" && outcome !== "N/A") {
-            // Outcome is a team name - map to form team name
-            if (outcome === result.homeTeam || outcome === result.homeTeamMatched) {
-              outcome = question.homeTeam;
-            } else if (outcome === result.awayTeam || outcome === result.awayTeamMatched) {
-              outcome = question.awayTeam;
-            }
-          }
-          
-          bestMatch = {
-            ...result,
-            matchNumber: i + 1,
-            confidence,
-            outcome,
-            // Use form team names instead of Flashscore names
-            homeTeam: question.homeTeam,
-            awayTeam: question.awayTeam,
-          };
-        }
+    let leveradeResultsCount = 0;
+    if (unmatchedIndices.length > 0) {
+      let leveradeResults = [];
+      try {
+        leveradeResults = await fetchLeveradeResults(start, end);
+      } catch (error) {
+        console.error("Leverade results fallback failed:", error.message);
       }
-
-      if (bestMatch && bestConfidence > 0.3) {
-        // Only include if confidence is above threshold
-        matchedResults.push(bestMatch);
-      }
+      leveradeResultsCount = leveradeResults.length;
+      const fallbackMatches = matchResultsToQuestions(
+        attachTeamIds(leveradeResults, teamMap),
+        quinipoloMatches,
+        quinipolo.league_id,
+        teamMap,
+        unmatchedIndices
+      );
+      matchedResults.push(...fallbackMatches);
+      matchedResults.sort((a, b) => a.matchNumber - b.matchNumber);
     }
 
     return {
       matches: matchedResults,
       window: { start: start.toISOString(), end: end.toISOString() },
       totalResults: filteredResults.length,
+      leveradeResults: leveradeResultsCount,
       matchedCount: matchedResults.length,
     };
   } catch (error) {
@@ -234,6 +279,8 @@ async function fetchLastWeekResults(quinipoloId, days = 7) {
 
 module.exports = {
   fetchLastWeekResults,
+  attachTeamIds,
+  matchResultsToQuestions,
   getMatchOutcome,
   calculateMatchConfidence,
 };
