@@ -58,7 +58,38 @@ async function fetchLeveradeMatches(start, end) {
   return settled.flat();
 }
 
-async function fetchLeagueMatches(league, start, end) {
+/**
+ * Finished Spanish-league matches with final scores from Leverade, for the
+ * results auto-fill. Same tournaments and name cleanup as the fixtures feed;
+ * only matches marked finished with a match-level score for both teams are
+ * returned. Used to fill matches Flashscore does not cover (Primera, Segunda).
+ */
+async function fetchLeveradeResults(start, end) {
+  if (process.env.SCRAPER_USE_LEVERADE === "false") {
+    return [];
+  }
+
+  const settled = await Promise.all(
+    leagues.map(async (league) => {
+      if (!league.leveradeTournamentId) return [];
+      try {
+        return await fetchLeagueMatches(league, start, end, {
+          withResults: true,
+        });
+      } catch (error) {
+        console.error(
+          `Leverade results fetch failed for ${league.id}: ${error.message}`
+        );
+        return [];
+      }
+    })
+  );
+
+  return settled.flat();
+}
+
+async function fetchLeagueMatches(league, start, end, options = {}) {
+  const withResults = Boolean(options.withResults);
   const from = formatFilterDate(addDays(start, -1));
   const to = formatFilterDate(addDays(end, 1));
   const params = new URLSearchParams();
@@ -66,7 +97,10 @@ async function fetchLeagueMatches(league, start, end) {
     "filter",
     `round.group.tournament.id:${league.leveradeTournamentId},datetime>${from},datetime<${to}`
   );
-  params.set("include", "teams,teams.club");
+  params.set(
+    "include",
+    withResults ? "teams,teams.club,results" : "teams,teams.club"
+  );
   params.set("page[size]", String(PAGE_SIZE));
   params.set("page[number]", "1");
 
@@ -89,7 +123,11 @@ async function fetchLeagueMatches(league, start, end) {
       break;
     }
 
-    matches.push(...parseLeveradeMatches(payload, league));
+    matches.push(
+      ...(withResults
+        ? parseLeveradeResults(payload, league)
+        : parseLeveradeMatches(payload, league))
+    );
     url = payload.links && payload.links.next ? payload.links.next : null;
   }
 
@@ -145,6 +183,67 @@ function parseLeveradeMatches(payload, league) {
   }
 
   return matches;
+}
+
+/**
+ * Like parseLeveradeMatches, but keeps only finished matches and attaches the
+ * final score. Leverade stores one match-level result per team (period null)
+ * plus per-period rows; only the match-level value is used.
+ */
+function parseLeveradeResults(payload, league) {
+  const included = new Map();
+  for (const item of payload.included || []) {
+    if (item && item.type && item.id != null) {
+      included.set(`${item.type}:${item.id}`, item);
+    }
+  }
+
+  const fixtures = new Map(
+    parseLeveradeMatches(payload, league).map((match) => [
+      match.leveradeId,
+      match,
+    ])
+  );
+
+  const results = [];
+  for (const row of payload.data || []) {
+    if (!row || row.type !== "match") continue;
+    const fixture = fixtures.get(String(row.id));
+    if (!fixture) continue;
+    const attrs = row.attributes || {};
+    if (!attrs.finished) continue;
+
+    const scores = matchLevelScores(row, included);
+    const homeId = String(row.meta && row.meta.home_team);
+    const awayId = String(row.meta && row.meta.away_team);
+    const homeScore = scores.get(homeId);
+    const awayScore = scores.get(awayId);
+    if (!Number.isFinite(homeScore) || !Number.isFinite(awayScore)) continue;
+
+    results.push({ ...fixture, homeScore, awayScore, status: "FT" });
+  }
+
+  return results;
+}
+
+function matchLevelScores(row, included) {
+  const scores = new Map();
+  const refs =
+    (row.relationships &&
+      row.relationships.results &&
+      row.relationships.results.data) ||
+    [];
+  for (const ref of refs) {
+    const result = included.get(`result:${ref.id}`);
+    if (!result) continue;
+    const rel = result.relationships || {};
+    if (rel.period && rel.period.data) continue;
+    const teamId = rel.team && rel.team.data && rel.team.data.id;
+    const value = Number(result.attributes && result.attributes.value);
+    if (teamId == null || !Number.isFinite(value)) continue;
+    scores.set(String(teamId), value);
+  }
+  return scores;
 }
 
 function clubNameFor(team, included) {
@@ -277,7 +376,9 @@ function addDays(date, days) {
 
 module.exports = {
   fetchLeveradeMatches,
+  fetchLeveradeResults,
   parseLeveradeMatches,
+  parseLeveradeResults,
   resolveLeveradeTeamName,
   leveradeDatetimeToIso,
 };

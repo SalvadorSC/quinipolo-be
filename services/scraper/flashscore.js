@@ -90,6 +90,7 @@ async function fetchFlashscoreResults() {
               flashscoreId: event.id,
               homeScore: event.homeScore,
               awayScore: event.awayScore,
+              source: "flashscore",
             };
             if (event.status) {
               match.status = event.status;
